@@ -38,7 +38,7 @@ export function makeMove(game: GameState, player: 0 | 1, r: number, c: number) {
   // enforce first move in the center
   const center_r = Math.floor(game.board.length / 2)
   const center_c = Math.floor(game.board.length / 2)
-  if (game.board[center_r][center_c] === undefined && (r !== center_r || c !== center_c)) return
+  if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
 
   // place gemstone onto board
   game.board[r][c] = player
