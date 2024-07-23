@@ -24,12 +24,15 @@ function areCoordsSignificant(r: number, c: number): boolean {
   <div class="board">
     <img class="board-background" src="/leather-texture.jpg" />
     <template class="row" v-for="r in boardSize">
-      <div class="intersection" v-for="c in boardSize" :class="{ 'significant': areCoordsSignificant(r - 1, c - 1) }"
+      <div class="intersection" v-for="c in boardSize"
+        :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize }"
         @click="$emit('make-move', r - 1, c - 1)">
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]">
-        </div>
-        <div class="grid-line-box" :class="{ 'last-col': c === boardSize, 'last-row': r === boardSize }">
+        <p v-if="c === boardSize" class="row-label">{{ r - 1 }}</p>
+        <p v-if="r === boardSize" class="col-label">{{ c - 1 }}</p>
+
+        <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+        <div class="grid-line-box">
 
         </div>
       </div>
@@ -80,11 +83,11 @@ function areCoordsSignificant(r: number, c: number): boolean {
   transform: translate(50%, 50%);
 }
 
-.grid-line-box.last-col {
+.last-col .grid-line-box {
   border-top: none;
 }
 
-.grid-line-box.last-row {
+.last-row .grid-line-box {
   border-left: none;
 }
 
@@ -106,4 +109,22 @@ function areCoordsSignificant(r: number, c: number): boolean {
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   /* background color comes from config in main.css */
 }
+
+.row-label, .col-label {
+  position: absolute;
+  font-family: sans-serif;
+  font-size: 12px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.row-label {
+  transform: translateX(50%);
+}
+.col-label {
+  transform: translateY(50%);
+}
+
 </style>
