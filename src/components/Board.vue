@@ -8,6 +8,14 @@ const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board[0].length)
 
+function areCoordsSignificant(r: number, c: number): boolean {
+    const center = Math.floor(boardSize.value / 2)
+    if (r === center && c === center) return true
+    if (Math.abs(r - center) === 3 && Math.abs(c - center) === 3) return true;
+    return false
+}
+
+
 </script>
 
 
@@ -16,11 +24,11 @@ const boardSize = computed(() => props.game.board[0].length)
     <div class="board">
         <img class="board-background" src="/leather-texture.jpg" />
         <template class="row" v-for="r in boardSize">
-            <div class="intersection" v-for="c in boardSize"
-                :class="{ 'center': r === Math.ceil(boardSize / 2) && c === r }"
+            <div class="intersection" v-for="c in boardSize" :class="{ 'significant': areCoordsSignificant(r - 1, c - 1) }"
                 @click="$emit('make-move', r - 1, c - 1)">
 
-                <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+                <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]">
+                </div>
                 <div class="grid-line-box" :class="{ 'last-col': c === boardSize, 'last-row': r === boardSize }">
 
                 </div>
@@ -80,13 +88,13 @@ const boardSize = computed(() => props.game.board[0].length)
     border-left: none;
 }
 
-.center::before {
+.intersection.significant::before {
     content: "";
     position: absolute;
-    width: 20%;
-    height: 20%;
-    border-radius: 100%;
-    background-color: var(--grid-line-color);
+    width: 25%;
+    height: 25%;
+    border: var(--grid-line-width) double var(--grid-line-color);
+    transform: rotateZ(45deg);
 }
 
 .gem {
