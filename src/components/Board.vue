@@ -1,24 +1,12 @@
 <script setup lang="ts">
 
 import { ref, type Ref, onMounted, computed } from 'vue'
-import type { GameState } from '@/model';
+import { makeMove, type GameState } from '@/model';
 
-const props = defineProps<{game: GameState}>()
+const props = defineProps<{ game: GameState }>()
+const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board[0].length)
-const backgroundCanvas: Ref<HTMLCanvasElement | null> = ref(null)
-
-onMounted(() => {
-    initBackground()
-})
-
-function initBackground() {
-    if (!backgroundCanvas.value) return
-    const ctx = backgroundCanvas.value.getContext("2d")
-    if (!ctx) return
-
-
-}
 
 </script>
 
@@ -27,8 +15,14 @@ function initBackground() {
 <template>
     <div class="board">
         <template class="row" v-for="r in boardSize">
-            <div class="intersection" v-for="c in boardSize">
-                <div class="grid-line-box" :class="{ 'last-col': c === boardSize, 'last-row': r === boardSize }"></div>
+            <div class="intersection" v-for="c in boardSize"
+                :class="{ 'center': r === Math.ceil(boardSize / 2) && c === r }"
+                @click="$emit('make-move', r - 1, c - 1)">
+
+                <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+                <div class="grid-line-box" :class="{ 'last-col': c === boardSize, 'last-row': r === boardSize }">
+
+                </div>
             </div>
         </template>
     </div>
@@ -42,6 +36,7 @@ function initBackground() {
     background-color: beige;
     display: grid;
     grid-template-columns: repeat(v-bind('boardSize'), 1fr);
+    box-shadow: 0 2px 2px 1px rgba(0, 0, 0, 0.25);
 }
 
 .intersection {
@@ -50,6 +45,10 @@ function initBackground() {
     justify-content: center;
     position: relative;
     cursor: pointer;
+}
+
+.intersection:has(.gem) {
+    cursor: default;
 }
 
 .grid-line-box {
@@ -67,5 +66,24 @@ function initBackground() {
 
 .grid-line-box.last-row {
     border-left: none;
+}
+
+.center::before {
+    content: "";
+    position: absolute;
+    width: 20%;
+    height: 20%;
+    border-radius: 100%;
+    background-color: maroon;
+}
+
+.gem {
+    width: 90%;
+    height: 90%;
+    border-radius: 90%;
+    position: relative;
+    z-index: 5;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    /* background color comes from config in main.css */
 }
 </style>

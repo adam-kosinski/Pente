@@ -1,9 +1,10 @@
 <script setup lang="ts">
 
+import { ref } from 'vue';
 import Board from '@/components/Board.vue';
-import { createNewGame } from '@/model';
+import { createNewGame, makeMove } from '@/model';
 
-const game = createNewGame(13)
+const game = ref(createNewGame(13))
 
 </script>
 
@@ -12,5 +13,5 @@ const game = createNewGame(13)
 
 <template>
   <div>Analyze</div>
-  <Board :game="game" />
+  <Board :game="game" @make-move="(r, c) => makeMove(game, game.currentPlayer, r, c)"/>
 </template>
