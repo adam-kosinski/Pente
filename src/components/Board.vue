@@ -1,8 +1,11 @@
 <script setup lang="ts">
 
-import { ref, type Ref, onMounted } from 'vue'
+import { ref, type Ref, onMounted, computed } from 'vue'
+import type { GameState } from '@/model';
 
-const boardSize = ref(19)
+const props = defineProps<{game: GameState}>()
+
+const boardSize = computed(() => props.game.board[0].length)
 const backgroundCanvas: Ref<HTMLCanvasElement | null> = ref(null)
 
 onMounted(() => {
