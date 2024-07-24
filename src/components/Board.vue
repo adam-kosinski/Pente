@@ -28,10 +28,10 @@ function areCoordsSignificant(r: number, c: number): boolean {
         :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize }"
         @click="$emit('make-move', r - 1, c - 1)">
 
-        <p v-if="c === boardSize" class="row-label">{{ r - 1 }}</p>
+        <p v-if="c === 1" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+        <div v-if="game.board[r - 1][c - 1] !== null" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
         <div class="grid-line-box">
 
         </div>
@@ -121,7 +121,7 @@ function areCoordsSignificant(r: number, c: number): boolean {
   justify-content: center;
 }
 .row-label {
-  transform: translateX(50%);
+  transform: translateX(-50%);
 }
 .col-label {
   transform: translateY(50%);

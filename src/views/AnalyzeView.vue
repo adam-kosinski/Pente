@@ -3,9 +3,12 @@
 import { ref } from 'vue';
 import Board from '@/components/Board.vue';
 import { createNewGame, makeMove } from '@/model';
-import { generateMoves, findBestMove } from '@/engines/engine_v1';
+import { generateMoves, findBestMove, findLinearShapes } from '@/engines/engine_v1';
 
 const game = ref(createNewGame(19))
+
+
+game.value = JSON.parse('{"board":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,0,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,1,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,1,0,0,0,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,1,null,1,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8}')
 
 </script>
 
@@ -13,9 +16,11 @@ const game = ref(createNewGame(19))
 
 
 <template>
-  <div class="wood-background" @click="console.log(findBestMove(game))"></div>
+  <div class="wood-background"></div>
   <div>Analyze</div>
-  <Board class="board" :game="game" @make-move="(r, c) => makeMove(game, game.currentPlayer, r, c)"/>
+  <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
+  <button @click="console.log(JSON.stringify(game))">Save Game</button><br>
+  <Board class="board" :game="game" @make-move="(r, c) => makeMove(game, r, c)"/>
 </template>
 
 
