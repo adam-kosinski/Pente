@@ -35,11 +35,11 @@ export function createNewGame(boardSize: number): GameState {
 
 export function copyGame(game: GameState): GameState {
   return {
-    board: game.board.map(row => row.slice()),
+    board: game.board.map(row => row.slice()),  // this takes up about 80% of execution time
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))  // this takes about 10%
   }
 }
 

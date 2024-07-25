@@ -5,8 +5,6 @@ let searchNodesVisited = 0
 export function findBestMove(game: GameState) {
   // minimax search with alpha beta pruning and iterative deepening
 
-  // console.profile()
-
   let evalEstimates: { move: number[], eval: number }[] = []
 
   for (let depth = 1; depth <= 4; depth++) {
@@ -29,8 +27,6 @@ export function findBestMove(game: GameState) {
     // if found a forced win, no need to keep looking
     if (Math.abs(result.eval) === Infinity) break
   }
-
-  // console.profileEnd()
 }
 
 
