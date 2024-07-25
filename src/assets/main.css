@@ -4,7 +4,6 @@
             color-mix(in hsl, white 40%, var(--gem-color)) 15%,
             var(--gem-color) 40%,
             color-mix(in hsl, black 20%, var(--gem-color)) 70%);
-    opacity: 0.97;
 }
 
 .gem[data-player="0"] {
