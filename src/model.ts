@@ -122,12 +122,17 @@ for (const [type, pattern] of Object.entries(linearShapeDef)) {
 const allPatternsRegEx = new RegExp(Array.from(linearShapes.keys()).join("|"), "g")
 
 
+let start = 0
+window.removeTime = 0
+window.addTime = 0
 
 export function updateLinearShapes(game: GameState, r0: number, c0: number) {
   // Given a game state, update the game state's list of linear shapes.
   // Will only take into account shapes that include the r0,c0 location.
   // This takes advantage of the fact that a move can only create/affect
   // shapes containing its location, or locations of captured stones
+
+  start = performance.now()
 
   // remove any shapes that are no longer there
   game.linearShapes = game.linearShapes.filter(shape => {
@@ -140,45 +145,91 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
     return true
   })
 
+  window.removeTime += performance.now() - start
+  start = performance.now()
+
   // add new shapes
 
-  // iterate over each of four directions
-  for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
-    let s = ""
+  // iterate over each of four directions, and assemble board contents into 4 strings
+  // and then will search everything at once with a single regex (WAY more efficient than searching
+  // separate strings with separate regexes)
+  const dirs = [[0, 1], [1, 0], [1, 1], [-1, 1]] // row, col, (\) diagonal, (/) diagonal
+  let searchStringLength = 2 * maxLinearShapeLength - 1
+  let combinedSearchString = ""
+  for (const dir of dirs) {
     let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
     let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
-    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
+    for (let i = 0, r = rInit, c = cInit; i < searchStringLength; i++, r += dir[0], c += dir[1]) {
       // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
       if (r < 0 || c < 0 || r >= game.board.length || c >= game.board[0].length) {
-        s += "x"
-        continue
+        combinedSearchString += "x"
       }
-      const value = game.board[r][c]
-      s += value === null ? "_" : value
+      else {
+        combinedSearchString += game.board[r][c] === null ? "_" : game.board[r][c]
+      }
     }
-    // search for each pattern
-    for (const match of s.matchAll(allPatternsRegEx)) {
-      const pattern: string = match[0]
-      const patternInfo = linearShapes.get(pattern)
-      const shape: LinearShape = {
-        type: patternInfo.type,
-        pattern: pattern,
-        owner: patternInfo.owner,
-        begin: [
-          rInit + dir[0] * match.index,
-          cInit + dir[1] * match.index
-        ],
-        end: [  // inclusive index
-          rInit + dir[0] * (match.index + patternInfo.length - 1),
-          cInit + dir[1] * (match.index + patternInfo.length - 1)
-        ],
-        length: patternInfo.length,
-        hash: ""  // placeholder, see below
-      }
-      shape.hash = [shape.type, shape.owner, shape.begin, shape.end].join()
-      if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
-        game.linearShapes.push(shape)
-      }
+    combinedSearchString += ","
+  }
+
+  // search for patterns
+  for (const match of combinedSearchString.matchAll(allPatternsRegEx)) {
+
+    const pattern: string = match[0]
+    const patternInfo = linearShapes.get(pattern)
+
+    // index of direction, and index of search result in that direction's substring, are just the quotient and remainder
+    // from dividing back up combinedSearchString
+    const dir = dirs[Math.floor(match.index / (searchStringLength + 1))]  // +1 for the "," character from the join
+    const index = match.index % (searchStringLength + 1)
+
+    // have to recalculate rInit and cInit
+    let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
+    let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
+
+    const shape: LinearShape = {
+      type: patternInfo.type,
+      pattern: pattern,
+      owner: patternInfo.owner,
+      begin: [
+        rInit + dir[0] * index,
+        cInit + dir[1] * index
+      ],
+      end: [  // inclusive index
+        rInit + dir[0] * (index + patternInfo.length - 1),
+        cInit + dir[1] * (index + patternInfo.length - 1)
+      ],
+      length: patternInfo.length,
+      hash: ""  // placeholder, see below
+    }
+    shape.hash = [shape.type, shape.owner, shape.begin, shape.end].join()
+    if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
+      game.linearShapes.push(shape)
     }
   }
+  // // search for each pattern
+  // for (const match of s.matchAll(allPatternsRegEx)) {
+  //   const pattern: string = match[0]
+  //   const patternInfo = linearShapes.get(pattern)
+  //   const shape: LinearShape = {
+  //     type: patternInfo.type,
+  //     pattern: pattern,
+  //     owner: patternInfo.owner,
+  //     begin: [
+  //       rInit + dir[0] * match.index,
+  //       cInit + dir[1] * match.index
+  //     ],
+  //     end: [  // inclusive index
+  //       rInit + dir[0] * (match.index + patternInfo.length - 1),
+  //       cInit + dir[1] * (match.index + patternInfo.length - 1)
+  //     ],
+  //     length: patternInfo.length,
+  //     hash: ""  // placeholder, see below
+  //   }
+  //   shape.hash = [shape.type, shape.owner, shape.begin, shape.end].join()
+  //   if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
+  //     game.linearShapes.push(shape)
+  //   }
+  // }
+
+  window.addTime += performance.now() - start
 }
