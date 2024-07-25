@@ -2,7 +2,6 @@ import { copyGame, makeMove, type GameState, type LinearShape } from "@/model";
 
 let searchNodesVisited = 0
 
-
 export function findBestMove(game: GameState) {
   // minimax search with alpha beta pruning and iterative deepening
 
@@ -13,17 +12,23 @@ export function findBestMove(game: GameState) {
 
     searchNodesVisited = 0
     const result = searchStep(game, depth, -Infinity, Infinity, evalEstimates)  // start alpha and beta at worst possible scores
-    console.log(searchNodesVisited + " nodes visited")
-
     evalEstimates = result.variations.map(v => { return { move: v.moves[0], eval: v.eval } })
-    result.variations.slice(0, 3).forEach(v => console.log(v.eval, v.evalCouldBe, JSON.stringify(v.moves)))
+
+    // log results
+    console.log(searchNodesVisited + " nodes visited")
+    result.variations.slice(0, 3).forEach(v => {
+      let evalString = "eval "
+      if(v.evalCouldBe === Infinity) evalString += "≥"
+      if(v.evalCouldBe === -Infinity) evalString += "≤"
+      evalString += v.eval
+      console.log(evalString, JSON.stringify(v.moves))
+    })
 
     // if found a forced win, no need to keep looking
     if (Math.abs(result.eval) === Infinity) break
   }
 
 }
-
 
 
 
@@ -108,6 +113,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
 }
 
 
+
 // TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning)
 
 export function generateMoves(game: GameState): number[][] {
@@ -145,6 +151,7 @@ export function generateMoves(game: GameState): number[][] {
 }
 
 
+
 export function orderMoves(moves: number[][], maximizing: boolean, evalEstimates: { move: number[], eval: number }[] = []) {
   // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
   // and sorts the moves (IN PLACE) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
@@ -177,193 +184,17 @@ export function evaluatePosition(game: GameState) {
   if (game.captures[0] >= 5) return -Infinity
   if (game.captures[1] >= 5) return Infinity
 
-  // get evaluation from linear shapes
-  const shapes = findLinearShapes(game)
-  let shapeEval = 0
-  shapes.forEach(s => shapeEval += s.evaluation)
+  // TODO get evaluation from linear shapes
 
   // capture eval
   const captureEval = 20 * (game.captures[1] - game.captures[0])
 
-  return shapeEval + captureEval
-}
-
-
-
-const linearShapeDef = {
-  // shapes are defined from the perspective of me as 1 and opponent as 0, with positive eval being good for me
-  // shapes should be defined with a positive evaluation
-  // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns
-  "pente": { pattern: "11111", evaluation: Infinity },
-  "open-tessera": { pattern: "_1111_", evaluation: 10000 },
-  "open-tria": { pattern: "_111_", evaluation: 30 },
-  "stretch-tria": { pattern: "_11_1_", evaluation: 30 }, // eval will be dampened by the contained open pair
-  "open-pair": { pattern: "_00_", evaluation: 5 },
-  "capture-threat": { pattern: "100_", evaluation: 15 }, // should be better than opponent just having an open pair
-  "stretch-two": { pattern: "_1_1_", evaluation: 5 },
-}
-
-// expand shape definition to include flips and both players, and store as a map for easy lookup
-// key is a string matching the pattern, e.g. 011_ for a capture threat
-const linearShapes = new Map()
-let maxLinearShapeLength = 0
-
-for (const [name, { pattern, evaluation }] of Object.entries(linearShapeDef)) {
-  // add forward and backwards patterns
-  linearShapes.set(pattern, { name: name, evaluation: evaluation, length: pattern.length })
-  linearShapes.set(pattern.split("").reverse().join(""), { name: name, evaluation: evaluation, length: pattern.length })
-  // do it for the other player
-  const patternSwitchPlayers = pattern.replace(/1/g, "x").replace(/0/g, "1").replace(/x/g, "0")
-  linearShapes.set(patternSwitchPlayers, { name: name, evaluation: -evaluation, length: pattern.length })
-  linearShapes.set(patternSwitchPlayers.split("").reverse().join(""), { name: name, evaluation: -evaluation, length: pattern.length })
-  // update max length
-  maxLinearShapeLength = Math.max(pattern.length, maxLinearShapeLength)
-}
-// create regex
-for (const [pattern, patternInfo] of linearShapes.entries()) {
-  patternInfo.regex = new RegExp(pattern, "g")
-}
-
-
-
-export function updateLinearShapes(game: GameState, r0: number, c0: number) {
-  // Given a game state, update the game state's list of linear shapes.
-  // Will only take into account shapes that include the r0,c0 location.
-  // This takes advantage of the fact that a move can only create/affect
-  // shapes containing its location, or locations of captured stones
-
-  // remove any shapes that are no longer there
-  game.linearShapes = game.linearShapes.filter(shape => {
-    const dy = Math.sign(shape.end[0] - shape.begin[0])
-    const dx = Math.sign(shape.end[1] - shape.begin[1])
-    for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      const s = game.board[r][c] === null ? "_" : String(game.board[r][c])
-      if (s !== shape.pattern[i]) return false
-    }
-    return true
-  })
-
-  // add new shapes
-
-  // iterate over each of four directions
-  for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
-    let s = ""
-    let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
-    let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
-    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
-      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board[0].length) continue
-      const value = game.board[r][c]
-      s += value === null ? "_" : value
-    }
-    // search for each pattern
-    for (const [pattern, patternInfo] of linearShapes.entries()) {
-      for (const match of s.matchAll(patternInfo.regex)) {
-        const shape: LinearShape = {
-          type: patternInfo.name,
-          pattern: pattern,
-          goodFor: patternInfo.evaluation <= 0 ? 0 : 1,
-          begin: [
-            rInit + dir[0] * match.index,
-            cInit + dir[1] * match.index
-          ],
-          end: [  // inclusive index
-            rInit + dir[0] * (match.index + patternInfo.length - 1),
-            cInit + dir[1] * (match.index + patternInfo.length - 1)
-          ],
-          length: patternInfo.length,
-          hash: ""  // placeholder, see below
-        }
-        shape.hash = [shape.type, shape.goodFor, shape.begin, shape.end].join()
-        if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
-          game.linearShapes.push(shape)
-        }
-      }
-    }
-  }
+  return captureEval
 }
 
 
 
 
-export function findLinearShapes(game: GameState) {
-  // map board to characters for easier lookup
-  const charBoard = game.board.map(row => row.map(x => x === null ? "_" : String(x)))
 
-  const results = []
-
-  const nRows = game.board.length;
-  const nCols = game.board[0].length;
-
-  // search rows
-  for (let r = 0; r < nRows; r++) {
-    const rowString = charBoard[r].join("")
-    for (const patternInfo of linearShapes.values()) {
-      for (const match of rowString.matchAll(patternInfo.regex)) {
-        results.push({
-          name: patternInfo.name,
-          evaluation: patternInfo.evaluation,
-          start: [r, match.index],
-          end: [r, match.index + patternInfo.length - 1] //inclusive index
-        })
-      }
-    }
-  }
-  // search cols
-  for (let c = 0; c < nCols; c++) {
-    let colString = ""
-    for (let r = 0; r < nRows; r++) {
-      colString += charBoard[r][c]
-    }
-    for (const patternInfo of linearShapes.values()) {
-      for (const match of colString.matchAll(patternInfo.regex)) {
-        results.push({
-          name: patternInfo.name,
-          evaluation: patternInfo.evaluation,
-          start: [match.index, c],
-          end: [match.index + patternInfo.length - 1, c] //inclusive index
-        })
-      }
-    }
-  }
-  // search diagonal \
-  for (let diag = 0; diag < nRows + nCols - 1; diag++) {
-    let diagString = ""
-    let rInit = Math.max(0, nRows - 1 - diag)
-    let cInit = Math.max(0, diag - nRows + 1)
-    for (let r = rInit, c = cInit; r < nRows && c < nCols; r++, c++) {
-      diagString += charBoard[r][c]
-    }
-    for (const patternInfo of linearShapes.values()) {
-      for (const match of diagString.matchAll(patternInfo.regex)) {
-        results.push({
-          name: patternInfo.name,
-          evaluation: patternInfo.evaluation,
-          start: [rInit + match.index, cInit + match.index],
-          end: [rInit + match.index + patternInfo.length - 1, cInit + match.index + patternInfo.length - 1]
-        })
-      }
-    }
-  }
-  // search diagonal /
-  for (let diag = 0; diag < nRows + nCols - 1; diag++) {
-    let diagString = ""
-    let rInit = Math.min(nRows - 1, diag)
-    let cInit = Math.max(0, diag - nRows + 1)
-
-    for (let r = rInit, c = cInit; r >= 0 && c < nCols; r--, c++) {
-      diagString += charBoard[r][c]
-    }
-    for (const patternInfo of linearShapes.values()) {
-      for (const match of diagString.matchAll(patternInfo.regex)) {
-        results.push({
-          name: patternInfo.name,
-          evaluation: patternInfo.evaluation,
-          start: [rInit - match.index, cInit + match.index],
-          end: [rInit - match.index - patternInfo.length + 1, cInit + match.index + patternInfo.length - 1]
-        })
-      }
-    }
-  }
-
-  return results
-}
+// if we ever need to find all linear shapes, can just use the updateLinearShapes function on the places
+// that have stones
