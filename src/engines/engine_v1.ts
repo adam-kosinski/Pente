@@ -5,9 +5,11 @@ let searchNodesVisited = 0
 export function findBestMove(game: GameState) {
   // minimax search with alpha beta pruning and iterative deepening
 
+  // console.profile()
+
   let evalEstimates: { move: number[], eval: number }[] = []
 
-  for (let depth = 1; depth <= 3; depth++) {
+  for (let depth = 1; depth <= 4; depth++) {
     console.log(`searching depth ${depth}...`)
 
     searchNodesVisited = 0
@@ -18,8 +20,8 @@ export function findBestMove(game: GameState) {
     console.log(searchNodesVisited + " nodes visited")
     result.variations.slice(0, 3).forEach(v => {
       let evalString = "eval "
-      if(v.evalCouldBe === Infinity) evalString += "≥"
-      if(v.evalCouldBe === -Infinity) evalString += "≤"
+      if (v.evalCouldBe === Infinity) evalString += "≥"
+      if (v.evalCouldBe === -Infinity) evalString += "≤"
       evalString += v.eval
       console.log(evalString, JSON.stringify(v.moves))
     })
@@ -28,6 +30,7 @@ export function findBestMove(game: GameState) {
     if (Math.abs(result.eval) === Infinity) break
   }
 
+  // console.profileEnd()
 }
 
 
@@ -132,7 +135,7 @@ export function generateMoves(game: GameState): number[][] {
     for (let c = 0; c < game.board[0].length; c++) {
       if (game.board[r][c] === null) continue
       // there is a piece here, add the neighborhood - will check for if spots are empty once added to the set, to avoid duplicate checks
-      const dists = [0, -1, 1]
+      const dists = [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
           if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board[0].length) {
@@ -185,11 +188,25 @@ export function evaluatePosition(game: GameState) {
   if (game.captures[1] >= 5) return Infinity
 
   // TODO get evaluation from linear shapes
+  // eval config below is for if player 1 is the owner (where higher eval is better)
+  const shapeEvalConfig: Record<string, number> = {
+    "pente": Infinity,
+    "open-tessera": 10000,
+    "open-tria": 30,
+    "stretch-tria": 30, // eval will be dampened by the contained open pair
+    "open-pair": -5,
+    "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
+    "stretch-two": 5
+  }
+  let shapeEval = 0
+  game.linearShapes.forEach(shape => {
+    shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
+  })
 
   // capture eval
   const captureEval = 20 * (game.captures[1] - game.captures[0])
 
-  return captureEval
+  return shapeEval + captureEval
 }
 
 

@@ -100,7 +100,7 @@ const linearShapeDef = {
   "stretch-tria": "_11_1_", // eval will be dampened by the contained open pair
   "open-pair": "_11_",
   "capture-threat": "100_", // compare with open pair
-  "stretch-two": "_1_1_",
+  "stretch-two": "_1_1_"
 }
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup
@@ -153,7 +153,11 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
     let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
     let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
     for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
-      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board[0].length) continue
+      // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
+      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board[0].length) {
+        s += "x"
+        continue
+      }
       const value = game.board[r][c]
       s += value === null ? "_" : value
     }
