@@ -3,6 +3,7 @@ export interface GameState {
   currentPlayer: 0 | 1
   captures: Record<0 | 1, number>
   nMoves: number
+  isOver: boolean
   linearShapes: LinearShape[]
 }
 
@@ -24,6 +25,7 @@ export function createNewGame(boardSize: number): GameState {
     currentPlayer: 0 as 0 | 1,
     captures: { 0: 0, 1: 0 },
     nMoves: 0,
+    isOver: false,
     linearShapes: []
   }
   for (let r = 0; r < boardSize; r++) {
@@ -39,6 +41,7 @@ export function copyGame(game: GameState): GameState {
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
+    isOver: game.isOver,
     linearShapes: JSON.parse(JSON.stringify(game.linearShapes))  // this takes about 10%
   }
 }
@@ -82,6 +85,11 @@ export function makeMove(game: GameState, r: number, c: number) {
   }
   updateLinearShapes(game, r, c)
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
+
+  // check for game over
+  if(game.captures[0] >= 5 || game.captures[1] >= 5 || game.linearShapes.some(shape => shape.type === "pente")){
+    game.isOver = true
+  }
 
   // update current player and move count
   game.currentPlayer = Number(!game.currentPlayer) as 0 | 1

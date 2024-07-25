@@ -44,7 +44,6 @@ function timeTest(){
   <button @click="profile()">Profile</button><br>
   <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
   <button @click="console.log(JSON.stringify(game))">Save Game</button><br>
-  <button @click="updateLinearShapes(game, 9, 15)">Update Linear Shapes</button><br>
   <button @click="timeTest()">Time Test</button>
   <Board class="board" :game="game" @make-move="(r, c) => makeMove(game, r, c)" />
 </template>

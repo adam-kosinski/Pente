@@ -43,9 +43,8 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
 
   searchNodesVisited++
 
-  const evaluation = evaluatePosition(game)
-  if (depth === 0 || Math.abs(evaluation) === Infinity) {
-    return { eval: evaluation, moves: [], variations: [] }
+  if (depth === 0 || game.isOver) {
+    return { eval: evaluatePosition(game), moves: [], variations: [] }
   }
 
   let moves = generateMoves(game)
@@ -192,7 +191,7 @@ export function evaluatePosition(game: GameState) {
     "stretch-tria": 30,
     "open-pair": -5,
     "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
-    "stretch-two": 5
+    "stretch-two": 15
   }
   let shapeEval = 0
   game.linearShapes.forEach(shape => {
