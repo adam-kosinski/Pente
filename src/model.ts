@@ -119,12 +119,7 @@ for (const [type, pattern] of Object.entries(linearShapeDef)) {
   // update max length
   maxLinearShapeLength = Math.max(pattern.length, maxLinearShapeLength)
 }
-// create regex
-for (const [pattern, patternInfo] of linearShapes.entries()) {
-  patternInfo.regex = new RegExp(pattern, "g")
-}
-
-
+const allPatternsRegEx = new RegExp(Array.from(linearShapes.keys()).join("|"), "g")
 
 
 
@@ -162,27 +157,27 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
       s += value === null ? "_" : value
     }
     // search for each pattern
-    for (const [pattern, patternInfo] of linearShapes.entries()) {
-      for (const match of s.matchAll(patternInfo.regex)) {
-        const shape: LinearShape = {
-          type: patternInfo.type,
-          pattern: pattern,
-          owner: patternInfo.owner,
-          begin: [
-            rInit + dir[0] * match.index,
-            cInit + dir[1] * match.index
-          ],
-          end: [  // inclusive index
-            rInit + dir[0] * (match.index + patternInfo.length - 1),
-            cInit + dir[1] * (match.index + patternInfo.length - 1)
-          ],
-          length: patternInfo.length,
-          hash: ""  // placeholder, see below
-        }
-        shape.hash = [shape.type, shape.owner, shape.begin, shape.end].join()
-        if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
-          game.linearShapes.push(shape)
-        }
+    for (const match of s.matchAll(allPatternsRegEx)) {
+      const pattern: string = match[0]
+      const patternInfo = linearShapes.get(pattern)
+      const shape: LinearShape = {
+        type: patternInfo.type,
+        pattern: pattern,
+        owner: patternInfo.owner,
+        begin: [
+          rInit + dir[0] * match.index,
+          cInit + dir[1] * match.index
+        ],
+        end: [  // inclusive index
+          rInit + dir[0] * (match.index + patternInfo.length - 1),
+          cInit + dir[1] * (match.index + patternInfo.length - 1)
+        ],
+        length: patternInfo.length,
+        hash: ""  // placeholder, see below
+      }
+      shape.hash = [shape.type, shape.owner, shape.begin, shape.end].join()
+      if (!game.linearShapes.some(existingShape => existingShape.hash === shape.hash)) {
+        game.linearShapes.push(shape)
       }
     }
   }
