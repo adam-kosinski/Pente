@@ -27,7 +27,7 @@ export function createNewGame(boardSize: number): GameState {
     linearShapes: []
   }
   for (let r = 0; r < boardSize; r++) {
-    game.board.push(new Array(boardSize).fill(null))
+    game.board.push(new Array(boardSize))
   }
   return game
 }
@@ -48,7 +48,7 @@ export function copyGame(game: GameState): GameState {
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board[0].length) return
   // can't go in a place with a piece
-  if (game.board[r][c] !== null) return
+  if (game.board[r][c] !== undefined) return
   // enforce first move in the center
   const center_r = Math.floor(game.board.length / 2)
   const center_c = Math.floor(game.board.length / 2)
@@ -66,13 +66,13 @@ export function makeMove(game: GameState, r: number, c: number) {
       if (c + 3 * dx < 0 || c + 3 * dx >= game.board[0].length) continue;
       if (r + 3 * dy < 0 || r + 3 * dy >= game.board.length) continue;
 
-      if (game.board[r + dy][c + dx] !== null &&
+      if (game.board[r + dy][c + dx] !== undefined &&
         game.board[r + dy][c + dx] !== game.currentPlayer &&
         game.board[r + dy][c + dx] === game.board[r + 2 * dy][c + 2 * dx] &&
         game.board[r + 3 * dy][c + 3 * dx] === game.currentPlayer) {
 
-        game.board[r + dy][c + dx] = null
-        game.board[r + 2 * dy][c + 2 * dx] = null
+        delete game.board[r + dy][c + dx]
+        delete game.board[r + 2 * dy][c + 2 * dx]
         game.captures[game.currentPlayer]++
         // cleared stones may lead to new shapes
         updateLinearShapes(game, r + dy, c + dx)
@@ -94,12 +94,14 @@ const linearShapeDef = {
   // shapes are defined from the perspective of me as player 1 and opponent as player 0
   // shapes should be defined so that they are "owned" by player 1, intuitively
   // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns
+  // NOTE that if one of these is contained in another, the one coming first in the list will be the only one found
+  // - this is due to using one big union regex for better performance
   "pente": "11111",
   "open-tessera": "_1111_",
   "open-tria": "_111_",
-  "stretch-tria": "_11_1_", // eval will be dampened by the contained open pair
+  "stretch-tria": "_11_1_",  // should be recognized instead of open pair
   "open-pair": "_11_",
-  "capture-threat": "100_", // compare with open pair
+  "capture-threat": "100_",
   "stretch-two": "_1_1_"
 }
 
@@ -134,7 +136,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      const s = game.board[r][c] === null ? "_" : String(game.board[r][c])
+      const s = game.board[r][c] === undefined ? "_" : String(game.board[r][c])
       if (s !== shape.pattern[i]) return false
     }
     return true
@@ -154,7 +156,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
         continue
       }
       const value = game.board[r][c]
-      s += value === null ? "_" : value
+      s += value === undefined ? "_" : value
     }
     // search for each pattern
     for (const match of s.matchAll(allPatternsRegEx)) {

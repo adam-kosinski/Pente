@@ -129,7 +129,7 @@ export function generateMoves(game: GameState): number[][] {
   const nearSpots = new Map() // using map so we can deduplicate based on string keys but we have the objects sitting there
   for (let r = 0; r < game.board.length; r++) {
     for (let c = 0; c < game.board[0].length; c++) {
-      if (game.board[r][c] === null) continue
+      if (game.board[r][c] === undefined) continue
       // there is a piece here, add the neighborhood - will check for if spots are empty once added to the set, to avoid duplicate checks
       const dists = [0, -1, 1, -2, 2]
       for (const dy of dists) {
@@ -144,7 +144,7 @@ export function generateMoves(game: GameState): number[][] {
   // filter for open spaces only
   const moves = []
   for (const [r, c] of nearSpots.values()) {
-    if (game.board[r][c] === null) moves.push([r, c])
+    if (game.board[r][c] === undefined) moves.push([r, c])
   }
   return moves
 }
@@ -189,7 +189,7 @@ export function evaluatePosition(game: GameState) {
     "pente": Infinity,
     "open-tessera": 10000,
     "open-tria": 30,
-    "stretch-tria": 30, // eval will be dampened by the contained open pair
+    "stretch-tria": 30,
     "open-pair": -5,
     "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
     "stretch-two": 5

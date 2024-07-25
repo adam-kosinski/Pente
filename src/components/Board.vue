@@ -31,7 +31,7 @@ function areCoordsSignificant(r: number, c: number): boolean {
         <p v-if="c === 1" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== null" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+        <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
         <div class="grid-line-box">
 
         </div>
