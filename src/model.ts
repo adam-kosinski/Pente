@@ -76,12 +76,13 @@ export function makeMove(game: GameState, r: number, c: number) {
         game.board[r + dy][c + dx] = null
         game.board[r + 2 * dy][c + 2 * dx] = null
         game.captures[game.currentPlayer]++
+        // cleared stones may lead to new shapes
+        updateLinearShapes(game, r + dy, c + dx)
+        updateLinearShapes(game, r + 2 * dy, c + 2 * dx)
       }
     }
   }
-
   updateLinearShapes(game, r, c)
-  // TODO update for capture locations too
   console.log(game.linearShapes.map(x => x.hash).join("\n"))
 
   // update current player and move count
