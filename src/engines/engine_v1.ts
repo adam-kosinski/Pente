@@ -213,7 +213,7 @@ export function evaluatePosition(game: GameState) {
     if (shape.type.includes("tria")) {
       shape.owner === 0 ? triaCount0++ : triaCount1++
     }
-    else if (shape.type in shapeEvalConfig) {
+    if (shape.type in shapeEvalConfig) {
       shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
     }
   }
