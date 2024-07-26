@@ -1,5 +1,5 @@
 export interface GameState {
-  board: (number | null)[][]
+  board: Record<number, 0 | 1>[]
   currentPlayer: 0 | 1
   captures: Record<0 | 1, number>
   nMoves: number
@@ -21,15 +21,15 @@ export interface LinearShape {
 
 export function createNewGame(boardSize: number): GameState {
   const game = {
-    board: [] as (number | null)[][],
+    board: [],
     currentPlayer: 0 as 0 | 1,
     captures: { 0: 0, 1: 0 },
     nMoves: 0,
     isOver: false,
     linearShapes: []
-  }
+  } as GameState
   for (let r = 0; r < boardSize; r++) {
-    game.board.push(new Array(boardSize))
+    game.board.push({})
   }
   return game
 }
@@ -37,19 +37,19 @@ export function createNewGame(boardSize: number): GameState {
 
 export function copyGame(game: GameState): GameState {
   return {
-    board: game.board.map(row => row.slice()),  // this takes up about 80% of execution time
+    board: game.board.map(row => Object.assign({}, row)),
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
     isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))  // this takes about 10%
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
   }
 }
 
 
 
 export function makeMove(game: GameState, r: number, c: number) {
-  if (r < 0 || r >= game.board.length || c < 0 || c >= game.board[0].length) return
+  if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
   // can't go in a place with a piece
   if (game.board[r][c] !== undefined) return
   // enforce first move in the center
@@ -66,7 +66,7 @@ export function makeMove(game: GameState, r: number, c: number) {
     for (let dy of [-1, 0, 1]) {
       if (dx === 0 && dy === 0) continue;
       // out of bounds check
-      if (c + 3 * dx < 0 || c + 3 * dx >= game.board[0].length) continue;
+      if (c + 3 * dx < 0 || c + 3 * dx >= game.board.length) continue;
       if (r + 3 * dy < 0 || r + 3 * dy >= game.board.length) continue;
 
       if (game.board[r + dy][c + dx] !== undefined &&
@@ -106,9 +106,9 @@ const linearShapeDef = {
   // - this is due to using one big union regex for better performance, and not really an issue as long as bigger threats are listed first in this list
   "pente": "11111",
   "open-tessera": "_1111_",
-  "pente-4-threat": "1111_",
-  "pente-31-threat": "111_1",
-  "pente-22-threat": "11_11",
+  "pente-threat-4": "1111_",
+  "pente-threat-31": "111_1",
+  "pente-threat-22": "11_11",
   "open-tria": "_111_",
   "stretch-tria": "_11_1_",  // should be recognized instead of open pair
   "open-pair": "_11_",
@@ -162,7 +162,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
     let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
     for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
       // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
-      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board[0].length) {
+      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
         s += "x"
         continue
       }

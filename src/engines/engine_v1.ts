@@ -16,7 +16,7 @@ export function findBestMove(game: GameState) {
 
     // log results
     console.log(searchNodesVisited + " nodes visited")
-    result.variations.slice().forEach(v => {
+    result.variations.slice(0,2).forEach(v => {
       let evalString = "eval "
       if (v.evalCouldBe === Infinity) evalString += "≥"
       if (v.evalCouldBe === -Infinity) evalString += "≤"
@@ -127,13 +127,13 @@ export function generateMoves(game: GameState): number[][] {
   // (limit moves to a short distance away horizontally and vertically from an existing piece for efficiency)
   const nearSpots = new Map() // using map so we can deduplicate based on string keys but we have the objects sitting there
   for (let r = 0; r < game.board.length; r++) {
-    for (let c = 0; c < game.board[0].length; c++) {
+    for (let c = 0; c < game.board.length; c++) {
       if (game.board[r][c] === undefined) continue
       // there is a piece here, add the neighborhood - will check for if spots are empty once added to the set, to avoid duplicate checks
       const dists = [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
-          if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board[0].length) {
+          if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
             nearSpots.set(`${r + dy},${c + dx}`, [r + dy, c + dx])
           }
         }
@@ -193,23 +193,32 @@ export function evaluatePosition(game: GameState) {
     "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
     "stretch-two": 8
   }
+  // go through shapes and count them, as well as sum up individual shape eval
   let shapeEval = 0
   let triaCount0 = 0
   let triaCount1 = 0
-  game.linearShapes.forEach(shape => {
-    if (["open-tria", "stretch-tria"].includes(shape.type)) {
+  for (let i = 0; i < game.linearShapes.length; i++) {
+    const shape = game.linearShapes[i]
+    // if current player has a pente threat, they've won
+    // if opponent has a pente threat, that's okay (search will decide whether it can be blocked)
+    if (shape.type.includes("pente-threat") && shape.owner === game.currentPlayer) {
+      return game.currentPlayer === 0 ? -Infinity : Infinity
+    }
+    if (shape.type.includes("tria")) {
       shape.owner === 0 ? triaCount0++ : triaCount1++
     }
     if (shape.type in shapeEvalConfig) {
       shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
     }
-  })
+  }
+
   // if someone has a double tria, that's essentially an open tessera, score highly
   // if both people have a double tria, whoever's move it is right now gets the bonus
-  const doubleTriaEval = 9000
+  const doubleTriaEval = 5000
   if (triaCount0 >= 2 && triaCount1 >= 2) shapeEval += (game.currentPlayer === 0 ? -doubleTriaEval : doubleTriaEval)
   else if (triaCount0 >= 2) shapeEval -= doubleTriaEval
   else if (triaCount1 >= 2) shapeEval += doubleTriaEval
+
 
   // capture eval
   const captureEval = 20 * (game.captures[1] - game.captures[0])

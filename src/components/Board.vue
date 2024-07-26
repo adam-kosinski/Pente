@@ -6,7 +6,7 @@ import { makeMove, type GameState } from '@/model';
 const props = defineProps<{ game: GameState }>()
 const emit = defineEmits(["make-move"])
 
-const boardSize = computed(() => props.game.board[0].length)
+const boardSize = computed(() => props.game.board.length)
 
 function areCoordsSignificant(r: number, c: number): boolean {
   const center = Math.floor(boardSize.value / 2)
