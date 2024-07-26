@@ -102,10 +102,13 @@ const linearShapeDef = {
   // shapes are defined from the perspective of me as player 1 and opponent as player 0
   // shapes should be defined so that they are "owned" by player 1, intuitively
   // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns
-  // NOTE that if one of these is contained in another, the one coming first in the list will be the only one found
-  // - this is due to using one big union regex for better performance
+  // NOTE that if one of these is a prefix for another (i.e. share the same starting index), the one coming first in the list will be the only one found
+  // - this is due to using one big union regex for better performance, and not really an issue as long as bigger threats are listed first in this list
   "pente": "11111",
   "open-tessera": "_1111_",
+  "pente-4-threat": "1111_",
+  "pente-31-threat": "111_1",
+  "pente-22-threat": "11_11",
   "open-tria": "_111_",
   "stretch-tria": "_11_1_",  // should be recognized instead of open pair
   "open-pair": "_11_",
@@ -129,7 +132,7 @@ for (const [type, pattern] of Object.entries(linearShapeDef)) {
   // update max length
   maxLinearShapeLength = Math.max(pattern.length, maxLinearShapeLength)
 }
-const allPatternsRegEx = new RegExp(Array.from(linearShapes.keys()).join("|"), "g")
+const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).join("|") + "))", "g")
 
 
 
@@ -168,7 +171,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number) {
     }
     // search for each pattern
     for (const match of s.matchAll(allPatternsRegEx)) {
-      const pattern: string = match[0]
+      const pattern: string = match[1]
       const patternInfo = linearShapes.get(pattern)
       const shape: LinearShape = {
         type: patternInfo.type,

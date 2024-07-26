@@ -42,11 +42,11 @@ function areCoordsSignificant(r: number, c: number): boolean {
 
 <style scoped>
 .board {
-  width: 600px;
-  height: 600px;
+  width: 80vh;
+  height: 80vh;
   position: relative;
   padding: 30px;
-  --grid-line-width: 1px;
+  --grid-line-width: 0.15vh;
   --grid-line-color: maroon;
 
   background-color: tan;

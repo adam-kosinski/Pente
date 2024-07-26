@@ -7,14 +7,14 @@ import { generateMoves, findBestMove, evaluatePosition } from '@/engines/engine_
 
 const game = ref(createNewGame(19))
 
-makeMove(game.value, 9, 9)
-makeMove(game.value, 10, 9)
-makeMove(game.value, 9, 11)
-makeMove(game.value, 8, 10)
-makeMove(game.value, 7, 11)
-makeMove(game.value, 10, 11)
-makeMove(game.value, 9, 10)
-makeMove(game.value, 9, 8)
+// makeMove(game.value, 9, 9)
+// makeMove(game.value, 10, 9)
+// makeMove(game.value, 9, 11)
+// makeMove(game.value, 8, 10)
+// makeMove(game.value, 7, 11)
+// makeMove(game.value, 10, 11)
+// makeMove(game.value, 9, 10)
+// makeMove(game.value, 9, 8)
 
 function profile(){
   console.profile()
@@ -43,6 +43,7 @@ function timeTest(){
   <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
   <button @click="profile()">Profile</button><br>
   <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
+  <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear Shapes</button><br>
   <button @click="console.log(JSON.stringify(game))">Save Game</button><br>
   <button @click="timeTest()">Time Test</button>
   <Board class="board" :game="game" @make-move="(r, c) => makeMove(game, r, c)" />

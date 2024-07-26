@@ -16,7 +16,7 @@ export function findBestMove(game: GameState) {
 
     // log results
     console.log(searchNodesVisited + " nodes visited")
-    result.variations.slice(0, 3).forEach(v => {
+    result.variations.slice().forEach(v => {
       let evalString = "eval "
       if (v.evalCouldBe === Infinity) evalString += "≥"
       if (v.evalCouldBe === -Infinity) evalString += "≤"
@@ -182,24 +182,40 @@ export function evaluatePosition(game: GameState) {
   if (game.captures[0] >= 5) return -Infinity
   if (game.captures[1] >= 5) return Infinity
 
-  // TODO get evaluation from linear shapes
+  // get evaluation from linear shapes
   // eval config below is for if player 1 is the owner (where higher eval is better)
   const shapeEvalConfig: Record<string, number> = {
     "pente": Infinity,
     "open-tessera": 10000,
-    "open-tria": 30,
-    "stretch-tria": 30,
+    "open-tria": 20,
+    "stretch-tria": 20,
     "open-pair": -5,
     "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
-    "stretch-two": 15
+    "stretch-two": 8
   }
   let shapeEval = 0
+  let triaCount0 = 0
+  let triaCount1 = 0
   game.linearShapes.forEach(shape => {
-    shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
+    if (["open-tria", "stretch-tria"].includes(shape.type)) {
+      shape.owner === 0 ? triaCount0++ : triaCount1++
+    }
+    if (shape.type in shapeEvalConfig) {
+      shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
+    }
   })
+  // if someone has a double tria, that's essentially an open tessera, score highly
+  // if both people have a double tria, whoever's move it is right now gets the bonus
+  const doubleTriaEval = 9000
+  if (triaCount0 >= 2 && triaCount1 >= 2) shapeEval += (game.currentPlayer === 0 ? -doubleTriaEval : doubleTriaEval)
+  else if (triaCount0 >= 2) shapeEval -= doubleTriaEval
+  else if (triaCount1 >= 2) shapeEval += doubleTriaEval
 
   // capture eval
   const captureEval = 20 * (game.captures[1] - game.captures[0])
+
+  // TODO add iniative eval based on forcing shapes like trias and capture threats
+  // TODO add bonus for double threats (particularly double open tria, should be as good as open tessera)
 
   return shapeEval + captureEval
 }
