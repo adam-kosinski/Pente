@@ -7,14 +7,13 @@ import { generateMoves, findBestMove, evaluatePosition } from '@/engines/engine_
 
 const game = ref(createNewGame(19))
 
-// makeMove(game.value, 9, 9)
-// makeMove(game.value, 10, 9)
-// makeMove(game.value, 9, 11)
-// makeMove(game.value, 8, 10)
-// makeMove(game.value, 7, 11)
-// makeMove(game.value, 10, 11)
-// makeMove(game.value, 9, 10)
-// makeMove(game.value, 9, 8)
+game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}')
+game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1,"12":0},{"8":1,"9":0,"10":0,"11":0,"12":1,"13":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":1,"captures":{"0":0,"1":0},"nMoves":11,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[11,10],"end":[8,13],"length":4,"hash":"open-pair,1,11,10,8,13"},{"type":"open-tria","pattern":"_000_","owner":0,"begin":[6,10],"end":[10,14],"length":5,"hash":"open-tria,0,6,10,10,14"},{"type":"open-pair","pattern":"_00_","owner":0,"begin":[10,10],"end":[7,13],"length":4,"hash":"open-pair,0,10,10,7,13"}]}')
+
+// game.value = JSON.parse(`
+// {"board":[{},{},{},{},{},{},{},{"11":0},{"10":1,"12":0,"13":1},{"8":1,"9":0,"10":0,"11":0,"12":1,"13":0},{"9":1,"11":1},{"10":1},{},{"12":0},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":14,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-tria","pattern":"_000_","owner":0,"begin":[6,10],"end":[10,14],"length":5,"hash":"open-tria,0,6,10,10,14"},{"type":"open-pair","pattern":"_00_","owner":0,"begin":[10,10],"end":[7,13],"length":4,"hash":"open-pair,0,10,10,7,13"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[8,7],"end":[12,11],"length":5,"hash":"open-tria,1,8,7,12,11"},{"type":"open-tessera","pattern":"_1111_","owner":1,"begin":[12,9],"end":[7,14],"length":6,"hash":"open-tessera,1,12,9,7,14"},{"type":"pente-threat-4","pattern":"1111_","owner":1,"begin":[11,10],"end":[7,14],"length":5,"hash":"pente-threat-4,1,11,10,7,14"}]}
+// `)
+
 
 function profile(){
   console.profile()

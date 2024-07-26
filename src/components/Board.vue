@@ -31,7 +31,9 @@ function areCoordsSignificant(r: number, c: number): boolean {
         <p v-if="c === 1" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="gem" :data-player="game.board[r - 1][c - 1]"></div>
+        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"></div>
+        <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
+
         <div class="grid-line-box">
 
         </div>
@@ -70,7 +72,7 @@ function areCoordsSignificant(r: number, c: number): boolean {
   cursor: pointer;
 }
 
-.intersection:has(.gem) {
+.intersection:has(.real.gem) {
   cursor: default;
 }
 
@@ -110,7 +112,16 @@ function areCoordsSignificant(r: number, c: number): boolean {
   /* background color comes from config in main.css */
 }
 
-.row-label, .col-label {
+.ghost.gem {
+  opacity: 0.5;
+  display: none;
+}
+.intersection:hover .gem.ghost {
+  display: block;
+}
+
+.row-label,
+.col-label {
   position: absolute;
   font-family: sans-serif;
   font-size: 12px;
@@ -120,11 +131,12 @@ function areCoordsSignificant(r: number, c: number): boolean {
   align-items: center;
   justify-content: center;
 }
+
 .row-label {
   transform: translateX(-50%);
 }
+
 .col-label {
   transform: translateY(50%);
 }
-
 </style>

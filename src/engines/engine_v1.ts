@@ -16,7 +16,7 @@ export function findBestMove(game: GameState) {
 
     // log results
     console.log(searchNodesVisited + " nodes visited")
-    result.variations.slice(0,2).forEach(v => {
+    result.variations.slice(0).forEach(v => {
       let evalString = "eval "
       if (v.evalCouldBe === Infinity) evalString += "≥"
       if (v.evalCouldBe === -Infinity) evalString += "≤"
@@ -57,6 +57,8 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
   let evalCouldBe: number = 0  // 0 is placeholder, when used will be -Infinity or Infinity
   let bestVariation: number[][] = [] // list of future moves (including the current best move) leading to the best eval, comes from recursion
 
+  let updatedMax = false
+
   if (game.currentPlayer === 0) {
     // minimizing player
     bestEval = Infinity  // start with worst possible eval
@@ -71,6 +73,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       if (result.eval < bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
+        updatedMax = true
       }
       beta = Math.min(beta, bestEval)
       // if the smallest eval that player 0 could force here is a lower aka better eval than what player 1 could force elsewhere in the tree (alpha)
@@ -94,7 +97,9 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       if (result.eval > bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
+        updatedMax = true
       }
+
       alpha = Math.max(alpha, bestEval)
       // if the largest eval player 1 could force here is a higher aka better eval than what player 0 could force elsewhere in the tree (beta)
       // then player 1 would avoid coming here in the first place, so stop looking (prune)
@@ -107,6 +112,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
   }
 
   const evalUncertainty = evalCouldBe !== 0 ? { evalCouldBe: evalCouldBe } : {}
+  // if (bestVariation.length !== depth && evalCouldBe === 0) console.warn(bestVariation, updatedMax, "eval", bestEval, "depth", depth, "alpha", alpha, "beta", beta)
   return { eval: bestEval, ...evalUncertainty, moves: bestVariation, variations: evaluatedVariations }
 }
 
@@ -164,7 +170,6 @@ export function orderMoves(moves: number[][], maximizing: boolean, evalEstimates
     const moveString = JSON.stringify(move)
     if (!evalMap.has(moveString)) evalMap.set(moveString, 0)
   })
-  // moves.forEach(move => evalMap.set(JSON.stringify(move), Math.random()))
   moves.sort((a, b) => {
     const diff = evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a))
     return maximizing ? diff : -diff
@@ -182,6 +187,15 @@ export function evaluatePosition(game: GameState) {
   if (game.captures[0] >= 5) return -Infinity
   if (game.captures[1] >= 5) return Infinity
 
+  // check for pente or forced pente win
+  for (const shape of game.linearShapes) {
+    if (shape.type === "pente" ||
+      (shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)  // if current player has a pente threat, they've won
+    ) {
+      return game.currentPlayer === 0 ? -Infinity : Infinity
+    }
+  }
+
   // get evaluation from linear shapes
   // eval config below is for if player 1 is the owner (where higher eval is better)
   const shapeEvalConfig: Record<string, number> = {
@@ -197,17 +211,11 @@ export function evaluatePosition(game: GameState) {
   let shapeEval = 0
   let triaCount0 = 0
   let triaCount1 = 0
-  for (let i = 0; i < game.linearShapes.length; i++) {
-    const shape = game.linearShapes[i]
-    // if current player has a pente threat, they've won
-    // if opponent has a pente threat, that's okay (search will decide whether it can be blocked)
-    if (shape.type.includes("pente-threat") && shape.owner === game.currentPlayer) {
-      return game.currentPlayer === 0 ? -Infinity : Infinity
-    }
+  for (const shape of game.linearShapes) {
     if (shape.type.includes("tria")) {
       shape.owner === 0 ? triaCount0++ : triaCount1++
     }
-    if (shape.type in shapeEvalConfig) {
+    else if (shape.type in shapeEvalConfig) {
       shapeEval += (shape.owner === 1 ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
     }
   }
