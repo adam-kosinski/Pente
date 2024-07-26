@@ -49,14 +49,12 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
 
   // generate moves ordered by how good we think they are
   let moves = generateMoves(game)
-  orderMoves(moves, game, evalEstimates)
+  moves = orderMoves(moves, game, evalEstimates)
 
   const evaluatedVariations = []  // store these so we can output a ranking
   let bestEval: number
   let evalCouldBe: number = 0  // 0 is placeholder, when used will be -Infinity or Infinity
   let bestVariation: number[][] = [] // list of future moves (including the current best move) leading to the best eval, comes from recursion
-
-  let updatedMax = false
 
   if (game.currentPlayer === 0) {
     // minimizing player
@@ -75,7 +73,6 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       if (result.eval < bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
-        updatedMax = true
       }
       beta = Math.min(beta, bestEval)
       // if the smallest eval that player 0 could force here is a lower aka better eval than what player 1 could force elsewhere in the tree (alpha)
@@ -102,7 +99,6 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       if (result.eval > bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
-        updatedMax = true
       }
 
       alpha = Math.max(alpha, bestEval)
@@ -177,7 +173,7 @@ const shapePriority: Record<string, number> = {
 }
 export function orderMoves(moves: number[][], game: GameState, evalEstimates: { move: number[], eval: number }[] = []) {
   // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
-  // and sorts the moves (IN PLACE) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
+  // and sorts the moves (not in place) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
 
   // rank by heuristics
 
@@ -200,15 +196,18 @@ export function orderMoves(moves: number[][], game: GameState, evalEstimates: { 
       }
     }
   }
-  moves.sort((a, b) => {
+  const interestingMoves = []
+  const boringMoves = []
+  for (const move of moves) {
+    if (shapeLocationPriorities.has(JSON.stringify(move))) interestingMoves.push(move)
+    else boringMoves.push(move)
+  }
+  interestingMoves.sort((a,b) => {
     const aValue = shapeLocationPriorities.get(JSON.stringify(a))
     const bValue = shapeLocationPriorities.get(JSON.stringify(b))
-    if (aValue !== undefined && bValue !== undefined) return aValue - bValue
-    if (aValue === undefined && bValue === undefined) return 0  // neither was interesting, arbitrary order
-    if (bValue === undefined) return -1  // since not both undefined, a was interesting, b wasn't
-    return 1  // b was interesting, a wasn't
+    return aValue - bValue
   })
-
+  const sortedMoves = [...interestingMoves, ...boringMoves]
 
   // use eval estimates if we have them (may not include all possible moves because of pruning)
   // usually we only have eval estimates at the search tree root node, provided by the previous iteration of iterative deepening
@@ -218,17 +217,17 @@ export function orderMoves(moves: number[][], game: GameState, evalEstimates: { 
     // associate all moves with an eval score in a data structure (if not ranked, give eval score 0)
     const evalMap = new Map()
     evalEstimates.forEach(obj => evalMap.set(JSON.stringify(obj.move), obj.eval))
-    moves.forEach(move => {
+    sortedMoves.forEach(move => {
       const moveString = JSON.stringify(move)
       if (!evalMap.has(moveString)) evalMap.set(moveString, 0)
     })
-    moves.sort((a, b) => {
+    sortedMoves.sort((a, b) => {
       const diff = evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a))
       return game.currentPlayer === 1 ? diff : -diff
     })
   }
 
-  return moves  // in case we want to chain stuff
+  return sortedMoves  // in case we want to chain stuff
 }
 
 
