@@ -104,6 +104,7 @@ const linearShapeDef = {
   // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns
   // NOTE that if one of these is a prefix for another (i.e. share the same starting index), the one coming first in the list will be the only one found
   // - this is due to using one big union regex for better performance, and not really an issue as long as bigger threats are listed first in this list
+  // - so generally, more pressing / threatening shapes should come first in this list
   "pente": "11111",
   "open-tessera": "_1111_",
   "pente-threat-4": "1111_",

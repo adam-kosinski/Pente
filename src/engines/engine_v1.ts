@@ -16,7 +16,7 @@ export function findBestMove(game: GameState) {
 
     // log results
     console.log(searchNodesVisited + " nodes visited")
-    result.variations.slice(0).forEach(v => {
+    result.variations.slice(0, 2).forEach(v => {
       let evalString = "eval "
       if (v.evalCouldBe === Infinity) evalString += "≥"
       if (v.evalCouldBe === -Infinity) evalString += "≤"
@@ -47,10 +47,9 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
     return { eval: evaluatePosition(game), moves: [], variations: [] }
   }
 
+  // generate moves ordered by how good we think they are
   let moves = generateMoves(game)
-
-  // sort moves based on the move ranking
-  orderMoves(moves, game.currentPlayer === 1, evalEstimates)
+  orderMoves(moves, game, evalEstimates)
 
   const evaluatedVariations = []  // store these so we can output a ranking
   let bestEval: number
@@ -62,7 +61,10 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
   if (game.currentPlayer === 0) {
     // minimizing player
     bestEval = Infinity  // start with worst possible eval
-    for (const [r, c] of moves) {
+
+    for (let i = 0; i < moves.length; i++) {
+      const [r, c] = moves[i]
+
       const gameCopy = copyGame(game)
       makeMove(gameCopy, r, c)
       const result = searchStep(gameCopy, depth - 1, alpha, beta)
@@ -88,7 +90,10 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
   else {
     // maximizing player
     bestEval = -Infinity  // start with worst possible eval
-    for (const [r, c] of moves) {
+
+    for (let i = 0; i < moves.length; i++) {
+      const [r, c] = moves[i]
+
       const gameCopy = copyGame(game)
       makeMove(gameCopy, r, c)
       const result = searchStep(gameCopy, depth - 1, alpha, beta)
@@ -118,7 +123,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
 
 
 
-// TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning)
+// TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning - perhaps can check for symmetry only when game.nMoves is low)
 
 export function generateMoves(game: GameState): number[][] {
   // returns a list of [row, col] moves
@@ -155,25 +160,74 @@ export function generateMoves(game: GameState): number[][] {
 }
 
 
-
-export function orderMoves(moves: number[][], maximizing: boolean, evalEstimates: { move: number[], eval: number }[] = []) {
+// store which shapes should be looked at first, to use when ordering moves
+// lower number is more important
+// using an object instead of an array for faster lookup
+const shapePriority: Record<string, number> = {
+  "pente-threat-22": 2,
+  "pente-threat-4": 3,
+  "pente-threat-31": 4,
+  "open-tria": 5,
+  "stretch-tria": 6,
+  "capture-threat": 7,
+  "open-pair": 8,
+  "stretch-two": 9,
+  "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
+  "pente": 20  // nothing you can do
+}
+export function orderMoves(moves: number[][], game: GameState, evalEstimates: { move: number[], eval: number }[] = []) {
   // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
   // and sorts the moves (IN PLACE) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
 
-  // TODO heuristics
+  // rank by heuristics
 
-  // use ranking (ranking may not include all possible moves because of pruning)
-  // associate all moves with an eval score in a data structure (if not ranked, give eval score 0)
-  const evalMap = new Map()
-  evalEstimates.forEach(obj => evalMap.set(JSON.stringify(obj.move), obj.eval))
-  moves.forEach(move => {
-    const moveString = JSON.stringify(move)
-    if (!evalMap.has(moveString)) evalMap.set(moveString, 0)
-  })
+  // if move is part of an existing shape, it is probably interesting
+  // also, if it is part of a forcing shape it is probably more interesting, so also write down a priority
+  const shapeLocationPriorities = new Map()  // "[r,c]": priority
+  for (const shape of game.linearShapes) {
+    const dy = Math.sign(shape.end[0] - shape.begin[0])
+    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
+      if (game.board[r][c] === undefined) {  // valid move spot
+        const key = JSON.stringify([r, c])
+        const existingPriority = shapeLocationPriorities.get(key)
+        if (existingPriority !== undefined) {
+          shapeLocationPriorities.set(key, Math.min(shapePriority[shape.type], existingPriority))
+        }
+        else {
+          shapeLocationPriorities.set(key, shapePriority[shape.type])
+        }
+      }
+    }
+  }
   moves.sort((a, b) => {
-    const diff = evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a))
-    return maximizing ? diff : -diff
+    const aValue = shapeLocationPriorities.get(JSON.stringify(a))
+    const bValue = shapeLocationPriorities.get(JSON.stringify(b))
+    if (aValue !== undefined && bValue !== undefined) return aValue - bValue
+    if (aValue === undefined && bValue === undefined) return 0  // neither was interesting, arbitrary order
+    if (bValue === undefined) return -1  // since not both undefined, a was interesting, b wasn't
+    return 1  // b was interesting, a wasn't
   })
+
+
+  // use eval estimates if we have them (may not include all possible moves because of pruning)
+  // usually we only have eval estimates at the search tree root node, provided by the previous iteration of iterative deepening
+  // so typically this won't execute
+
+  if (evalEstimates.length > 0) {
+    // associate all moves with an eval score in a data structure (if not ranked, give eval score 0)
+    const evalMap = new Map()
+    evalEstimates.forEach(obj => evalMap.set(JSON.stringify(obj.move), obj.eval))
+    moves.forEach(move => {
+      const moveString = JSON.stringify(move)
+      if (!evalMap.has(moveString)) evalMap.set(moveString, 0)
+    })
+    moves.sort((a, b) => {
+      const diff = evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a))
+      return game.currentPlayer === 1 ? diff : -diff
+    })
+  }
+
   return moves  // in case we want to chain stuff
 }
 
@@ -189,8 +243,8 @@ export function evaluatePosition(game: GameState) {
     return game.currentPlayer === 0 ? Infinity : -Infinity
   }
   // if current player has a pente threat, they've won
-  for(const shape of game.linearShapes){
-    if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)){
+  for (const shape of game.linearShapes) {
+    if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)) {
       return game.currentPlayer === 0 ? -Infinity : Infinity
     }
   }
