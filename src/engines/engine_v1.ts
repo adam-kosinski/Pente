@@ -183,15 +183,14 @@ export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
   // player 0 wants a low (negative) eval, player 1 wants a high (positive) eval
 
-  // check for capture win
-  if (game.captures[0] >= 5) return -Infinity
-  if (game.captures[1] >= 5) return Infinity
-
-  // check for pente or forced pente win
-  for (const shape of game.linearShapes) {
-    if (shape.type === "pente" ||
-      (shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)  // if current player has a pente threat, they've won
-    ) {
+  // check for winning position
+  if (game.isOver) {
+    // player who just moved won (not current player)
+    return game.currentPlayer === 0 ? Infinity : -Infinity
+  }
+  // if current player has a pente threat, they've won
+  for(const shape of game.linearShapes){
+    if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)){
       return game.currentPlayer === 0 ? -Infinity : Infinity
     }
   }
@@ -199,7 +198,6 @@ export function evaluatePosition(game: GameState) {
   // get evaluation from linear shapes
   // eval config below is for if player 1 is the owner (where higher eval is better)
   const shapeEvalConfig: Record<string, number> = {
-    "pente": Infinity,
     "open-tessera": 10000,
     "open-tria": 20,
     "stretch-tria": 20,
