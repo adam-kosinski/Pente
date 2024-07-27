@@ -117,6 +117,7 @@ function principalVariationSearch(
   let moves = prevDepthResults.length > 0 ? prevDepthResults.map(r => r.bestVariation[0]) : generateMoves(game)
   moves = orderMoves(moves, game, principalVariation[0], tableEntry, prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
 
+
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
@@ -159,11 +160,11 @@ function principalVariationSearch(
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (alpha),
     // they would avoid coming here, so we can stop looking at this node
+    alpha = Math.max(alpha, bestResult.eval)
     if (beta <= alpha) {
       myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
       break
     }
-    alpha = Math.max(alpha, bestResult.eval)
   }
 
   transpositionTableSet(game, bestResult, depth)
@@ -232,7 +233,6 @@ export function generateMoves(game: GameState): number[][] {
 // lower number is more important
 // using an object instead of an array for faster lookup
 const shapePriority: Record<string, number> = {
-  "open-tessera": 1,
   "pente-threat-22": 2,
   "pente-threat-4": 3,
   "pente-threat-31": 4,
@@ -241,6 +241,7 @@ const shapePriority: Record<string, number> = {
   "capture-threat": 7,
   "open-pair": 8,
   "stretch-two": 9,
+  "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
   "pente": 20  // nothing you can do
 }
 export function orderMoves(moves: number[][], game: GameState, principalVariationMove: number[], tableEntry: TTEntry | undefined = undefined, prevDepthResults: SearchResult[] = []) {
