@@ -3,8 +3,14 @@ export interface GameState {
   currentPlayer: 0 | 1
   captures: Record<0 | 1, number>
   nMoves: number
+  prevMoves: PrevMove[]
   isOver: boolean
   linearShapes: LinearShape[]
+}
+
+export interface PrevMove {
+  addedGems: number[][]  // list of [r,c]
+  removedGems: number[][]  // list of [r,c,player]
 }
 
 // linear shape that's been located on the board
@@ -25,6 +31,7 @@ export function createNewGame(boardSize: number): GameState {
     currentPlayer: 0 as 0 | 1,
     captures: { 0: 0, 1: 0 },
     nMoves: 0,
+    prevMoves: [],
     isOver: false,
     linearShapes: []
   } as GameState
@@ -45,8 +52,11 @@ export function makeMove(game: GameState, r: number, c: number) {
   const center_c = Math.floor(game.board.length / 2)
   if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
 
+  const prevMove: PrevMove = { addedGems: [], removedGems: [] }
+
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer
+  prevMove.addedGems.push([r,c])
 
   // check for capture of opponent pair(s)
   // iterate over directions
@@ -64,6 +74,7 @@ export function makeMove(game: GameState, r: number, c: number) {
 
         delete game.board[r + dy][c + dx]
         delete game.board[r + 2 * dy][c + 2 * dx]
+        prevMove.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
         game.captures[game.currentPlayer]++
         // cleared stones may lead to new shapes
         updateLinearShapes(game, r + dy, c + dx)
@@ -75,13 +86,47 @@ export function makeMove(game: GameState, r: number, c: number) {
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
 
   // check for game over
-  if(game.captures[0] >= 5 || game.captures[1] >= 5 || game.linearShapes.some(shape => shape.type === "pente")){
+  if (game.captures[0] >= 5 || game.captures[1] >= 5 || game.linearShapes.some(shape => shape.type === "pente")) {
     game.isOver = true
   }
 
-  // update current player and move count
+  // update variables
+  game.prevMoves.push(prevMove)
   game.currentPlayer = Number(!game.currentPlayer) as 0 | 1
   game.nMoves++
+}
+
+
+export function undoMove(game: GameState) {
+  const prevMove = game.prevMoves.pop()
+  if (!prevMove) return
+
+  const prevPlayer = Number(!game.currentPlayer) as 0 | 1  // useful to just compute once
+
+  // remove added gems
+  prevMove.addedGems.forEach(([r, c]) => {
+    delete game.board[r][c]
+  })
+  // undo captures
+  prevMove.removedGems.forEach(([r, c]) => {
+    // current player is whose gems were just captured
+    game.board[r][c] = game.currentPlayer
+  })
+  game.captures[prevPlayer] -= prevMove.removedGems.length / 2
+
+  // update linear shapes
+  prevMove.addedGems.forEach(([r, c]) => {
+    updateLinearShapes(game, r, c)
+  })
+  prevMove?.removedGems.forEach(([r, c]) => {
+    updateLinearShapes(game, r, c)
+  })
+  // console.log(game.linearShapes.map(s => s.hash).join("\n"))
+
+  // update other variables
+  game.currentPlayer = prevPlayer
+  game.nMoves -= 1
+  game.isOver = false
 }
 
 

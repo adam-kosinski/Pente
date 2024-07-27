@@ -2,12 +2,12 @@
 
 import { ref } from 'vue';
 import Board from '@/components/Board.vue';
-import { createNewGame, makeMove } from '@/model';
-import { findBestMove, evaluatePosition } from '@/engines/engine_v3';
+import { createNewGame, makeMove, undoMove } from '@/model';
+import { findBestMove, evaluatePosition } from '@/engines/engine_v4';
 
 const game = ref(createNewGame(19))
 
-game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}')
+// game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}')
 // game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1,"12":0},{"8":1,"9":0,"10":0,"11":0,"12":1,"13":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":1,"captures":{"0":0,"1":0},"nMoves":11,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[11,10],"end":[8,13],"length":4,"hash":"open-pair,1,11,10,8,13"},{"type":"open-tria","pattern":"_000_","owner":0,"begin":[6,10],"end":[10,14],"length":5,"hash":"open-tria,0,6,10,10,14"},{"type":"open-pair","pattern":"_00_","owner":0,"begin":[10,10],"end":[7,13],"length":4,"hash":"open-pair,0,10,10,7,13"}]}')
 
 // game.value = JSON.parse(`
@@ -17,6 +17,11 @@ game.value = JSON.parse('{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1
 // game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0,"13":0},{"10":1,"12":0,"13":0},{"8":1,"9":0,"10":0,"11":0,"13":0},{"8":1,"9":1,"10":1,"14":1},{"10":0},{},{},{},{},{},{},{}],"currentPlayer":1,"captures":{"0":1,"1":0},"nMoves":17,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[7,10],"end":[7,14],"length":5,"hash":"stretch-two,0,7,10,7,14"},{"type":"open-pair","pattern":"_00_","owner":0,"begin":[8,11],"end":[8,14],"length":4,"hash":"open-pair,0,8,11,8,14"},{"type":"open-tria","pattern":"_000_","owner":0,"begin":[6,13],"end":[10,13],"length":5,"hash":"open-tria,0,6,13,10,13"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,8],"end":[11,8],"length":4,"hash":"open-pair,1,8,8,11,8"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[10,7],"end":[10,11],"length":5,"hash":"open-tria,1,10,7,10,11"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"},{"type":"pente-threat-31","pattern":"000_0","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"pente-threat-31,0,9,9,9,13"},{"type":"capture-threat","pattern":"_110","owner":0,"begin":[8,7],"end":[11,10],"length":4,"hash":"capture-threat,0,8,7,11,10"}]}`)
 // game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0,"13":0},{"10":1,"12":0,"13":0},{"8":1,"9":0,"10":0,"11":0,"13":0},{"8":1,"9":1,"10":1,"14":1},{"10":0},{},{},{},{},{},{},{}],"currentPlayer":1,"captures":{"0":1,"1":0},"nMoves":17,"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[7,10],"end":[7,14],"length":5,"hash":"stretch-two,0,7,10,7,14"},{"type":"open-pair","pattern":"_00_","owner":0,"begin":[8,11],"end":[8,14],"length":4,"hash":"open-pair,0,8,11,8,14"},{"type":"open-tria","pattern":"_000_","owner":0,"begin":[6,13],"end":[10,13],"length":5,"hash":"open-tria,0,6,13,10,13"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,8],"end":[11,8],"length":4,"hash":"open-pair,1,8,8,11,8"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[10,7],"end":[10,11],"length":5,"hash":"open-tria,1,10,7,10,11"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"},{"type":"pente-threat-31","pattern":"000_0","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"pente-threat-31,0,9,9,9,13"},{"type":"capture-threat","pattern":"_110","owner":0,"begin":[8,7],"end":[11,10],"length":4,"hash":"capture-threat,0,8,7,11,10"}]}`)
 
+
+// v4 only
+game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"prevMoves":[{"addedGems":[[9,9]],"removedGems":[]},{"addedGems":[[10,9]],"removedGems":[]},{"addedGems":[[9,11]],"removedGems":[]},{"addedGems":[[8,10]],"removedGems":[]},{"addedGems":[[7,11]],"removedGems":[]},{"addedGems":[[10,11]],"removedGems":[]},{"addedGems":[[9,10]],"removedGems":[]},{"addedGems":[[9,8]],"removedGems":[]}],"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}`)
+// test where it found a win
+// game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0},{"7":0,"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":1,"captures":{"0":0,"1":0},"nMoves":9,"prevMoves":[{"addedGems":[[9,9]],"removedGems":[]},{"addedGems":[[10,9]],"removedGems":[]},{"addedGems":[[9,11]],"removedGems":[]},{"addedGems":[[8,10]],"removedGems":[]},{"addedGems":[[7,11]],"removedGems":[]},{"addedGems":[[10,11]],"removedGems":[]},{"addedGems":[[9,10]],"removedGems":[]},{"addedGems":[[9,8]],"removedGems":[]},{"addedGems":[[8,7]],"removedGems":[]}],"isOver":true,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"capture-threat","pattern":"011_","owner":0,"begin":[8,7],"end":[11,10],"length":4,"hash":"capture-threat,0,8,7,11,10"}]}`)
 
 function profile(){
   console.profile()
@@ -44,6 +49,7 @@ function timeTest(){
   <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
   <button @click="profile()">Profile</button><br>
   <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
+  <button @click="undoMove(game)">Undo Move</button><br>
   <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear Shapes</button><br>
   <button @click="console.log(JSON.stringify(game))">Save Game</button><br>
   <button @click="timeTest()">Time Test</button>

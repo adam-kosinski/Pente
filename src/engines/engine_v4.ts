@@ -1,4 +1,4 @@
-import { makeMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, undoMove, type GameState, type LinearShape } from "@/model";
 
 interface SearchResult {
   eval: number
@@ -44,6 +44,8 @@ function transpositionTableSet(game: GameState, result: SearchResult, depth: num
 export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
+
+  game = copyGame(game)
 
   let prevDepthResults: SearchResult[] = []
 
@@ -123,25 +125,25 @@ function principalVariationSearch(
 
   for (const [i, [r, c]] of moves.entries()) {
     // search child
-    const childGameNode = copyGame(game)
-    makeMove(childGameNode, r, c)
+    makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (i === 0) childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+    if (i === 0) childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
-      childResult = principalVariationSearch(childGameNode, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(game, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // beta - alpha > 1 avoids a redundant null window search
       if (-childResult.eval > alpha && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
       }
     }
+    undoMove(game)
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
