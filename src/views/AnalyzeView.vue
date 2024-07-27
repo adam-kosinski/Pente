@@ -2,8 +2,8 @@
 
 import { ref } from 'vue';
 import Board from '@/components/Board.vue';
-import { copyGame, createNewGame, makeMove, updateLinearShapes } from '@/model';
-import { generateMoves, findBestMove, evaluatePosition } from '@/engines/engine_v1';
+import { createNewGame, makeMove } from '@/model';
+import { findBestMove, evaluatePosition } from '@/engines/engine_v1';
 
 const game = ref(createNewGame(19))
 
@@ -23,7 +23,6 @@ function profile(){
 function timeTest(){
   const start = performance.now()
   for(let i=0; i<10000; i++){
-    copyGame(game.value)
   }
   console.log(performance.now() - start + " ms")
 }

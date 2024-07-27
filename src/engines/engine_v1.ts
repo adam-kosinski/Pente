@@ -1,4 +1,4 @@
-import { copyGame, makeMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, type GameState, type LinearShape } from "@/model";
 
 let searchNodesVisited = 0
 
@@ -7,7 +7,7 @@ export function findBestMove(game: GameState) {
 
   let evalEstimates: { move: number[], eval: number }[] = []
 
-  for (let depth = 1; depth <= 4; depth++) {
+  for (let depth = 1; depth <= 5; depth++) {
     console.log(`searching depth ${depth}...`)
 
     searchNodesVisited = 0
@@ -66,8 +66,6 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       const gameCopy = copyGame(game)
       makeMove(gameCopy, r, c)
       const result = searchStep(gameCopy, depth - 1, alpha, beta)
-      if (game.board[10][13] === 1) {
-      }
 
       evaluatedVariations.push({ moves: [[r, c], ...result.moves], eval: result.eval, evalCouldBe: result.evalCouldBe })
       if (result.eval < bestEval) {
@@ -115,6 +113,19 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
   const evalUncertainty = evalCouldBe !== 0 ? { evalCouldBe: evalCouldBe } : {}
   // if (bestVariation.length !== depth && evalCouldBe === 0) console.warn(bestVariation, updatedMax, "eval", bestEval, "depth", depth, "alpha", alpha, "beta", beta)
   return { eval: bestEval, ...evalUncertainty, moves: bestVariation, variations: evaluatedVariations }
+}
+
+
+
+export function copyGame(game: GameState): GameState {
+  return {
+    board: game.board.map(row => Object.assign({}, row)),
+    currentPlayer: game.currentPlayer,
+    captures: { ...game.captures },
+    nMoves: game.nMoves,
+    isOver: game.isOver,
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+  }
 }
 
 
@@ -252,10 +263,13 @@ export function evaluatePosition(game: GameState) {
   // eval config below is for if player 1 is the owner (where higher eval is better)
   const shapeEvalConfig: Record<string, number> = {
     "open-tessera": 10000,
-    "open-tria": 20,
+    "open-tria": 25,
     "stretch-tria": 20,
     "open-pair": -5,
-    "capture-threat": 15, // compare with open pair (should be better to threaten), and with capture reward (should be more)
+    "pente-threat-4": 15,  // pente threats aren't marked as super good in a vaccuum b/c often they are good tactically
+    "pente-threat-31": 15,
+    "pente-threat-22": 15,  // if pairs are vulnerable, the open-pair penalty will apply
+    "capture-threat": 10, // compare with open pair (should be better to threaten), and with capture reward (should be more)
     "stretch-two": 8
   }
   // go through shapes and count them, as well as sum up individual shape eval
@@ -280,10 +294,10 @@ export function evaluatePosition(game: GameState) {
 
 
   // capture eval
+  // TODO - 0 vs 1 capture is not quite as big a difference as 3 vs 4 captures
   const captureEval = 20 * (game.captures[1] - game.captures[0])
 
   // TODO add iniative eval based on forcing shapes like trias and capture threats
-  // TODO add bonus for double threats (particularly double open tria, should be as good as open tessera)
 
   return shapeEval + captureEval
 }

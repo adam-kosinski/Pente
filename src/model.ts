@@ -35,18 +35,6 @@ export function createNewGame(boardSize: number): GameState {
 }
 
 
-export function copyGame(game: GameState): GameState {
-  return {
-    board: game.board.map(row => Object.assign({}, row)),
-    currentPlayer: game.currentPlayer,
-    captures: { ...game.captures },
-    nMoves: game.nMoves,
-    isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
-  }
-}
-
-
 
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
