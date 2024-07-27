@@ -68,6 +68,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       const result = searchStep(gameCopy, depth - 1, alpha, beta)
 
       evaluatedVariations.push({ moves: [[r, c], ...result.moves], eval: result.eval, evalCouldBe: result.evalCouldBe })
+      if (bestVariation.length === 0) bestVariation = [[r, c], ...result.moves]
       if (result.eval < bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
@@ -94,6 +95,7 @@ function searchStep(game: GameState, depth: number, alpha: number, beta: number,
       const result = searchStep(gameCopy, depth - 1, alpha, beta)
 
       evaluatedVariations.push({ moves: [[r, c], ...result.moves], eval: result.eval, evalCouldBe: result.evalCouldBe })
+      if (bestVariation.length === 0) bestVariation = [[r, c], ...result.moves]
       if (result.eval > bestEval) {
         bestEval = result.eval
         bestVariation = [[r, c], ...result.moves]
