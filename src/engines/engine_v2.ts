@@ -10,6 +10,8 @@ type EvalFlag = "exact" | "upper-bound" | "lower-bound"
 
 
 let searchNodesVisited = 0
+let confirmAlpha = 0
+let failHigh = 0
 
 export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
@@ -21,15 +23,21 @@ export function findBestMove(game: GameState) {
     console.log(`searching depth ${depth}...`)
 
     searchNodesVisited = 0
-    const results = principalVariationSearch(game, depth, -Infinity, Infinity, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+    confirmAlpha = 0
+    failHigh = 0
+
+    const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
+    const results = principalVariationSearch(game, depth, -Infinity, Infinity, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
     prevDepthResults = results
 
     // log results
     console.log(searchNodesVisited + " nodes visited")
+    console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     results.slice(0, 2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
+    console.log("")
 
     // if found a forced win for either player, no need to keep looking
     if (Math.abs(results[0].eval) === Infinity) break
@@ -39,12 +47,14 @@ export function findBestMove(game: GameState) {
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, alpha: number, beta: number, prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState, depth: number, alpha: number, beta: number, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
 
   // alpha and beta are used for alpha-beta pruning
+  // principalVariation is the remainder of the principal variation from the previous iteration of iterative deepening
+  // - the first move in this variation is always searched first and at full depth
   // prevDepthResults (optional): results from previous iteration of iterative deepening, will be used to help order moves
   // returnAllMoveResults is useful for debugging
 
@@ -57,16 +67,32 @@ function principalVariationSearch(
   // generate moves ordered by how good we think they are
   // if we have previous depth results, we don't need to regenerate moves
   let moves = prevDepthResults.length > 0 ? prevDepthResults.map(r => r.bestVariation[0]) : generateMoves(game)
-  moves = orderMoves(moves, game, prevDepthResults)
+  moves = orderMoves(moves, game, principalVariation[0], prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
 
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
-  for (const [r, c] of moves) {
+  for (const [i, [r, c]] of moves.entries()) {
     // search child
-    const gameCopy = copyGame(game)
-    makeMove(gameCopy, r, c)
-    const childResult = principalVariationSearch(gameCopy, depth - 1, -beta, -alpha)[0]
+    const childGameNode = copyGame(game)
+    makeMove(childGameNode, r, c)
+    const restOfPrincipalVariation = principalVariation.slice(1)
+    let childResult: SearchResult
+    // do full search on the principal variation move, which is probably good
+    if (i === 0) childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+    else {
+      // not first-ordered move, so probably worse, do a fast null window search
+      childResult = principalVariationSearch(childGameNode, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]
+      // if failed high (we found a way to do better), do a full search
+      // beta - alpha > 1 avoids a redundant null window search
+      if (-childResult.eval > alpha && beta - alpha > 1) {
+        failHigh++
+        childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+      }
+      else {
+        confirmAlpha++
+      }
+    }
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
@@ -162,7 +188,7 @@ const shapePriority: Record<string, number> = {
   "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
   "pente": 20  // nothing you can do
 }
-export function orderMoves(moves: number[][], game: GameState, prevDepthResults: SearchResult[] = []) {
+export function orderMoves(moves: number[][], game: GameState, principalVariationMove: number[], prevDepthResults: SearchResult[] = []) {
   // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
   // and sorts the moves (not in place) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
 
@@ -206,7 +232,18 @@ export function orderMoves(moves: number[][], game: GameState, prevDepthResults:
     // make a map for faster eval lookup and thus faster sorting
     const evalMap = new Map()
     prevDepthResults.forEach(r => evalMap.set(JSON.stringify(r.bestVariation[0]), r.eval))
-    sortedMoves.sort((a,b) => evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a)))
+    sortedMoves.sort((a, b) => evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a)))
+  }
+
+  // put the principal variation move first
+  if (principalVariationMove !== undefined) {
+    for (let i = 0; i < sortedMoves.length; i++) {
+      if (sortedMoves[i][0] === principalVariationMove[0] && sortedMoves[i][1] === principalVariationMove[1]) {
+        sortedMoves.splice(i, 1)
+        sortedMoves.unshift(principalVariationMove)
+        break
+      }
+    }
   }
 
   return sortedMoves
