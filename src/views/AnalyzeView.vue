@@ -9,13 +9,18 @@ import Board from '@/components/Board.vue';
 // import { createNewGame, makeMove, undoMove } from '@/engine_v7/model_v7';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v7/engine_v7';
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v8/model_v8';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v8/engine_v8';
+// import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v8/model_v8';
+// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v8/engine_v8';
+
+import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v9/model_v9';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v9/engine_v9';
 
 
 const game = ref(createNewGame(19))
 
 game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"prevMoves":[{"addedGems":[[9,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[10,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[9,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}],"removed":[]}},{"addedGems":[[8,10]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[7,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}],"removed":[]}},{"addedGems":[[10,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}]}},{"addedGems":[[9,10]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-tria","pattern":"__000_","owner":0,"begin":[9,7],"end":[9,12],"length":6,"hash":"open-tria,0,9,7,9,12"},{"type":"open-tria","pattern":"_000__","owner":0,"begin":[9,8],"end":[9,13],"length":6,"hash":"open-tria,0,9,8,9,13"},{"type":"extendable-tria","pattern":"000__","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"extendable-tria,0,9,9,9,13"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}]}},{"addedGems":[[9,8]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}],"removed":[{"type":"open-tria","pattern":"__000_","owner":0,"begin":[9,7],"end":[9,12],"length":6,"hash":"open-tria,0,9,7,9,12"},{"type":"open-tria","pattern":"_000__","owner":0,"begin":[9,8],"end":[9,13],"length":6,"hash":"open-tria,0,9,8,9,13"}]}}],"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"extendable-tria","pattern":"000__","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"extendable-tria,0,9,9,9,13"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}`)
+
+window.game = game.value
 
 declare global {
   interface Console {
