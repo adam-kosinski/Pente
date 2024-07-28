@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, type GameState, type LinearShape } from "./model"
 
 interface SearchResult {
   eval: number
@@ -12,52 +12,10 @@ type EvalFlag = "exact" | "upper-bound" | "lower-bound"
 let searchNodesVisited = 0
 let confirmAlpha = 0
 let failHigh = 0
-let ttableHit = 0
-let ttableMiss = 0
-
-
-// transposition table - key comes from TTableKey(game) function below
-export interface TTEntry {
-  depth: number
-  linearShapes: LinearShape[]
-  result: SearchResult
-}
-export let transpositionTable: Map<string, TTEntry> = new Map()
-const maxTTableEntries = 20000
-window.ttable = transpositionTable
-
-export function TTableKey(game: GameState) {
-  let key = String(game.currentPlayer)
-  game.board.forEach(row => {
-    for (const col in row) {
-      key += col + row[col] + ","
-    }
-    key += "."
-  })
-  return key
-}
-function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
-  const entry: TTEntry = {
-    depth: depth,
-    linearShapes: game.linearShapes.slice(),  // slice is necessary b/c we push new linear shapes to the game object all the time
-    result: result
-  }
-  if (transpositionTable.size === maxTTableEntries) {
-    // remove the oldest entry to make space
-    const oldKey = transpositionTable.keys().next().value
-    transpositionTable.delete(oldKey)
-  }
-  const key = game.TTKey || TTableKey(game)
-  transpositionTable.set(key, entry)
-}
-
-
 
 export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
-
-  game = copyGame(game)  // don't use the UI game object since we will be mutating it
 
   let prevDepthResults: SearchResult[] = []
 
@@ -67,8 +25,6 @@ export function findBestMove(game: GameState) {
     searchNodesVisited = 0
     confirmAlpha = 0
     failHigh = 0
-    ttableHit = 0
-    ttableMiss = 0
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
     const results = principalVariationSearch(game, depth, -Infinity, Infinity, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
@@ -77,7 +33,6 @@ export function findBestMove(game: GameState) {
     // log results
     console.log(searchNodesVisited + " nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
-    console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
     results.slice(0, 2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
@@ -105,61 +60,39 @@ function principalVariationSearch(
 
   searchNodesVisited++
 
-  // leaf node base case
   if (depth === 0 || game.isOver) {
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
-  // transposition table cutoff / info - doing this after the leaf node check, it hurts performance to use the transposition table for leaf nodes
-  const TTKey = game.TTKey || TTableKey(game)
-  const tableEntry = transpositionTable.get(TTKey)
-  if (tableEntry && tableEntry.depth >= depth) {
-    ttableHit++
-    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
-      return [tableEntry.result]
-    }
-    else if (tableEntry.result.evalFlag === "lower-bound") {
-      alpha = Math.max(alpha, tableEntry.result.eval)
-    }
-    else if (tableEntry.result.evalFlag === "upper-bound") {
-      beta = Math.min(beta, tableEntry.result.eval)
-    }
-    if (alpha >= beta && !returnAllMoveResults) {
-      // cutoff
-      return [tableEntry.result]
-    }
-  }
-  else {
-    ttableMiss++
-  }
+  // generate moves ordered by how good we think they are
+  // if we have previous depth results, we don't need to regenerate moves
+  let moves = prevDepthResults.length > 0 ? prevDepthResults.map(r => r.bestVariation[0]) : generateMoves(game)
+  moves = orderMoves(moves, game, principalVariation[0], prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
 
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
-  let moveIndex = 0
-  const moveIterator = makeOrderedMoveIterator(game, principalVariation[0], tableEntry, prevDepthResults)
-  for (const [r, c] of moveIterator) {
+  for (const [i, [r, c]] of moves.entries()) {
     // search child
-    makeMove(game, r, c, true)  // update TTKey only for non-leaf node children, since we are not using the table for leaf nodes
+    const childGameNode = copyGame(game)
+    makeMove(childGameNode, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+    if (i === 0) childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
-      childResult = principalVariationSearch(game, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(childGameNode, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]
       // if failed high (we found a way to do better), do a full search
       // beta - alpha > 1 avoids a redundant null window search
       if (-childResult.eval > alpha && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
       }
     }
-    undoMove(game, false)  // no need to update the TTKey, we know it already
-    game.TTKey = TTKey
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
@@ -169,9 +102,7 @@ function principalVariationSearch(
     }
     allMoveResults.push(myResult)
 
-    // if no result recorded yet, ours is the best (important not to skip this, so that we end up with a meaningful variation)
-    if (bestResult.bestVariation.length === 0) bestResult = myResult
-    // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
+    if (bestResult.bestVariation.length === 0) bestResult = myResult  // so we have at least some line to report, even if we lost
     if (myResult.eval > bestResult.eval) {
       bestResult = myResult
     }
@@ -183,12 +114,7 @@ function principalVariationSearch(
       myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
       break
     }
-    moveIndex++
   }
-
-  transpositionTableSet(game, bestResult, depth)
-
-  // return
   if (returnAllMoveResults) {
     allMoveResults.sort((a, b) => b.eval - a.eval)
     return allMoveResults
@@ -204,10 +130,48 @@ export function copyGame(game: GameState): GameState {
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
-    prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
+    prevMoves: [],
     isOver: game.isOver,
     linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
   }
+}
+
+
+
+// TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning - perhaps can check for symmetry only when game.nMoves is low)
+
+export function generateMoves(game: GameState): number[][] {
+  // returns a list of [row, col] moves
+
+  // first move must be in center
+  if (game.nMoves === 0) {
+    const center = Math.floor(game.board.length / 2)
+    return [[center, center]]
+  }
+
+  // look for spots with pieces and add the neighborhood to the move list
+  // (limit moves to a short distance away horizontally and vertically from an existing piece for efficiency)
+  const nearSpots = new Map() // using map so we can deduplicate based on string keys but we have the objects sitting there
+  for (let r = 0; r < game.board.length; r++) {
+    for (let c = 0; c < game.board.length; c++) {
+      if (game.board[r][c] === undefined) continue
+      // there is a piece here, add the neighborhood - will check for if spots are empty once added to the set, to avoid duplicate checks
+      const dists = [0, -1, 1, -2, 2]
+      for (const dy of dists) {
+        for (const dx of dists) {
+          if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
+            nearSpots.set(`${r + dy},${c + dx}`, [r + dy, c + dx])
+          }
+        }
+      }
+    }
+  }
+  // filter for open spaces only
+  const moves = []
+  for (const [r, c] of nearSpots.values()) {
+    if (game.board[r][c] === undefined) moves.push([r, c])
+  }
+  return moves
 }
 
 
@@ -226,104 +190,65 @@ const shapePriority: Record<string, number> = {
   "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
   "pente": 20  // nothing you can do
 }
+export function orderMoves(moves: number[][], game: GameState, principalVariationMove: number[], prevDepthResults: SearchResult[] = []) {
+  // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
+  // and sorts the moves (not in place) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
 
-
-
-
-export function* makeOrderedMoveIterator(
-  game: GameState,
-  principalVariationMove: number[] | undefined = undefined,
-  tableEntry: TTEntry | undefined = undefined,
-  prevDepthResults: SearchResult[] = []
-) {
-  // because good moves often cause a cutoff, don't generate more less-good moves unless needed
-  // so, create an iterator that generates moves as needed (using generator syntax for readability)
-
-  // first move must be in center
-  if (game.nMoves === 0) {
-    const center = Math.floor(game.board.length / 2)
-    return [[center, center]]
-  }
-
-  // setup
-  const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const isValidMove = function (move: number[]) {
-    return game.board[move[0]][move[1]] === undefined
-  }
-
-  // first priority is principal variation move
-  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-    yield principalVariationMove
-    moveHashes.add(principalVariationMove.join(","))
-  }
-  // second priority is transposition table entry (aka hash move)
-  if (tableEntry !== undefined) {
-    const goodMove = tableEntry.result.bestVariation[0]
-    if (goodMove !== undefined && isValidMove(goodMove)) {
-      const hash = goodMove[0] + "," + goodMove[1]
-      if (!moveHashes.has(hash)) {
-        yield goodMove
-        moveHashes.add(hash)
-      }
-    }
-  }
   // rank by heuristics
 
   // if move is part of an existing shape, it is probably interesting
-  // also, if it is part of a forcing shape it is probably more interesting, so visit those first
-  // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
-  game.linearShapes.sort((a, b) => {
-    if (a.type in shapePriority && b.type in shapePriority) return shapePriority[a.type] - shapePriority[b.type]
-    return 0
-  })
+  // also, if it is part of a forcing shape it is probably more interesting, so also write down a priority
+  const shapeLocationPriorities = new Map()  // "[r,c]": priority
   for (const shape of game.linearShapes) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      if (!isValidMove([r, c])) continue
-      const hash = r + "," + c
-      if (!moveHashes.has(hash)) {
-        yield [r, c]
-        moveHashes.add(hash)
-      }
-    }
-  }
-
-  // use order from prevDepthResults - this will contain all remaining moves, ranked
-  if (prevDepthResults.length > 0) {
-    for (const result of prevDepthResults) {
-      const move = result.bestVariation[0]
-      if (!isValidMove(move)) continue
-      const hash = move[0] + "," + move[1]
-      if (!moveHashes.has(hash)) {
-        yield move
-        moveHashes.add(hash)
-      }
-    }
-  }
-  else {
-    // return all other spots near gems
-    for (let r = 0; r < game.board.length; r++) {
-      for (let c = 0; c < game.board.length; c++) {
-        if (game.board[r][c] === undefined) continue
-        // there is a gem here, suggest nearby locations
-        const dists = [0, -1, 1, -2, 2]
-        for (const dy of dists) {
-          for (const dx of dists) {
-            if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
-              const move = [r + dy, c + dx]
-              if (!isValidMove(move)) continue
-              const hash = move[0] + "," + move[1]
-              if (!moveHashes.has(hash)) {
-                yield move
-                moveHashes.add(hash)
-              }
-            }
-          }
+      if (game.board[r][c] === undefined) {  // valid move spot
+        const key = JSON.stringify([r, c])
+        const existingPriority = shapeLocationPriorities.get(key)
+        if (existingPriority !== undefined) {
+          shapeLocationPriorities.set(key, Math.min(shapePriority[shape.type], existingPriority))
+        }
+        else {
+          shapeLocationPriorities.set(key, shapePriority[shape.type])
         }
       }
     }
   }
+  const interestingMoves = []
+  const boringMoves = []
+  for (const move of moves) {
+    if (shapeLocationPriorities.has(JSON.stringify(move))) interestingMoves.push(move)
+    else boringMoves.push(move)
+  }
+  interestingMoves.sort((a, b) => {
+    const aValue = shapeLocationPriorities.get(JSON.stringify(a))
+    const bValue = shapeLocationPriorities.get(JSON.stringify(b))
+    return aValue - bValue
+  })
+  const sortedMoves = [...interestingMoves, ...boringMoves]
+
+
+  // use prev depth results if we have them from iterative deepening, prioritize this sorting over the previous heuristics
+  if (prevDepthResults.length > 0) {
+    // make a map for faster eval lookup and thus faster sorting
+    const evalMap = new Map()
+    prevDepthResults.forEach(r => evalMap.set(JSON.stringify(r.bestVariation[0]), r.eval))
+    sortedMoves.sort((a, b) => evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a)))
+  }
+
+  // put the principal variation move first
+  if (principalVariationMove !== undefined) {
+    for (let i = 0; i < sortedMoves.length; i++) {
+      if (sortedMoves[i][0] === principalVariationMove[0] && sortedMoves[i][1] === principalVariationMove[1]) {
+        sortedMoves.splice(i, 1)
+        sortedMoves.unshift(principalVariationMove)
+        break
+      }
+    }
+  }
+
+  return sortedMoves
 }
 
 

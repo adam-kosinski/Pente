@@ -1,4 +1,7 @@
-import { makeMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, type GameState, type LinearShape } from "./model";
+
+export function* makeOrderedMoveIterator(){}  // placeholder to compare with v6
+
 
 interface SearchResult {
   eval: number
@@ -12,6 +15,33 @@ type EvalFlag = "exact" | "upper-bound" | "lower-bound"
 let searchNodesVisited = 0
 let confirmAlpha = 0
 let failHigh = 0
+
+
+// transposition table - key is game.currentPlayer + JSON.stringify(game.board)
+interface TTEntry {
+  depth: number
+  result: SearchResult
+}
+let transpositionTable: Map<string, TTEntry> = new Map()
+const maxTTableEntries = 20000
+
+function TTableKey(game: GameState){
+  return game.currentPlayer + JSON.stringify(game.board)
+}
+function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
+  const entry: TTEntry = {
+    depth: depth,
+    result: result
+  }
+  if(transpositionTable.size === maxTTableEntries) {
+    // remove the oldest entry to make space
+    const oldKey = transpositionTable.keys().next().value
+    transpositionTable.delete(oldKey)
+  }
+  transpositionTable.set(TTableKey(game), entry)
+}
+
+
 
 export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
@@ -33,7 +63,7 @@ export function findBestMove(game: GameState) {
     // log results
     console.log(searchNodesVisited + " nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
-    results.slice(0, 2).forEach(r => {
+    results.slice(0,2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
@@ -60,6 +90,26 @@ function principalVariationSearch(
 
   searchNodesVisited++
 
+  // transposition table cutoff / info
+  const tableEntry = transpositionTable.get(TTableKey(game))
+  if(tableEntry && tableEntry.depth >= depth){
+    if(tableEntry.result.evalFlag === "exact" && !returnAllMoveResults){
+      return [tableEntry.result]
+    }
+    else if(tableEntry.result.evalFlag === "lower-bound"){
+      alpha = Math.max(alpha, tableEntry.result.eval)
+    }
+    else if (tableEntry.result.evalFlag === "upper-bound"){
+      beta = Math.min(beta, tableEntry.result.eval)
+    }
+    if(alpha >= beta && !returnAllMoveResults){
+      // cutoff
+      return [tableEntry.result]
+    }
+  }
+
+
+  // leaf node base case
   if (depth === 0 || game.isOver) {
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
@@ -67,7 +117,8 @@ function principalVariationSearch(
   // generate moves ordered by how good we think they are
   // if we have previous depth results, we don't need to regenerate moves
   let moves = prevDepthResults.length > 0 ? prevDepthResults.map(r => r.bestVariation[0]) : generateMoves(game)
-  moves = orderMoves(moves, game, principalVariation[0], prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
+  moves = orderMoves(moves, game, principalVariation[0], tableEntry, prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
+
 
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
@@ -82,7 +133,7 @@ function principalVariationSearch(
     if (i === 0) childResult = principalVariationSearch(childGameNode, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
-      childResult = principalVariationSearch(childGameNode, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]
+      childResult = principalVariationSearch(childGameNode, depth - 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // beta - alpha > 1 avoids a redundant null window search
       if (-childResult.eval > alpha && beta - alpha > 1) {
@@ -102,7 +153,9 @@ function principalVariationSearch(
     }
     allMoveResults.push(myResult)
 
-    if (bestResult.bestVariation.length === 0) bestResult = myResult  // so we have at least some line to report, even if we lost
+    // if no result recorded yet, ours is the best (important not to skip this, so that we end up with a meaningful variation)
+    if (bestResult.bestVariation.length === 0) bestResult = myResult
+    // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
     if (myResult.eval > bestResult.eval) {
       bestResult = myResult
     }
@@ -115,6 +168,10 @@ function principalVariationSearch(
       break
     }
   }
+
+  transpositionTableSet(game, bestResult, depth)
+
+  // return
   if (returnAllMoveResults) {
     allMoveResults.sort((a, b) => b.eval - a.eval)
     return allMoveResults
@@ -130,6 +187,7 @@ export function copyGame(game: GameState): GameState {
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
+    prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
     isOver: game.isOver,
     linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
   }
@@ -189,7 +247,7 @@ const shapePriority: Record<string, number> = {
   "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
   "pente": 20  // nothing you can do
 }
-export function orderMoves(moves: number[][], game: GameState, principalVariationMove: number[], prevDepthResults: SearchResult[] = []) {
+export function orderMoves(moves: number[][], game: GameState, principalVariationMove: number[], tableEntry: TTEntry | undefined = undefined, prevDepthResults: SearchResult[] = []) {
   // takes a list of moves and optionally a list of evaluation estimates (probably from iterative deepening)
   // and sorts the moves (not in place) based on heuristics and the eval estimates, best moves first (if maximizing, these are highest eval)
 
@@ -234,6 +292,20 @@ export function orderMoves(moves: number[][], game: GameState, principalVariatio
     const evalMap = new Map()
     prevDepthResults.forEach(r => evalMap.set(JSON.stringify(r.bestVariation[0]), r.eval))
     sortedMoves.sort((a, b) => evalMap.get(JSON.stringify(b)) - evalMap.get(JSON.stringify(a)))
+  }
+
+  // put the transposition table best variation move first
+  if(tableEntry !== undefined){
+    const goodMove = tableEntry.result.bestVariation[0]
+    if(goodMove !== undefined){
+      for (let i = 0; i < sortedMoves.length; i++) {
+        if (sortedMoves[i][0] === goodMove[0] && sortedMoves[i][1] === goodMove[1]) {
+          sortedMoves.splice(i, 1)
+          sortedMoves.unshift(goodMove)
+          break
+        }
+      }
+    }
   }
 
   // put the principal variation move first

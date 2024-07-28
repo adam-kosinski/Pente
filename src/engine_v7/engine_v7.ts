@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, undoMove, type GameState, type LinearShape } from "./model_v7"
 
 interface SearchResult {
   eval: number
@@ -17,11 +17,12 @@ let ttableMiss = 0
 
 
 // transposition table - key comes from TTableKey(game) function below
-interface TTEntry {
+export interface TTEntry {
   depth: number
+  linearShapes: LinearShape[]
   result: SearchResult
 }
-let transpositionTable: Map<string, TTEntry> = new Map()
+export let transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
 window.ttable = transpositionTable
 
@@ -38,6 +39,7 @@ export function TTableKey(game: GameState) {
 function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
   const entry: TTEntry = {
     depth: depth,
+    linearShapes: game.linearShapes.slice(),  // slice is necessary b/c we push new linear shapes to the game object all the time
     result: result
   }
   if (transpositionTable.size === maxTTableEntries) {
@@ -45,7 +47,8 @@ function transpositionTableSet(game: GameState, result: SearchResult, depth: num
     const oldKey = transpositionTable.keys().next().value
     transpositionTable.delete(oldKey)
   }
-  transpositionTable.set(TTableKey(game), entry)
+  const key = game.TTKey || TTableKey(game)
+  transpositionTable.set(key, entry)
 }
 
 
@@ -54,7 +57,7 @@ export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
 
-  game = copyGame(game)
+  game = copyGame(game)  // don't use the UI game object since we will be mutating it
 
   let prevDepthResults: SearchResult[] = []
 
@@ -107,8 +110,9 @@ function principalVariationSearch(
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
-  // transposition table cutoff / info
-  const tableEntry = transpositionTable.get(TTableKey(game))
+  // transposition table cutoff / info - doing this after the leaf node check, it hurts performance to use the transposition table for leaf nodes
+  const TTKey = game.TTKey || TTableKey(game)
+  const tableEntry = transpositionTable.get(TTKey)
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
     if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
@@ -136,7 +140,7 @@ function principalVariationSearch(
   const moveIterator = makeOrderedMoveIterator(game, principalVariation[0], tableEntry, prevDepthResults)
   for (const [r, c] of moveIterator) {
     // search child
-    makeMove(game, r, c)
+    makeMove(game, r, c, depth > 1)  // update TTKey only for non-leaf node children, since we are not using the table for leaf nodes
     const restOfPrincipalVariation = principalVariation.slice(1)
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
@@ -154,7 +158,8 @@ function principalVariationSearch(
         confirmAlpha++
       }
     }
-    undoMove(game)
+    undoMove(game, false)  // no need to update the TTKey, we know it already
+    game.TTKey = TTKey
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {

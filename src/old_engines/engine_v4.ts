@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, undoMove, type GameState, type LinearShape } from "./model";
 
 export function* makeOrderedMoveIterator(){}  // placeholder to compare with v6
 
@@ -26,7 +26,6 @@ interface TTEntry {
 }
 let transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
-window.ttable = transpositionTable
 
 export function TTableKey(game: GameState) {
   let key = String(game.currentPlayer)
@@ -105,11 +104,6 @@ function principalVariationSearch(
 
   searchNodesVisited++
 
-  // leaf node base case
-  if (depth === 0 || game.isOver) {
-    return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
-  }
-
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
@@ -132,10 +126,17 @@ function principalVariationSearch(
     ttableMiss++
   }
 
+
+  // leaf node base case
+  if (depth === 0 || game.isOver) {
+    return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+  }
+
   // generate moves ordered by how good we think they are
   // if we have previous depth results, we don't need to regenerate moves
   let moves = prevDepthResults.length > 0 ? prevDepthResults.map(r => r.bestVariation[0]) : generateMoves(game)
   moves = orderMoves(moves, game, principalVariation[0], tableEntry, prevDepthResults)  // if principalVariation is empty, index 0 is undefined, which is checked for
+
 
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
@@ -210,6 +211,9 @@ export function copyGame(game: GameState): GameState {
   }
 }
 
+
+
+// TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning - perhaps can check for symmetry only when game.nMoves is low)
 
 export function generateMoves(game: GameState): number[][] {
   // returns a list of [row, col] moves

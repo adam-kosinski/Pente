@@ -1,4 +1,4 @@
-import { makeMove, type GameState, type LinearShape } from "@/model";
+import { makeMove, type GameState, type LinearShape } from "./model"
 
 let searchNodesVisited = 0
 
@@ -125,6 +125,7 @@ export function copyGame(game: GameState): GameState {
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
+    prevMoves: [],
     isOver: game.isOver,
     linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
   }
