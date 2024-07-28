@@ -61,8 +61,8 @@ export function makeMove(game: GameState, r: number, c: number) {
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
   const prevMove: PrevMove = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
 
-    // place gemstone onto board
-    game.board[r][c] = game.currentPlayer
+  // place gemstone onto board
+  game.board[r][c] = game.currentPlayer
   prevMove.addedGems.push([r, c])
 
   // check for capture of opponent pair(s)

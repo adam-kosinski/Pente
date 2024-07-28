@@ -23,15 +23,22 @@ let transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
 window.ttable = transpositionTable
 
-function TTableKey(game: GameState){
-  return game.currentPlayer + JSON.stringify(game.board)
+export function TTableKey(game: GameState) {
+  let key = String(game.currentPlayer)
+  game.board.forEach(row => {
+    for(const col in row){
+      key += col + row[col] + ","
+    }
+    key += "."
+  })
+  return key
 }
 function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
   const entry: TTEntry = {
     depth: depth,
     result: result
   }
-  if(transpositionTable.size === maxTTableEntries) {
+  if (transpositionTable.size === maxTTableEntries) {
     // remove the oldest entry to make space
     const oldKey = transpositionTable.keys().next().value
     transpositionTable.delete(oldKey)
@@ -63,7 +70,7 @@ export function findBestMove(game: GameState) {
     // log results
     console.log(searchNodesVisited + " nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
-    results.slice(0,2).forEach(r => {
+    results.slice(0, 2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
@@ -92,17 +99,17 @@ function principalVariationSearch(
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
-  if(tableEntry && tableEntry.depth >= depth){
-    if(tableEntry.result.evalFlag === "exact" && !returnAllMoveResults){
+  if (tableEntry && tableEntry.depth >= depth) {
+    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
       return [tableEntry.result]
     }
-    else if(tableEntry.result.evalFlag === "lower-bound"){
+    else if (tableEntry.result.evalFlag === "lower-bound") {
       alpha = Math.max(alpha, tableEntry.result.eval)
     }
-    else if (tableEntry.result.evalFlag === "upper-bound"){
+    else if (tableEntry.result.evalFlag === "upper-bound") {
       beta = Math.min(beta, tableEntry.result.eval)
     }
-    if(alpha >= beta && !returnAllMoveResults){
+    if (alpha >= beta && !returnAllMoveResults) {
       // cutoff
       return [tableEntry.result]
     }
@@ -295,9 +302,9 @@ export function orderMoves(moves: number[][], game: GameState, principalVariatio
   }
 
   // put the transposition table best variation move first
-  if(tableEntry !== undefined){
+  if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0]
-    if(goodMove !== undefined){
+    if (goodMove !== undefined) {
       for (let i = 0; i < sortedMoves.length; i++) {
         if (sortedMoves[i][0] === goodMove[0] && sortedMoves[i][1] === goodMove[1]) {
           sortedMoves.splice(i, 1)
