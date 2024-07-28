@@ -9,8 +9,9 @@ import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engin
 const game = ref(createNewGame(19))
 
 async function playerMove(r: number, c: number){
-  if(game.value.currentPlayer === 1) return  // computer's turn
+  if(game.value.currentPlayer === 1 || game.value.isOver) return
   makeMove(game.value, r, c)
+  if(game.value.isOver) return
   await new Promise(resolve => setTimeout(resolve, 10))
   const [compR, compC] = findBestMove(game.value)
   makeMove(game.value, compR, compC)
