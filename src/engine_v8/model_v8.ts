@@ -60,11 +60,11 @@ export function makeMove(game: GameState, r: number, c: number) {
   if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
 
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
-  const prevMove: PrevMove = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
+  const moveInfo: PrevMove = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
 
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer
-  prevMove.addedGems.push([r, c])
+  moveInfo.addedGems.push([r, c])
 
   // check for capture of opponent pair(s)
   // iterate over directions
@@ -82,19 +82,18 @@ export function makeMove(game: GameState, r: number, c: number) {
 
         delete game.board[r + dy][c + dx]
         delete game.board[r + 2 * dy][c + 2 * dx]
-        prevMove.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
+        moveInfo.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
         game.captures[game.currentPlayer]++
-        // cleared stones may lead to new shapes
-        const update1 = updateLinearShapes(game, r + dy, c + dx)
-        const update2 = updateLinearShapes(game, r + 2 * dy, c + 2 * dx)
-        shapeUpdate.added = shapeUpdate.added.concat([...update1.added, ...update2.added])
-        shapeUpdate.removed = shapeUpdate.removed.concat([...update1.removed, ...update2.removed])
       }
     }
   }
-  const update0 = updateLinearShapes(game, r, c)
-  shapeUpdate.added = shapeUpdate.added.concat(update0.added)
-  shapeUpdate.removed = shapeUpdate.removed.concat(update0.removed)
+  // update linear shapes for all the locations we messed with
+  moveInfo.addedGems.concat(moveInfo.removedGems).forEach(([r, c]) => {
+    const update = updateLinearShapes(game, r, c)
+    shapeUpdate.added = shapeUpdate.added.concat(update.added)
+    shapeUpdate.removed = shapeUpdate.removed.concat(update.removed)
+  })
+
   // console.log("added", shapeUpdate.added.map(s => s.hash))
   // console.log("removed", shapeUpdate.removed.map(s => s.hash))
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
@@ -106,7 +105,7 @@ export function makeMove(game: GameState, r: number, c: number) {
   }
 
   // update variables
-  game.prevMoves.push(prevMove)
+  game.prevMoves.push(moveInfo)
   game.currentPlayer = Number(!game.currentPlayer) as 0 | 1
   game.nMoves++
 }
