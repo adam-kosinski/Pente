@@ -3,7 +3,7 @@
 import { ref } from 'vue';
 import Board from '@/components/Board.vue';
 import { createNewGame, makeMove, undoMove } from '@/model';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engines/engine_v6';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engines/engine_v7';
 
 const game = ref(createNewGame(19))
 

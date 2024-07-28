@@ -1,14 +1,17 @@
+import { transpositionTable, TTableKey, type TTEntry } from "@/engines/engine_v7"
+
 export interface GameState {
   board: Record<number, 0 | 1>[]
   currentPlayer: 0 | 1
   captures: Record<0 | 1, number>
   nMoves: number
-  prevMoves: PrevMove[]
+  prevMoves: MoveInfo[]
   isOver: boolean
   linearShapes: LinearShape[]
+  TTKey?: string  // key for transposition table, we don't need/want to calculate for every position so it is optional
 }
 
-export interface PrevMove {
+export interface MoveInfo {
   addedGems: number[][]  // list of [r,c]
   removedGems: number[][]  // list of [r,c,player]
   linearShapeUpdate: LinearShapeUpdate
@@ -50,7 +53,7 @@ export function createNewGame(boardSize: number): GameState {
 
 
 
-export function makeMove(game: GameState, r: number, c: number) {
+export function makeMove(game: GameState, r: number, c: number, updateTTKey: boolean = true) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
   // can't go in a place with a piece
   if (game.board[r][c] !== undefined) return
@@ -60,11 +63,11 @@ export function makeMove(game: GameState, r: number, c: number) {
   if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
 
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
-  const prevMove: PrevMove = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
+  const moveInfo: MoveInfo = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
 
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer
-  prevMove.addedGems.push([r, c])
+  moveInfo.addedGems.push([r, c])
 
   // check for capture of opponent pair(s)
   // iterate over directions
@@ -82,37 +85,45 @@ export function makeMove(game: GameState, r: number, c: number) {
 
         delete game.board[r + dy][c + dx]
         delete game.board[r + 2 * dy][c + 2 * dx]
-        prevMove.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
+        moveInfo.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
         game.captures[game.currentPlayer]++
-        // cleared stones may lead to new shapes
-        const update1 = updateLinearShapes(game, r + dy, c + dx)
-        const update2 = updateLinearShapes(game, r + 2 * dy, c + 2 * dx)
-        shapeUpdate.added = shapeUpdate.added.concat([...update1.added, ...update2.added])
-        shapeUpdate.removed = shapeUpdate.removed.concat([...update1.removed, ...update2.removed])
       }
     }
   }
-  const update0 = updateLinearShapes(game, r, c)
-  shapeUpdate.added = shapeUpdate.added.concat(update0.added)
-  shapeUpdate.removed = shapeUpdate.removed.concat(update0.removed)
-  // console.log("added", shapeUpdate.added.map(s => s.hash))
-  // console.log("removed", shapeUpdate.removed.map(s => s.hash))
-  // console.log(game.linearShapes.map(s => s.hash).join("\n"))
-
-
+  // update other variables
+  game.prevMoves.push(moveInfo)
+  game.currentPlayer = Number(!game.currentPlayer) as 0 | 1
+  game.nMoves++
   // check for game over
   if (game.captures[0] >= 5 || game.captures[1] >= 5 || game.linearShapes.some(shape => shape.type === "pente")) {
     game.isOver = true
   }
 
-  // update variables
-  game.prevMoves.push(prevMove)
-  game.currentPlayer = Number(!game.currentPlayer) as 0 | 1
-  game.nMoves++
+  // now that we've changed the board position and player, update the TTKey
+  let tableEntry: TTEntry | undefined = undefined
+  if (updateTTKey) {
+    game.TTKey = TTableKey(game)
+    tableEntry = transpositionTable.get(game.TTKey)
+  }
+  else { delete game.TTKey }
+
+  // update linear shapes; do after TTKey calculations so we can use the table entry if we have it to avoid expensive recomputation
+  moveInfo.addedGems.concat(moveInfo.removedGems).forEach(([r, c]) => {
+    const update = updateLinearShapes(game, r, c)
+    shapeUpdate.added = shapeUpdate.added.concat(update.added)
+    shapeUpdate.removed = shapeUpdate.removed.concat(update.removed)
+  })
+  // console.log("added", shapeUpdate.added.map(s => s.hash))
+  // console.log("removed", shapeUpdate.removed.map(s => s.hash))
+  // console.log(game.linearShapes.map(s => s.hash).join("\n"))
+
+
+
+
 }
 
 
-export function undoMove(game: GameState) {
+export function undoMove(game: GameState, updateTTKey: boolean = true) {
   const prevMove = game.prevMoves.pop()
   if (!prevMove) return
 
@@ -135,6 +146,9 @@ export function undoMove(game: GameState) {
   prevMove.linearShapeUpdate.removed.forEach(shape => game.linearShapes.push(shape))
 
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
+
+  if (updateTTKey) game.TTKey = TTableKey(game)
+  else { delete game.TTKey }
 
   // update other variables
   game.currentPlayer = prevPlayer
