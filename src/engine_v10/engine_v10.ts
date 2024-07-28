@@ -1,5 +1,5 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag } from "./model_v9";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v9";
+import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v10";
+import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v10";
 
 let searchNodesVisited = 0
 let confirmAlpha = 0
@@ -9,14 +9,14 @@ let ttableMiss = 0
 
 let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
 // will only store at most 2 killer moves per ply, as recommended by wikipedia, to keep them recent / relevant
-function addKillerMove(r: number, c: number, ply: number){
+function addKillerMove(r: number, c: number, ply: number) {
   if (!killerMoves[ply]) killerMoves[ply] = []
   // make sure it's a new move
-  for (const m of killerMoves[ply]){
-    if(m[0] === r && m[1] === c) return
+  for (const m of killerMoves[ply]) {
+    if (m[0] === r && m[1] === c) return
   }
-  killerMoves[ply].unshift([r,c])
-  if( killerMoves[ply].length >= 2) killerMoves[ply].splice(2)
+  killerMoves[ply].unshift([r, c])
+  if (killerMoves[ply].length >= 2) killerMoves[ply].splice(2)
 }
 
 
@@ -63,7 +63,7 @@ export function findBestMove(game: GameState) {
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, ply :number, alpha: number, beta: number, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState, depth: number, ply: number, alpha: number, beta: number, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -198,9 +198,9 @@ const shapePriority: Record<string, number> = {
   "pente-threat-31": 4,
   "open-tria": 5,
   "stretch-tria": 6,
-  "extendable-tria": 7,
-  "extendable-stretch-tria": 8,
-  "extendable-stretch-tria-threatened": 9,
+  "extendable-stretch-tria-threatened": 7,
+  "extendable-tria": 8,
+  "extendable-stretch-tria": 9,
   "capture-threat": 10,
   "stretch-two": 11,
   "open-pair": 12,
@@ -250,8 +250,8 @@ export function* makeOrderedMoveIterator(
     }
   }
   // third priority are killer moves
-  if (killerMoves[ply]){
-    for (const move of killerMoves[ply]){
+  if (killerMoves[ply]) {
+    for (const move of killerMoves[ply]) {
       if (!isValidMove(move)) continue
       const hash = move[0] + "," + move[1]
       if (!moveHashes.has(hash)) {
@@ -322,6 +322,72 @@ export function* makeOrderedMoveIterator(
       }
     }
   }
+}
+
+
+export function getNonQuietMoves(game: GameState): number[][] {
+  // function to tell if a position is quiet, used for quiescence search (QS), and which moves relevant to the non-quietness should be considered for the QS
+  // if the return move list has length 0, the position is quiet
+
+  // suppose it is my turn
+  // in order of urgency:
+  // if the opponent has a pente threat or open tessera, needs to be blocked - not quiet (if I have one the eval function will notice that as a win)
+  // else, examine these in order:
+  //  - if I have an open or extendable tria, we want to see what happens if I extend it to a open or closed tessera - not quiet
+  //  - if the opponent has a open (not just extendable) tria, we need to block it
+
+  // if there are pairs I can capture, that often can result in tactics - not quiet
+  //  - should always examine this, possibility for blocking any of the above situations, and to find out if I can force a 5-capture win via tactics
+  //  - but rank capture moves behind the more forcing moves above
+  // if there are pairs my opponent can capture, it's not immediately tactical, so we can probably just do the static eval
+
+  const opponentPenteThreats: LinearShape[] = []
+  const myOpenTrias: LinearShape[] = []
+  const myExtendableTrias: LinearShape[] = []
+  const opponentOpenTrias: LinearShape[] = []
+  const myCaptureThreats: LinearShape[] = []
+
+  for (const shape of game.linearShapes) {
+    if (shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer) {
+      opponentPenteThreats.push(shape)
+    }
+    else if (["open-tria", "stretch-tria"].includes(shape.type)) {
+      if (shape.owner === game.currentPlayer) myOpenTrias.push(shape)
+      else opponentOpenTrias.push(shape)
+    }
+    else if (["extendable-tria", "extendable-stretch-tria", "extendable-stretch-tria-threatened"].includes(shape.type) && shape.owner === game.currentPlayer) {
+      myExtendableTrias.push(shape)
+    }
+    else if (shape.type === "capture-threat") {
+      myCaptureThreats.push(shape)
+    }
+  }
+
+  const nonQuietShapes = opponentPenteThreats.length > 0 ?
+    [...opponentPenteThreats, ...myCaptureThreats]
+    : [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
+
+  // get moves from shapes - similar logic to the main move generator
+  const moves = []
+
+  // setup
+  const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
+  const isValidMove = function (move: number[]) {
+    return game.board[move[0]][move[1]] === undefined
+  }
+  for (const shape of nonQuietShapes) {
+    const dy = Math.sign(shape.end[0] - shape.begin[0])
+    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
+      if (!isValidMove([r, c])) continue
+      const hash = r + "," + c
+      if (!moveHashes.has(hash)) {
+        moves.push([r,c])
+        moveHashes.add(hash)
+      }
+    }
+  }
+  return moves
 }
 
 
