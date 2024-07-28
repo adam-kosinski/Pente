@@ -9,8 +9,6 @@ import Board from '@/components/Board.vue';
 import { createNewGame, makeMove, undoMove } from '@/engine_v7/model_v7';
 import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v7/engine_v7';
 
-// import { createNewGame, makeMove, undoMove } from '@/engine_v7/model_v7';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v7/engine_v7';
 
 const game = ref(createNewGame(19))
 
