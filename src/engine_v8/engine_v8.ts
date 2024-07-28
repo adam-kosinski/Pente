@@ -57,7 +57,7 @@ export function findBestMove(game: GameState) {
 
   let prevDepthResults: SearchResult[] = []
 
-  for (let depth = 1; depth <= 7; depth++) {
+  for (let depth = 1; depth <= 6; depth++) {
     console.log(`searching depth ${depth}...`)
 
     searchNodesVisited = 0
@@ -83,6 +83,8 @@ export function findBestMove(game: GameState) {
     // if found a forced win for either player, no need to keep looking
     if (Math.abs(results[0].eval) === Infinity) break
   }
+
+  return prevDepthResults[0].bestVariation[0]
 }
 
 

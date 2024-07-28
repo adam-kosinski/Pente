@@ -1,9 +1,9 @@
 <script setup lang="ts">
 
-import { ref, type Ref, onMounted, computed } from 'vue'
-import { makeMove, type GameState } from '@/model';
+import { computed } from 'vue'
+import { type GameState } from '@/engine_v8/model_v8';
 
-const props = defineProps<{ game: GameState }>()
+const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
 const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
@@ -28,11 +28,11 @@ function areCoordsSignificant(r: number, c: number): boolean {
         :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize }"
         @click="$emit('make-move', r - 1, c - 1)">
 
-        <p v-if="c === 1" class="row-label">{{ r - 1 }}</p>
-        <p v-if="r === boardSize" class="col-label">{{ c - 1 }}</p>
+        <p v-if="c === 1 && showCoordLabels" class="row-label">{{ r - 1 }}</p>
+        <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
 
         <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"></div>
-        <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
+        <div v-else-if="!game.isOver" class="ghost gem" :data-player="game.currentPlayer"></div>
 
         <div class="grid-line-box">
 
@@ -139,4 +139,5 @@ function areCoordsSignificant(r: number, c: number): boolean {
 .col-label {
   transform: translateY(50%);
 }
+
 </style>

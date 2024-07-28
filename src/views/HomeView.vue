@@ -2,5 +2,5 @@
 </script>
 
 <template>
-  <div>Home</div>
+  <div style="color: white;">Home</div>
 </template>

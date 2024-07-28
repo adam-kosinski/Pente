@@ -10,6 +10,9 @@ import { RouterLink, RouterView } from 'vue-router'
     <RouterLink to="play">Play</RouterLink>
   </nav>
 
+  <div class="wood-background"></div>
+
+
   <RouterView />
   </div>
   
@@ -19,5 +22,13 @@ import { RouterLink, RouterView } from 'vue-router'
 <style scoped>
 .wrapper {
   padding: 16px;
+}
+.wood-background {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  inset: 0;
+  background-image: radial-gradient(transparent 50%, black), url('/wood-texture.jpg');
+  z-index: -1;
 }
 </style>

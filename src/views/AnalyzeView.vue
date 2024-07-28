@@ -57,8 +57,7 @@ function printMoves(){
 
 
 <template>
-  <div class="wood-background"></div>
-  <div>Analyze</div>
+  <div style="color: white;">Analyze</div>
   <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
   <button @click="profile()">Profile</button><br>
   <button @click="printMoves()">Generate Moves</button><br>
@@ -68,20 +67,11 @@ function printMoves(){
   <button @click="console.log(JSON.stringify(game))">Save Game</button><br>
   <button @click="timeTest()">Time Test</button>
 
-  <Board class="board" :game="game" @make-move="(r, c) => makeMove(game, r, c)" />
+  <Board class="board" :game="game" show-coord-labels @make-move="(r, c) => makeMove(game, r, c)" />
 </template>
 
 
 <style scoped>
-.wood-background {
-  position: absolute;
-  width: 100vw;
-  height: 100vh;
-  inset: 0;
-  background-image: radial-gradient(transparent 50%, black), url('/wood-texture.jpg');
-  z-index: -1;
-  /* box-shadow: inset 0 0 100px 10px black; */
-}
 
 .board {
   position: absolute;
