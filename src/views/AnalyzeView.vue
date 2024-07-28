@@ -21,6 +21,13 @@ const game = ref(createNewGame(19))
 // v4+ only
 game.value = JSON.parse(`{"board":[{},{},{},{},{},{},{},{"11":0},{"10":1},{"8":1,"9":0,"10":0,"11":0},{"9":1,"11":1},{},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":8,"prevMoves":[{"addedGems":[[9,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[10,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[9,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}],"removed":[]}},{"addedGems":[[8,10]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[7,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}],"removed":[]}},{"addedGems":[[10,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}]}},{"addedGems":[[9,10]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-tria","pattern":"_000_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"open-tria,0,9,8,9,12"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}]}},{"addedGems":[[9,8]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}],"removed":[{"type":"open-tria","pattern":"_000_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"open-tria,0,9,8,9,12"}]}}],"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}]}`)
 
+
+declare global {
+  interface Console {
+    profile: () => any
+    profileEnd: () => any
+  }
+}
 function profile(){
   console.profile()
   findBestMove(game.value)

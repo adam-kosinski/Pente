@@ -24,7 +24,6 @@ export interface TTEntry {
 }
 export let transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
-window.ttable = transpositionTable
 
 export function TTableKey(game: GameState) {
   let key = String(game.currentPlayer)
