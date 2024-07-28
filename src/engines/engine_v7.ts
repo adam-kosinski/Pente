@@ -19,11 +19,11 @@ let ttableMiss = 0
 // transposition table - key comes from TTableKey(game) function below
 interface TTEntry {
   depth: number
+  linearShapes: LinearShape[]
   result: SearchResult
 }
-let transpositionTable: Map<string, TTEntry> = new Map()
+export let transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
-window.ttable = transpositionTable
 
 export function TTableKey(game: GameState) {
   let key = String(game.currentPlayer)
@@ -38,6 +38,7 @@ export function TTableKey(game: GameState) {
 function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
   const entry: TTEntry = {
     depth: depth,
+    linearShapes: game.linearShapes.slice(),  // slice is necessary b/c we push new linear shapes to the game object all the time
     result: result
   }
   if (transpositionTable.size === maxTTableEntries) {

@@ -19,7 +19,8 @@ export interface LinearShapeUpdate {
 }
 
 // linear shape that's been located on the board
-// this is readonly b/c there's no reason to change it, and because I'm not sure if references might be shared (see undo move code)
+// this is readonly b/c there's no reason to change it, and because there might be multiple references to the same LinearShape object
+// (e.g. transposition table, re-using game state object when searching)
 export interface LinearShape {
   readonly type: string
   readonly pattern: string
