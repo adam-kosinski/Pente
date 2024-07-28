@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type LinearShape } from "./model_v7"
+import { makeMove, undoMove, type GameState, type LinearShape } from "./model_v7";
 
 interface SearchResult {
   eval: number
@@ -38,7 +38,7 @@ export function TTableKey(game: GameState) {
 function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
   const entry: TTEntry = {
     depth: depth,
-    linearShapes: game.linearShapes.slice(),  // slice is necessary b/c we push new linear shapes to the game object all the time
+    linearShapes: game.linearShapes.slice(),
     result: result
   }
   if (transpositionTable.size === maxTTableEntries) {
@@ -46,8 +46,7 @@ function transpositionTableSet(game: GameState, result: SearchResult, depth: num
     const oldKey = transpositionTable.keys().next().value
     transpositionTable.delete(oldKey)
   }
-  const key = game.TTKey || TTableKey(game)
-  transpositionTable.set(key, entry)
+  transpositionTable.set(game.TTKey || TTableKey(game), entry)
 }
 
 
@@ -205,7 +204,8 @@ export function copyGame(game: GameState): GameState {
     nMoves: game.nMoves,
     prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
     isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes)),
+    TTKey: game.TTKey
   }
 }
 
