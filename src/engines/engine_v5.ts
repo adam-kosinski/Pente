@@ -102,6 +102,11 @@ function principalVariationSearch(
 
   searchNodesVisited++
 
+  // leaf node base case
+  if (depth === 0 || game.isOver) {
+    return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+  }
+
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
@@ -122,12 +127,6 @@ function principalVariationSearch(
   }
   else {
     ttableMiss++
-  }
-
-
-  // leaf node base case
-  if (depth === 0 || game.isOver) {
-    return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
   // generate moves ordered by how good we think they are
@@ -211,7 +210,9 @@ export function copyGame(game: GameState): GameState {
 
 
 
-// TODO take advantage of symmetry to avoid redundant moves (particularly an issue in the beginning - perhaps can check for symmetry only when game.nMoves is low)
+export function orderedMoveIterator(game: GameState, principalVariationMove: number[], tableEntry: TTEntry | undefined = undefined, prevDepthResults: SearchResult[] = []) {
+
+}
 
 export function generateMoves(game: GameState): number[][] {
   // returns a list of [row, col] moves
