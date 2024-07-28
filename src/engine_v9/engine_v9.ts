@@ -7,6 +7,8 @@ let failHigh = 0
 let ttableHit = 0
 let ttableMiss = 0
 
+let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
+
 
 export function findBestMove(game: GameState) {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
@@ -66,6 +68,8 @@ function principalVariationSearch(
   if (depth === 0 || game.isOver) {
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
+
+  const alphaOrig = alpha
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
@@ -137,11 +141,15 @@ function principalVariationSearch(
     // they would avoid coming here, so we can stop looking at this node
     alpha = Math.max(alpha, bestResult.eval)
     if (beta <= alpha) {
-      myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
+      // myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
       break
     }
     moveIndex++
   }
+
+  if (bestResult.eval <= alphaOrig) bestResult.evalFlag = "upper-bound"
+  else if (bestResult.eval >= beta) bestResult.evalFlag = "lower-bound"
+  else bestResult.evalFlag = "exact"
 
   transpositionTableSet(game, bestResult, depth)
 
