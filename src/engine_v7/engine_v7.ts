@@ -108,6 +108,8 @@ function principalVariationSearch(
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
+  const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
+
   // transposition table cutoff / info - doing this after the leaf node check, it hurts performance to use the transposition table for leaf nodes
   const TTKey = game.TTKey || TTableKey(game)
   const tableEntry = transpositionTable.get(TTKey)
@@ -178,12 +180,15 @@ function principalVariationSearch(
     // they would avoid coming here, so we can stop looking at this node
     alpha = Math.max(alpha, bestResult.eval)
     if (beta <= alpha) {
-      myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
       break
     }
     moveIndex++
   }
 
+  if (bestResult.eval <= alphaOrig) bestResult.evalFlag = "upper-bound"
+  else if (bestResult.eval >= beta) bestResult.evalFlag = "lower-bound"
+  else bestResult.evalFlag = "exact"
+  
   transpositionTableSet(game, bestResult, depth)
 
   // return

@@ -8,6 +8,16 @@ let ttableHit = 0
 let ttableMiss = 0
 
 let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
+// will only store at most 2 killer moves per ply, as recommended by wikipedia, to keep them recent / relevant
+function addKillerMove(r: number, c: number, ply: number){
+  if (!killerMoves[ply]) killerMoves[ply] = []
+  // make sure it's a new move
+  for (const m of killerMoves[ply]){
+    if(m[0] === r && m[1] === c) return
+  }
+  killerMoves[ply].unshift([r,c])
+  if( killerMoves[ply].length >= 2) killerMoves[ply].splice(2)
+}
 
 
 export function findBestMove(game: GameState) {
@@ -21,6 +31,8 @@ export function findBestMove(game: GameState) {
   for (let depth = 1; depth <= 6; depth++) {
     console.log(`searching depth ${depth}...`)
 
+    killerMoves = []
+
     searchNodesVisited = 0
     confirmAlpha = 0
     failHigh = 0
@@ -28,7 +40,7 @@ export function findBestMove(game: GameState) {
     ttableMiss = 0
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-    const results = principalVariationSearch(game, depth, -Infinity, Infinity, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
     prevDepthResults = results
 
     // log results
@@ -51,11 +63,12 @@ export function findBestMove(game: GameState) {
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, alpha: number, beta: number, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState, depth: number, ply :number, alpha: number, beta: number, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
 
+  // ply counts how deep into the search tree we are so far; depth is how much we have left to go and b/c of late move reductions isn't a good measure of how deep we've gone
   // alpha and beta are used for alpha-beta pruning
   // principalVariation is the remainder of the principal variation from the previous iteration of iterative deepening
   // - the first move in this variation is always searched first and at full depth
@@ -69,7 +82,7 @@ function principalVariationSearch(
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
-  const alphaOrig = alpha
+  const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
@@ -97,7 +110,7 @@ function principalVariationSearch(
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
   let moveIndex = 0
-  const moveIterator = makeOrderedMoveIterator(game, principalVariation[0], tableEntry, prevDepthResults)
+  const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, prevDepthResults)
   for (const [r, c] of moveIterator) {
     // search child
     makeMove(game, r, c)
@@ -105,16 +118,16 @@ function principalVariationSearch(
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       const searchDepth = moveIndex < 3 || depth < 3 ? depth - 1 : depth - 2  // late move reduction
-      childResult = principalVariationSearch(game, searchDepth, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // beta - alpha > 1 avoids a redundant null window search
       if (-childResult.eval > alpha && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(game, depth - 1, -beta, -alpha, restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
@@ -141,7 +154,7 @@ function principalVariationSearch(
     // they would avoid coming here, so we can stop looking at this node
     alpha = Math.max(alpha, bestResult.eval)
     if (beta <= alpha) {
-      // myResult.evalFlag = "lower-bound"  // it's possible we could have forced even better in this position, but we stopped looking
+      addKillerMove(r, c, ply)
       break
     }
     moveIndex++
@@ -198,6 +211,7 @@ const shapePriority: Record<string, number> = {
 
 export function* makeOrderedMoveIterator(
   game: GameState,
+  ply: number,
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
   prevDepthResults: SearchResult[] = []
@@ -233,6 +247,19 @@ export function* makeOrderedMoveIterator(
       }
     }
   }
+  // third priority are killer moves
+  if (killerMoves[ply]){
+    for (const move of killerMoves[ply]){
+      if (!isValidMove(move)) continue
+      const hash = move[0] + "," + move[1]
+      if (!moveHashes.has(hash)) {
+        yield move
+        moveHashes.add(hash)
+      }
+    }
+  }
+
+
   // rank by heuristics
 
   // if move is part of an existing shape, it is probably interesting
