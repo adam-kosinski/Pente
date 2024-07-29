@@ -88,7 +88,7 @@ function principalVariationSearch(
   if (depth === 0) {
     if (isQuiescent) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
     // else do quiescent search with some reasonable max depth
-    else return principalVariationSearch(game, 7, ply, alpha, beta, true, principalVariation) // no move has been made so don't negate
+    else return principalVariationSearch(game, 10, ply, alpha, beta, true, principalVariation) // no move has been made so don't negate
   }
   let nonQuietMoves: number[][] = []  // declare out here so we can use it later if needed
   if (isQuiescent) {

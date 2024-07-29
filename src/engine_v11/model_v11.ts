@@ -6,6 +6,11 @@ export interface GameState {
   prevMoves: PrevMove[]
   isOver: boolean
   linearShapes: LinearShape[]
+
+  rowStrings: string[]
+  colStrings: string[]
+  mainDiagStrings: string[]  // diagonal (\)
+  crossDiagStrings: string[]  // diagonal (/)
 }
 
 export interface PrevMove {
@@ -48,26 +53,54 @@ export function createNewGame(boardSize: number): GameState {
     nMoves: 0,
     prevMoves: [],
     isOver: false,
-    linearShapes: []
+    linearShapes: [],
+
+    rowStrings: new Array(boardSize).fill(new Array(boardSize).fill("_").join("")),
+    colStrings: new Array(boardSize).fill(new Array(boardSize).fill("_").join("")),
+    mainDiagStrings: [],
+    crossDiagStrings: []
   } as GameState
+
   for (let r = 0; r < boardSize; r++) {
     game.board.push({})
   }
+  for (let i = -boardSize + 1; i <= boardSize - 1; i++) {
+    const diagLength = boardSize - Math.abs(i)
+    const s = new Array(diagLength).fill("_").join("")
+    game.mainDiagStrings.push(s)
+    game.crossDiagStrings.push(s)
+  }
   return game
 }
 
 
-export function moveString(game: GameState){
+export function moveString(game: GameState) {
   return game.board.length + "~" + game.prevMoves.map(m => m.addedGems[0].join(".")).join("|")
 }
-export function loadFromString(s: string){
+export function loadFromString(s: string) {
   const [size, moveString] = s.split("~")
   const moves = moveString.split("|").map(m => m.split(".").map(x => Number(x)))
   const game = createNewGame(Number(size))
-  for(const [r,c] of moves) {
+  for (const [r, c] of moves) {
     makeMove(game, r, c)
   }
   return game
+}
+
+
+export function mainDiagIndices(game: GameState, r: number, c: number) {
+  return [c - r + game.board.length - 1, Math.min(r, c)]  // index of the diagonal, then index within the diagonal
+}
+export function crossDiagIndices(game: GameState, r: number, c: number) {
+  return [r + c, game.board.length - 1 - r]  // index of the diagonal, then index within the diagonal
+}
+export function updateBoardStrings(game: GameState, char: "_" | 0 | 1, r: number, c: number) {
+  game.rowStrings[r] = game.rowStrings[r].substring(0, c) + char + game.rowStrings[r].substring(c + 1)
+  game.colStrings[c] = game.colStrings[c].substring(0, r) + char + game.colStrings[c].substring(r + 1)
+  const [mainDiag, i] = mainDiagIndices(game, r, c)
+  game.mainDiagStrings[mainDiag] = game.mainDiagStrings[mainDiag].substring(0, i) + char + game.mainDiagStrings[mainDiag].substring(i + 1)
+  const [crossDiag, j] = crossDiagIndices(game, r, c)
+  game.crossDiagStrings[crossDiag] = game.crossDiagStrings[crossDiag].substring(0, j) + char + game.crossDiagStrings[crossDiag].substring(j + 1)
 }
 
 
@@ -86,6 +119,7 @@ export function makeMove(game: GameState, r: number, c: number) {
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer
   moveInfo.addedGems.push([r, c])
+  updateBoardStrings(game, game.currentPlayer, r, c)
 
   // check for capture of opponent pair(s)
   // iterate over directions
@@ -103,6 +137,8 @@ export function makeMove(game: GameState, r: number, c: number) {
 
         delete game.board[r + dy][c + dx]
         delete game.board[r + 2 * dy][c + 2 * dx]
+        updateBoardStrings(game, "_", r + dy, c + dx)
+        updateBoardStrings(game, "_", r + 2 * dy, c + 2 * dx)
         moveInfo.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx])
         game.captures[game.currentPlayer]++
       }
@@ -141,11 +177,13 @@ export function undoMove(game: GameState) {
   // remove added gems
   prevMove.addedGems.forEach(([r, c]) => {
     delete game.board[r][c]
+    updateBoardStrings(game, "_", r, c)
   })
   // undo captures
   game.captures[prevPlayer] -= prevMove.removedGems.length / 2
   prevMove.removedGems.forEach(([r, c]) => {
     game.board[r][c] = game.currentPlayer   // current player is whose gems were just captured
+    updateBoardStrings(game, game.currentPlayer, r, c)
   })
 
   // remove added linear shapes
@@ -227,53 +265,95 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
     return true
   })
 
-  
+
   // add new shapes - takes about 70% of time
 
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
 
-  // iterate over each of four directions
-  for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
-    // construct string to search for patterns in - takes about 50% of time
-    let s = ""
-    let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
-    let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
-    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
-      // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
-      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
-        s += "x"
-        continue
-      }
-      const value = game.board[r][c]
-      s += value === undefined ? "_" : value
+  const rowString = game.rowStrings[r0].substring(0, r0 + maxLinearShapeLength)
+  for (const match of rowString.matchAll(allPatternsRegEx)) {
+    const pattern: string = match[1]
+    const patternInfo = linearShapes.get(pattern)
+    const begin = [r0, match.index]
+    const end = [r0, match.index + patternInfo.length - 1] // inclusive index
+    const shape: LinearShape = {
+      type: patternInfo.type,
+      pattern: pattern,
+      owner: patternInfo.owner,
+      begin: begin,
+      end: end,
+      length: patternInfo.length,
+      hash: [patternInfo.type, patternInfo.owner, begin, end].join()
     }
-
-    // search for each pattern - takes about 20% of time
-    for (const match of s.matchAll(allPatternsRegEx)) {
-      const pattern: string = match[1]
-      const patternInfo = linearShapes.get(pattern)
-      const begin = [
-        rInit + dir[0] * match.index,
-        cInit + dir[1] * match.index
-      ]
-      const end = [  // inclusive index
-        rInit + dir[0] * (match.index + patternInfo.length - 1),
-        cInit + dir[1] * (match.index + patternInfo.length - 1)
-      ]
-      const shape: LinearShape = {
-        type: patternInfo.type,
-        pattern: pattern,
-        owner: patternInfo.owner,
-        begin: begin,
-        end: end,
-        length: patternInfo.length,
-        hash: [patternInfo.type, patternInfo.owner, begin, end].join()
-      }
-      if (!existingShapeHashes.has(shape.hash)) {
-        game.linearShapes.push(shape)
-        existingShapeHashes.add(shape.hash)
-        update.added.push(shape)
-      }
+    if (!existingShapeHashes.has(shape.hash)) {
+      game.linearShapes.push(shape)
+      existingShapeHashes.add(shape.hash)
+      update.added.push(shape)
+    }
+  }
+  const colString = game.colStrings[c0].substring(0, r0 + maxLinearShapeLength)
+  for (const match of colString.matchAll(allPatternsRegEx)) {
+    const pattern: string = match[1]
+    const patternInfo = linearShapes.get(pattern)
+    const begin = [match.index, c0]
+    const end = [match.index + patternInfo.length - 1, c0] // inclusive index
+    const shape: LinearShape = {
+      type: patternInfo.type,
+      pattern: pattern,
+      owner: patternInfo.owner,
+      begin: begin,
+      end: end,
+      length: patternInfo.length,
+      hash: [patternInfo.type, patternInfo.owner, begin, end].join()
+    }
+    if (!existingShapeHashes.has(shape.hash)) {
+      game.linearShapes.push(shape)
+      existingShapeHashes.add(shape.hash)
+      update.added.push(shape)
+    }
+  }
+  const [mainDiag, i] = mainDiagIndices(game, r0, c0)
+  const mainDiagString = game.mainDiagStrings[mainDiag]
+  for (const match of mainDiagString.matchAll(allPatternsRegEx)) {
+    const pattern: string = match[1]
+    const patternInfo = linearShapes.get(pattern)
+    const begin = [r0 + match.index - i, c0 + match.index - i]
+    const end = [begin[0] + patternInfo.length - 1, begin[1] + patternInfo.length - 1] // inclusive index
+    const shape: LinearShape = {
+      type: patternInfo.type,
+      pattern: pattern,
+      owner: patternInfo.owner,
+      begin: begin,
+      end: end,
+      length: patternInfo.length,
+      hash: [patternInfo.type, patternInfo.owner, begin, end].join()
+    }
+    if (!existingShapeHashes.has(shape.hash)) {
+      game.linearShapes.push(shape)
+      existingShapeHashes.add(shape.hash)
+      update.added.push(shape)
+    }
+  }
+  const [crossDiag, j] = crossDiagIndices(game, r0, c0)
+  const crossDiagString = game.crossDiagStrings[crossDiag]
+  for (const match of crossDiagString.matchAll(allPatternsRegEx)) {
+    const pattern: string = match[1]
+    const patternInfo = linearShapes.get(pattern)
+    const begin = [r0 + j - match.index, c0 + match.index - j]
+    const end = [begin[0] - patternInfo.length + 1, begin[1] + patternInfo.length - 1] // inclusive index
+    const shape: LinearShape = {
+      type: patternInfo.type,
+      pattern: pattern,
+      owner: patternInfo.owner,
+      begin: begin,
+      end: end,
+      length: patternInfo.length,
+      hash: [patternInfo.type, patternInfo.owner, begin, end].join()
+    }
+    if (!existingShapeHashes.has(shape.hash)) {
+      game.linearShapes.push(shape)
+      existingShapeHashes.add(shape.hash)
+      update.added.push(shape)
     }
   }
   return update

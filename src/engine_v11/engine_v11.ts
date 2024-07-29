@@ -221,7 +221,12 @@ export function copyGame(game: GameState): GameState {
     nMoves: game.nMoves,
     prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
     isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes)),
+
+    rowStrings: game.rowStrings.slice(),
+    colStrings: game.colStrings.slice(),
+    mainDiagStrings: game.mainDiagStrings.slice(),
+    crossDiagStrings: game.crossDiagStrings.slice()
   }
 }
 
