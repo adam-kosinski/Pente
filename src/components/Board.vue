@@ -2,6 +2,7 @@
 
 import { computed } from 'vue'
 import { type GameState } from '@/engine_v8/model_v8';
+import CapturesArea from './CapturesArea.vue';
 
 const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
 const emit = defineEmits(["make-move"])
@@ -47,26 +48,33 @@ function tryToMakeMove(r: number, c: number) {
         </div>
         <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
 
-        <div class="grid-line-box">
-
-        </div>
+        <div class="grid-line-box"></div>
       </div>
     </template>
+    <CapturesArea class="captures top" :n-captures="game.captures[1]" :gemPlayer="0"  />
+    <CapturesArea class="captures bottom" :n-captures="game.captures[0]" :gemPlayer="1" />
   </div>
 </template>
 
 <style scoped>
 .board {
-  width: 80vh;
-  height: 80vh;
+  --board-width: 90vh;
+  width: var(--board-width);
+  height: var(--board-width);
+  --intersection-size: calc(var(--board-width) / v-bind('boardSize + 3'));
+
+  box-sizing: border-box;
   position: relative;
-  padding: 30px;
   --grid-line-width: 0.15vh;
   --grid-line-color: maroon;
+  border: 1.5vh solid rgb(102, 74, 63);
 
   background-color: tan;
   display: grid;
-  grid-template-columns: repeat(v-bind('boardSize'), 1fr);
+  grid-template-columns: repeat(v-bind('boardSize'), var(--intersection-size));
+  grid-template-rows: repeat(v-bind('boardSize'), var(--intersection-size));
+  justify-content: center;
+  align-content: center;
   box-shadow: 4px 4px 4px 1px rgba(0, 0, 0, 0.5);
 }
 
@@ -115,16 +123,6 @@ function tryToMakeMove(r: number, c: number) {
   transform: rotateZ(45deg);
 }
 
-.gem {
-  width: 90%;
-  height: 90%;
-  border-radius: 90%;
-  position: relative;
-  z-index: 5;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  /* background color comes from config in main.css */
-}
-
 .ghost.gem {
   opacity: 0.5;
   display: none;
@@ -152,5 +150,15 @@ function tryToMakeMove(r: number, c: number) {
 
 .col-label {
   transform: translateY(50%);
+}
+
+.captures {
+  height: var(--intersection-size);
+}
+.captures.top {
+  top: 1vh;
+}
+.captures.bottom {
+  bottom: 1vh;
 }
 </style>
