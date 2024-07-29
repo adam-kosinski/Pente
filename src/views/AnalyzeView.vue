@@ -15,8 +15,8 @@ import Board from '@/components/Board.vue';
 // import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v9/model_v9';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v9/engine_v9';
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, moveString, loadFromString } from '@/engine_v10/model_v10';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v10/engine_v10';
+// import { createNewGame, makeMove, undoMove, updateLinearShapes, moveString, loadFromString } from '@/engine_v10/model_v10';
+// import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v10/engine_v10';
 
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, moveString, loadFromString } from '@/engine_v11/model_v11';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v11/engine_v11';
@@ -24,9 +24,13 @@ import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMov
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 // eval = 0 [[10,10],[8,8],[9,8],[11,11],[9,10],[9,9],[10,8],[9,9],[12,11],[9,12]] BUT the third move [9,8] is illegal
 
+import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString } from '@/engine_v12/model_v12';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v12/engine_v12';
+
 
 const game = ref(createNewGame(19))
-game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
+game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
+// game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 
 declare global {
@@ -99,7 +103,7 @@ function showBoardStrings() {
   <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
   <button @click="undoMove(game)">Undo Move</button><br>
   <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear Shapes</button><br>
-  <button @click="console.log(moveString(game))">Save Game</button><br>
+  <button @click="console.log(gameToString(game))">Save Game</button><br>
   <button @click="console.log(game)">Game Object</button><br>
   <button @click="showBoardStrings()">Board Strings</button><br>
   <button @click="timeTest()">Time Test</button>
