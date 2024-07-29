@@ -1,5 +1,5 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v10";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v10";
+import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v11";
+import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v11";
 
 let normalNodesVisited = 0
 let quiescentNodesVisited = 0
@@ -258,10 +258,10 @@ export function* makeOrderedMoveIterator(
   }
 
   // first priority is principal variation move
-  // if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-  //   yield principalVariationMove
-  //   moveHashes.add(principalVariationMove.join(","))
-  // }
+  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
+    yield principalVariationMove
+    moveHashes.add(principalVariationMove.join(","))
+  }
   // second priority is transposition table entry (aka hash move)
   if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0]

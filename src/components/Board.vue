@@ -7,12 +7,24 @@ const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
 const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
+const center = computed(() => Math.floor(boardSize.value / 2))
 
 function areCoordsSignificant(r: number, c: number): boolean {
-  const center = Math.floor(boardSize.value / 2)
-  if (r === center && c === center) return true
-  if (Math.abs(r - center) === 3 && Math.abs(c - center) === 3) return true;
+  if (r === center.value && c === center.value) return true
+  if (Math.abs(r - center.value) === 3 && Math.abs(c - center.value) === 3) return true;
   return false
+}
+
+function isLegalMove(r: number, c: number) {
+  if (props.game.isOver) return false
+  if (props.game.board[r][c] !== undefined) return false
+  if (props.game.nMoves === 0 && (r !== center.value || c !== center.value)) return false
+  return true
+}
+
+function tryToMakeMove(r: number, c: number) {
+  if (!isLegalMove(r, c)) return
+  emit('make-move', r, c)
 }
 
 
@@ -25,14 +37,15 @@ function areCoordsSignificant(r: number, c: number): boolean {
     <img class="board-background" src="/leather-texture.jpg" />
     <template class="row" v-for="r in boardSize">
       <div class="intersection" v-for="c in boardSize"
-        :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize }"
-        @click="$emit('make-move', r - 1, c - 1)">
+        :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize, 'legal-move': isLegalMove(r - 1, c - 1) }"
+        @click="tryToMakeMove(r - 1, c - 1)">
 
         <p v-if="c === 1 && showCoordLabels" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"></div>
-        <div v-else-if="!game.isOver" class="ghost gem" :data-player="game.currentPlayer"></div>
+        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]">
+        </div>
+        <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
 
         <div class="grid-line-box">
 
@@ -72,7 +85,7 @@ function areCoordsSignificant(r: number, c: number): boolean {
   cursor: pointer;
 }
 
-.intersection:has(.real.gem) {
+.intersection:not(.legal-move) {
   cursor: default;
 }
 
@@ -116,7 +129,8 @@ function areCoordsSignificant(r: number, c: number): boolean {
   opacity: 0.5;
   display: none;
 }
-.intersection:hover .gem.ghost {
+
+.intersection.legal-move:hover .gem.ghost {
   display: block;
 }
 
@@ -139,5 +153,4 @@ function areCoordsSignificant(r: number, c: number): boolean {
 .col-label {
   transform: translateY(50%);
 }
-
 </style>
