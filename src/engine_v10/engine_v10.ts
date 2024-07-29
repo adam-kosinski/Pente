@@ -1,7 +1,8 @@
 import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v10";
 import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v10";
 
-let searchNodesVisited = 0
+let normalNodesVisited = 0
+let quiescentNodesVisited = 0
 let confirmAlpha = 0
 let failHigh = 0
 let ttableHit = 0
@@ -28,12 +29,13 @@ export function findBestMove(game: GameState) {
 
   let prevDepthResults: SearchResult[] = []
 
-  for (let depth = 1; depth <= 6; depth++) {
+  for (let depth = 1; depth <= 5; depth++) {
     console.log(`searching depth ${depth}...`)
 
     killerMoves = []
 
-    searchNodesVisited = 0
+    normalNodesVisited = 0
+    quiescentNodesVisited = 0
     confirmAlpha = 0
     failHigh = 0
     ttableHit = 0
@@ -44,7 +46,8 @@ export function findBestMove(game: GameState) {
     prevDepthResults = results
 
     // log results
-    console.log(searchNodesVisited + " nodes visited")
+    console.log(normalNodesVisited + " normal nodes visited")
+    console.log(quiescentNodesVisited + " quiescent nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
     results.slice(0, 2).forEach(r => {
@@ -76,29 +79,29 @@ function principalVariationSearch(
   // prevDepthResults (optional): results from previous iteration of iterative deepening, will be used to help order moves
   // returnAllMoveResults is useful for debugging
 
-  searchNodesVisited++
+  isQuiescent ? quiescentNodesVisited++ : normalNodesVisited++
 
   // leaf node base cases
   if (game.isOver) {
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
-  if (depth === 0){
-    if(isQuiescent) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+  if (depth === 0) {
+    if (isQuiescent) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
     // else do quiescent search with some reasonable max depth
-    else return principalVariationSearch(game, 5, ply + 1, alpha, beta, true, principalVariation) // no move has been made so don't negate
+    else return principalVariationSearch(game, 7, ply, alpha, beta, true, principalVariation) // no move has been made so don't negate
   }
   let nonQuietMoves: number[][] = []  // declare out here so we can use it later if needed
   if (isQuiescent) {
     nonQuietMoves = getNonQuietMoves(game)
     // if reached quiet node in quiescent search, we're done
-    if(nonQuietMoves.length === 0) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+    if (nonQuietMoves.length === 0) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
-  if (tableEntry && tableEntry.depth >= depth) {
+  if (tableEntry && tableEntry.depth >= depth && tableEntry.fromQuiescentSearch === isQuiescent) {
     ttableHit++
     if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
       return [tableEntry.result]
@@ -118,6 +121,15 @@ function principalVariationSearch(
     ttableMiss++
   }
 
+  // quiescent standing pat - helps prune away some of the quiescent search
+  // if the evaluation already exceeds beta, prune (basically assume the evaluation is good enough to approximate alpha)
+  if(isQuiescent){
+    const evaluation = evaluatePosition(game)
+    if (evaluation >= beta && !returnAllMoveResults) {
+      return [{ eval: evaluation, evalFlag: "lower-bound", bestVariation: [] }]
+    }
+  }
+
   const allMoveResults: SearchResult[] = []
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
@@ -133,7 +145,7 @@ function principalVariationSearch(
     if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
-      const searchDepth = moveIndex < 3 || depth < 3 ? depth - 1 : depth - 2  // late move reduction
+      let searchDepth = (depth >= 3 && moveIndex >= 3) ? depth - 2 : depth - 1  // apply late move reduction
       childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, isQuiescent, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // beta - alpha > 1 avoids a redundant null window search
@@ -176,7 +188,7 @@ function principalVariationSearch(
   else if (bestResult.eval >= beta) bestResult.evalFlag = "lower-bound"
   else bestResult.evalFlag = "exact"
 
-  transpositionTableSet(game, bestResult, depth)
+  transpositionTableSet(game, bestResult, depth, isQuiescent)
 
   // return
   if (returnAllMoveResults) {
@@ -273,7 +285,6 @@ export function* makeOrderedMoveIterator(
     }
   }
 
-
   // rank by heuristics
 
   // if move is part of an existing shape, it is probably interesting
@@ -343,6 +354,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
 
   // suppose it is my turn
   // in order of urgency:
+  // if I have a pente threat, just complete pente
   // if the opponent has a pente threat or open tessera, needs to be blocked - not quiet (if I have one the eval function will notice that as a win)
   // else, examine these in order:
   //  - if I have an open or extendable tria, we want to see what happens if I extend it to a open or closed tessera - not quiet
@@ -353,6 +365,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
   //  - but rank capture moves behind the more forcing moves above
   // if there are pairs my opponent can capture, it's not immediately tactical, so we can probably just do the static eval
 
+  const myPenteThreats: LinearShape[] = []
   const opponentPenteThreats: LinearShape[] = []
   const myOpenTrias: LinearShape[] = []
   const myExtendableTrias: LinearShape[] = []
@@ -360,8 +373,12 @@ export function getNonQuietMoves(game: GameState): number[][] {
   const myCaptureThreats: LinearShape[] = []
 
   for (const shape of game.linearShapes) {
-    if (shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer) {
-      opponentPenteThreats.push(shape)
+    if (shape.type.includes("pente-threat")) {
+      if (shape.owner === game.currentPlayer) {
+        myPenteThreats.push(shape)
+        break  // no need to keep looking, just play this move and win
+      }
+      else opponentPenteThreats.push(shape)
     }
     else if (["open-tria", "stretch-tria"].includes(shape.type)) {
       if (shape.owner === game.currentPlayer) myOpenTrias.push(shape)
@@ -375,9 +392,10 @@ export function getNonQuietMoves(game: GameState): number[][] {
     }
   }
 
-  const nonQuietShapes = opponentPenteThreats.length > 0 ?
-    [...opponentPenteThreats, ...myCaptureThreats]
-    : [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
+  let nonQuietShapes: LinearShape[] = []
+  if (myPenteThreats.length > 0) nonQuietShapes = myPenteThreats
+  else if (opponentPenteThreats.length > 0) nonQuietShapes = [...opponentPenteThreats, ...myCaptureThreats]
+  else nonQuietShapes = [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
 
   // get moves from shapes - similar logic to the main move generator
   const moves = []
@@ -394,7 +412,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
       if (!isValidMove([r, c])) continue
       const hash = r + "," + c
       if (!moveHashes.has(hash)) {
-        moves.push([r,c])
+        moves.push([r, c])
         moveHashes.add(hash)
       }
     }
