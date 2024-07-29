@@ -258,10 +258,10 @@ export function* makeOrderedMoveIterator(
   }
 
   // first priority is principal variation move
-  // if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-  //   yield principalVariationMove
-  //   moveHashes.add(principalVariationMove.join(","))
-  // }
+  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
+    yield principalVariationMove
+    moveHashes.add(principalVariationMove.join(","))
+  }
   // second priority is transposition table entry (aka hash move)
   if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0]

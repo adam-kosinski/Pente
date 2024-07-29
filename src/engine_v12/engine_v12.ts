@@ -50,7 +50,7 @@ export function findBestMove(game: GameState) {
     console.log(quiescentNodesVisited + " quiescent nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
-    results.slice(0, 1).forEach(r => {
+    results.slice(0).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
@@ -258,10 +258,10 @@ export function* makeOrderedMoveIterator(
   }
 
   // first priority is principal variation move
-  // if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-  //   yield principalVariationMove
-  //   moveHashes.add(principalVariationMove.join(","))
-  // }
+  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
+    yield principalVariationMove
+    moveHashes.add(principalVariationMove.join(","))
+  }
   // second priority is transposition table entry (aka hash move)
   if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0]

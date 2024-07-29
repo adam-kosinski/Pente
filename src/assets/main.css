@@ -15,9 +15,11 @@
 .gem[data-player="0"] {
     --gem-color: rgb(0, 170, 57);
     --gem-color: black;
+    --gem-color: #ddd;
 }
 
 .gem[data-player="1"] {
     --gem-color: rgb(168, 104, 8);
     --gem-color: #ddd;
+    --gem-color: black;
 }
