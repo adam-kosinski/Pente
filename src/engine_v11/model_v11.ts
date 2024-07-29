@@ -57,6 +57,19 @@ export function createNewGame(boardSize: number): GameState {
 }
 
 
+export function moveString(game: GameState){
+  return game.board.length + "~" + game.prevMoves.map(m => m.addedGems[0].join(".")).join("|")
+}
+export function loadFromString(s: string){
+  const [size, moveString] = s.split("~")
+  const moves = moveString.split("|").map(m => m.split(".").map(x => Number(x)))
+  const game = createNewGame(Number(size))
+  for(const [r,c] of moves) {
+    makeMove(game, r, c)
+  }
+  return game
+}
+
 
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
