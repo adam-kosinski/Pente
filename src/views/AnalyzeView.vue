@@ -12,8 +12,12 @@ import Board from '@/components/Board.vue';
 // import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v8/model_v8';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v8/engine_v8';
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v9/model_v9';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v9/engine_v9';
+// import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v9/model_v9';
+// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v9/engine_v9';
+
+import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v10/model_v10';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v10/engine_v10';
+import { getNonQuietMoves } from '@/engine_v10/engine_v10';
 
 
 const game = ref(createNewGame(19))
@@ -51,7 +55,7 @@ function timeTest(){
 
 
 function printMoves(){
-  for(const move of makeOrderedMoveIterator(game.value)){
+  for(const move of makeOrderedMoveIterator(game.value, 1)){
     console.log(move)
   }
   console.log("")
@@ -67,6 +71,7 @@ function printMoves(){
   <div style="color: white;">Analyze</div>
   <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
   <button @click="profile()">Profile</button><br>
+  <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
   <button @click="printMoves()">Generate Moves</button><br>
   <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
   <button @click="undoMove(game)">Undo Move</button><br>
