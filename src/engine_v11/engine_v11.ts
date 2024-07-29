@@ -7,6 +7,8 @@ let confirmAlpha = 0
 let failHigh = 0
 let ttableHit = 0
 let ttableMiss = 0
+let QSDepthFinish = 0
+let QSNaturalFinish = 0
 
 let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
 // will only store at most 2 killer moves per ply, as recommended by wikipedia, to keep them recent / relevant
@@ -40,6 +42,8 @@ export function findBestMove(game: GameState) {
     failHigh = 0
     ttableHit = 0
     ttableMiss = 0
+    QSDepthFinish = 0
+    QSNaturalFinish = 0
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
     const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
@@ -48,6 +52,7 @@ export function findBestMove(game: GameState) {
     // log results
     console.log(normalNodesVisited + " normal nodes visited")
     console.log(quiescentNodesVisited + " quiescent nodes visited")
+    console.log("QS natural finish fraction", (QSNaturalFinish / (QSDepthFinish + QSNaturalFinish)).toPrecision(4))
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
     results.slice(0, 1).forEach(r => {
@@ -83,18 +88,25 @@ function principalVariationSearch(
 
   // leaf node base cases
   if (game.isOver) {
+    if(isQuiescent) QSNaturalFinish++
     return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
   }
   if (depth === 0) {
-    if (isQuiescent) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+    if (isQuiescent) {
+      QSDepthFinish++
+      return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+    }
     // else do quiescent search with some reasonable max depth
-    else return principalVariationSearch(game, 7, ply, alpha, beta, true, principalVariation) // no move has been made so don't negate
+    else return principalVariationSearch(game, 10, ply, alpha, beta, true, principalVariation) // no move has been made so don't negate
   }
   let nonQuietMoves: number[][] = []  // declare out here so we can use it later if needed
   if (isQuiescent) {
     nonQuietMoves = getNonQuietMoves(game)
     // if reached quiet node in quiescent search, we're done
-    if (nonQuietMoves.length === 0) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+    if (nonQuietMoves.length === 0){
+      QSNaturalFinish++
+      return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
+    }
   }
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
@@ -126,6 +138,7 @@ function principalVariationSearch(
   if(isQuiescent){
     const evaluation = evaluatePosition(game)
     if (evaluation >= beta && !returnAllMoveResults) {
+      QSNaturalFinish++
       return [{ eval: evaluation, evalFlag: "lower-bound", bestVariation: [] }]
     }
   }
