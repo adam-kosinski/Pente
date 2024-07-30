@@ -13,7 +13,7 @@ import Board from '@/components/Board.vue';
 // eval = 0 [[10,10],[8,8],[9,8],[11,11],[9,10],[9,9],[10,8],[9,9],[12,11],[9,12]] BUT the third move [9,8] is illegal
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v12/engine_v12';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
 
@@ -33,6 +33,7 @@ game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 
 
+const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game changes, the analysis lines don't behave weirdly before we give them the next analysis result
 const futurePosition: Ref<GameState | undefined> = ref()
 
 
@@ -81,6 +82,7 @@ function printMoves() {
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
   result.value = findBestMove(game.value, true)
+  analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
   // analyzePosition()
@@ -101,8 +103,8 @@ onMounted(() => {
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
       <div class="analysis-lines">
-        <AnalysisLine :game="game" :result="result" @show-future-position="(position) => futurePosition = position"
-          @clear-future-position="futurePosition = undefined" />
+        <AnalysisLine :game="analysisLineGameCopy" :result="result" @show-future-position="(position) => futurePosition = position"
+          @clear-future-position="futurePosition = undefined" @go-to-position="(position) => game = position" />
       </div>
       <div class="future-position-container">
         <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
@@ -140,12 +142,12 @@ onMounted(() => {
 }
 
 .board-container {
-  flex: 0 1 90vh;
+  flex: 0 0.75 90vh;
   align-self: flex-start;
 }
 
 .analysis-panel {
-  flex: 0 1 400px;
+  flex: 0 1 500px;
   height: 90vh;
   padding: 20px;
   box-sizing: border-box;
