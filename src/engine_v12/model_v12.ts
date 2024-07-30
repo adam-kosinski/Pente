@@ -3,12 +3,12 @@ export interface GameState {
   currentPlayer: 0 | 1
   captures: Record<0 | 1, number>
   nMoves: number
-  prevMoves: PrevMove[]
+  prevMoves: MoveInfo[]
   isOver: boolean
   linearShapes: LinearShape[]
 }
 
-export interface PrevMove {
+export interface MoveInfo {
   addedGems: number[][]  // list of [r,c]
   removedGems: number[][]  // list of [r,c,player]
   linearShapeUpdate: LinearShapeUpdate
@@ -82,7 +82,7 @@ export function makeMove(game: GameState, r: number, c: number) {
   if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
 
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
-  const moveInfo: PrevMove = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
+  const moveInfo: MoveInfo = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
 
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer

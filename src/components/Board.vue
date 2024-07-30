@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
-import { type GameState } from '@/engine_v8/model_v8';
+import { type GameState } from '@/engine_v12/model_v12';
 import CapturesArea from './CapturesArea.vue';
 
 const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
@@ -9,6 +9,7 @@ const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
 const center = computed(() => Math.floor(boardSize.value / 2))
+const lastMove = computed(() => props.game.prevMoves.slice(-1)[0]?.addedGems[0])
 
 function areCoordsSignificant(r: number, c: number): boolean {
   if (r === center.value && c === center.value) return true
@@ -44,7 +45,8 @@ function tryToMakeMove(r: number, c: number) {
         <p v-if="c === 1 && showCoordLabels" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]">
+        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"
+          :class="{'last-move': r - 1 === lastMove[0] && c - 1 === lastMove[1]}">
         </div>
         <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
 
@@ -133,6 +135,32 @@ function tryToMakeMove(r: number, c: number) {
   height: 25%;
   border: var(--grid-line-width) double var(--grid-line-color);
   transform: rotateZ(45deg);
+}
+
+.gem {
+  width: 90%;
+  height: 90%;
+  border-radius: 90%;
+  position: relative;
+  z-index: 5;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  background-image: radial-gradient(circle at 35% 35%,
+      color-mix(in hsl, white 90%, var(--gem-color)) 0%,
+      color-mix(in hsl, white 40%, var(--gem-color)) 15%,
+      var(--gem-color) 40%,
+      color-mix(in hsl, black 20%, var(--gem-color)) 70%);
+}
+
+.gem[data-player="0"] {
+  --gem-color: var(--gem-color-0);
+}
+
+.gem[data-player="1"] {
+  --gem-color: var(--gem-color-1);
+}
+
+.gem.last-move {
+  box-shadow: 0 0 4px 4px white;
 }
 
 .ghost.gem {

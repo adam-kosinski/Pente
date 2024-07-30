@@ -19,22 +19,21 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 const game = ref(createNewGame(19))
 
-const futurePosition: Ref<GameState | undefined> = ref()
-
-
 // v12 thinks this lost-in-2 position is a win, b/c somehow the opponent will decide not to complete pente
 // game.value = loadFromString("19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6")
 
 // v12 blunders pente-in-1 here, again for some reason it thinks the opponent will go and do something else besides completing pente
-// game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
+game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
 
 
 // cool trap
-game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
+// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
 
 // game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 
+
+const futurePosition: Ref<GameState | undefined> = ref()
 
 
 declare global {
