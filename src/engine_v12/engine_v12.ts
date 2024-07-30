@@ -51,7 +51,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     console.log(quiescentNodesVisited + " quiescent nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
-    results.slice(0).forEach(r => {
+    results.slice(0, 2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
@@ -124,7 +124,6 @@ function principalVariationSearch(
     }
     if (alpha >= beta && !returnAllMoveResults) {
       // cutoff
-      console.log("ttable", JSON.stringify(tableEntry.result))
       return [tableEntry.result]
     }
   }
@@ -132,18 +131,24 @@ function principalVariationSearch(
     ttableMiss++
   }
 
-  // quiescent standing pat - helps prune away some of the quiescent search
-  // if the evaluation already exceeds beta, prune (basically assume the evaluation is good enough to approximate alpha)
+  // quiescent standing pat
+  // assume the true evaluation will be better or the same as the current evaluation (assume some move exists to at least maintain the position)
+  // if the evaluation already exceeds beta, we can then apply alpha-beta pruning now
   if (isQuiescent) {
     const evaluation = evaluatePosition(game)
     if (evaluation >= beta && !returnAllMoveResults) {
-      return [{ eval: evaluation, evalFlag: "lower-bound", bestVariation: [] }]
+      const flag = evaluation === Infinity ? "exact" : "lower-bound"
+      return [{ eval: evaluation, evalFlag: flag, bestVariation: [] }]
     }
   }
 
   let moveIndex = 0
   const moveIterator = isQuiescent ? nonQuietMoves : makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, prevDepthResults)
   for (const [r, c] of moveIterator) {
+    if(isQuiescent && ply === 2 && r === 10 && c === 8){
+      console.log("debugger")
+    }
+    
     // search child
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
@@ -175,11 +180,20 @@ function principalVariationSearch(
     }
     allMoveResults.push(myResult)
 
-    // if no result recorded yet, ours is the best (important not to skip this, so that we end up with a meaningful variation)
+    // if no result recorded yet, ours is the best
+    // - important not to skip this, so that we end up with a meaningful (i.e. at least "try" to stop the threat) variation in the case that all moves lead to -Infinity eval
     if (bestResult.bestVariation.length === 0) bestResult = myResult
-    // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
-    if (myResult.eval > bestResult.eval && (myResult.evalFlag === "lower-bound" || myResult.evalFlag === "exact")) {
-      bestResult = myResult
+    // check if best so far - exclude upper-bound results from being the best line, for all you know the true eval could be -Infinity
+    else if (myResult.evalFlag === "lower-bound" || myResult.evalFlag === "exact") {
+      if (myResult.eval > bestResult.eval) {  // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
+        bestResult = myResult
+      }
+      // if we found another way to force a win that's shorter, prefer that one
+      // - note: my eval being Infinity necessarily means it equals the best result eval
+      // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
+      else if (myResult.eval === Infinity && myResult.bestVariation.length < bestResult.bestVariation.length) {
+        bestResult = myResult
+      }
     }
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (alpha),
@@ -201,8 +215,8 @@ function principalVariationSearch(
   // return
   if (returnAllMoveResults) {
     allMoveResults.sort((a, b) => {
-      if(a.evalFlag === "exact" && b.evalFlag !== "exact") return -1
-      if(b.evalFlag === "exact" && a.evalFlag !== "exact") return 1
+      if (a.evalFlag === "exact" && b.evalFlag !== "exact") return -1
+      if (b.evalFlag === "exact" && a.evalFlag !== "exact") return 1
       return b.eval - a.eval
     })
     return allMoveResults
