@@ -21,7 +21,7 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function findBestMove(game: GameState, absoluteEval: boolean = false): SearchResult {
+export function findBestMove(game: GameState, maxDepth: number, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if 1st player winning, negative if 2nd player winning (otherwise positive means current player winning)
@@ -30,7 +30,7 @@ export function findBestMove(game: GameState, absoluteEval: boolean = false): Se
 
   let prevDepthResults: SearchResult[] = []
 
-  for (let depth = 1; depth <= 1; depth++) {
+  for (let depth = 1; depth <= maxDepth; depth++) {
     console.log(`searching depth ${depth}...`)
 
     killerMoves = []
