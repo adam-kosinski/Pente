@@ -137,28 +137,6 @@ function tryToMakeMove(r: number, c: number) {
   transform: rotateZ(45deg);
 }
 
-.gem {
-  width: 90%;
-  height: 90%;
-  border-radius: 90%;
-  position: relative;
-  z-index: 5;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  background-image: radial-gradient(circle at 35% 35%,
-      color-mix(in hsl, white 90%, var(--gem-color)) 0%,
-      color-mix(in hsl, white 40%, var(--gem-color)) 15%,
-      var(--gem-color) 40%,
-      color-mix(in hsl, black 20%, var(--gem-color)) 70%);
-}
-
-.gem[data-player="0"] {
-  --gem-color: var(--gem-color-0);
-}
-
-.gem[data-player="1"] {
-  --gem-color: var(--gem-color-1);
-}
-
 .gem.last-move {
   box-shadow: 0 0 4px 4px white;
 }
