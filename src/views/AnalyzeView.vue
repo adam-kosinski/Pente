@@ -1,19 +1,7 @@
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { onMounted, ref, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
-
-// import { createNewGame, makeMove, undoMove } from '@/engine_v6/model_v6';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v6/engine_v6';
-
-// import { createNewGame, makeMove, undoMove } from '@/engine_v7/model_v7';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v7/engine_v7';
-
-// import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v8/model_v8';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v8/engine_v8';
-
-// import { createNewGame, makeMove, undoMove, updateLinearShapes } from '@/engine_v9/model_v9';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator } from '@/engine_v9/engine_v9';
 
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, moveString, loadFromString } from '@/engine_v10/model_v10';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v10/engine_v10';
@@ -24,22 +12,27 @@ import Board from '@/components/Board.vue';
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 // eval = 0 [[10,10],[8,8],[9,8],[11,11],[9,10],[9,9],[10,8],[9,9],[12,11],[9,12]] BUT the third move [9,8] is illegal
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString } from '@/engine_v12/model_v12';
+import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult } from '@/engine_v12/model_v12';
 import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v12/engine_v12';
+import AnalysisLine from '@/components/AnalysisLine.vue';
 
 
 const game = ref(createNewGame(19))
+
+
 // v12 thinks this lost-in-2 position is a win, b/c somehow the opponent will decide not to complete pente
-game.value = loadFromString("19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6")
+// game.value = loadFromString("19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6")
+
 // v12 blunders pente-in-1 here, again for some reason it thinks the opponent will go and do something else besides completing pente
-game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
+// game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
 
 
 // cool trap
-// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
+game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
 
 // game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
+
 
 declare global {
   interface Console {
@@ -76,7 +69,6 @@ function timeTest() {
   console.log(performance.now() - start + " ms")
 }
 
-
 function printMoves() {
   for (const move of makeOrderedMoveIterator(game.value, 1)) {
     console.log(move)
@@ -84,17 +76,13 @@ function printMoves() {
   console.log("")
 }
 
-
-function showBoardStrings() {
-  console.log("row strings")
-  console.log(game.value.rowStrings.join("\n"))
-  console.log("col strings")
-  console.log(game.value.colStrings.slice().reverse().join("\n"))
-  console.log("main diags")
-  console.log(game.value.mainDiagStrings.slice().reverse().join("\n"))
-  console.log("cross diags")
-  console.log(game.value.crossDiagStrings.join("\n"))
+const result: Ref<SearchResult | undefined> = ref(undefined)
+function analyzePosition() {
+  result.value = findBestMove(game.value, true)
 }
+onMounted(() => {
+  // analyzePosition()
+})
 
 
 </script>
@@ -103,27 +91,72 @@ function showBoardStrings() {
 
 
 <template>
-  <div style="color: white;">Analyze</div>
-  <button @click="console.log(findBestMove(game))">Find Best Move</button><br>
-  <button @click="profile()">Profile</button><br>
-  <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
-  <button @click="printMoves()">Generate Moves</button><br>
-  <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
-  <button @click="undoMove(game)">Undo Move</button><br>
-  <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear Shapes</button><br>
-  <button @click="console.log(gameToString(game))">Save Game</button><br>
-  <button @click="console.log(game)">Game Object</button><br>
-  <button @click="showBoardStrings()">Board Strings</button><br>
-  <button @click="timeTest()">Time Test</button>
+  <div class="analyze-view">
 
-  <Board class="board" :game="game" show-coord-labels @make-move="(r, c) => makeMove(game, r, c)" />
+    <div class="board-container">
+      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c); analyzePosition(); }" />
+    </div>
+    <div class="analysis-panel">
+      <p class="analysis-title">Analysis</p>
+      <div class="analysis-lines">
+        <AnalysisLine :game="game" :result="result" />
+      </div>
+      <div class="button-panel">
+        <button @click="analyzePosition()">Find Best Move</button><br>
+        <button @click="profile()">Profile</button><br>
+        <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
+        <button @click="printMoves()">Generate Moves</button><br>
+        <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
+        <button @click="undoMove(game)">Undo Move</button><br>
+        <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
+          Shapes</button><br>
+        <button @click="console.log(gameToString(game))">Save Game</button><br>
+        <button @click="console.log(game)">Game Object</button><br>
+        <button @click="timeTest()">Time Test</button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 
+
 <style scoped>
-.board {
-  position: absolute;
-  inset: 0;
-  margin: auto;
+.analyze-view {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  padding: 5vh 20px;
+  box-sizing: border-box;
+}
+
+.board-container {
+  flex: 0 1 90vh;
+  align-self: flex-start;
+}
+
+.analysis-panel {
+  flex: 0 1 400px;
+  height: 90vh;
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--medium-brown);
+  background-color: var(--dark-brown);
+  color: #fffe;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-title {
+  font-size: 30px;
+  text-align: center;
+  margin: 0;
+}
+.analysis-lines {
 }
 </style>

@@ -34,7 +34,7 @@ function tryToMakeMove(r: number, c: number) {
 
 
 <template>
-  <div class="board">
+  <div class="board-element">
     <img class="board-background" src="/leather-texture.jpg" />
     <template class="row" v-for="r in boardSize">
       <div class="intersection" v-for="c in boardSize"
@@ -51,23 +51,33 @@ function tryToMakeMove(r: number, c: number) {
         <div class="grid-line-box"></div>
       </div>
     </template>
-    <CapturesArea class="captures top" :n-captures="game.captures[1]" :gemPlayer="0"  />
+    <CapturesArea class="captures top" :n-captures="game.captures[1]" :gemPlayer="0" />
     <CapturesArea class="captures bottom" :n-captures="game.captures[0]" :gemPlayer="1" />
   </div>
 </template>
 
 <style scoped>
-.board {
-  --board-width: 90vh;
-  width: var(--board-width);
-  height: var(--board-width);
-  --intersection-size: calc(var(--board-width) / v-bind('boardSize + 3'));
+.board-wrapper {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  align-self: center;
+}
+
+.board-element {
+  width: 100%;
+  max-width: 90vh;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  /* need to override align stretch, so will play nice with flexbox and grid layouts */
+  align-self: center;
+  --intersection-size: calc(100% / v-bind('boardSize + 3'));
 
   box-sizing: border-box;
   position: relative;
-  --grid-line-width: 0.15vh;
-  --grid-line-color: maroon;
-  border: 1.5vh solid rgb(102, 74, 63);
+  --grid-line-width: 1px;
+  --grid-line-color: rgba(128, 0, 0, 0.8);
+  border: 10px solid rgb(102, 74, 63);
 
   background-color: tan;
   display: grid;
@@ -155,10 +165,12 @@ function tryToMakeMove(r: number, c: number) {
 .captures {
   height: var(--intersection-size);
 }
+
 .captures.top {
-  top: 1vh;
+  top: 1%;
 }
+
 .captures.bottom {
-  bottom: 1vh;
+  bottom: 1%;
 }
 </style>

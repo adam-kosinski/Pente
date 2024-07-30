@@ -21,9 +21,10 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function findBestMove(game: GameState) {
+export function findBestMove(game: GameState, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
+  // if absoluteEval is true, return positive eval if 1st player winning, negative if 2nd player winning (otherwise positive means current player winning)
 
   game = copyGame(game)
 
@@ -60,7 +61,14 @@ export function findBestMove(game: GameState) {
     if (Math.abs(results[0].eval) === Infinity) break
   }
 
-  return prevDepthResults[0].bestVariation[0]
+  const answer = prevDepthResults[0]
+  if (absoluteEval && game.currentPlayer === 1) {
+    // flip eval sign
+    answer.eval = -answer.eval
+    if (answer.evalFlag === "lower-bound") answer.evalFlag = "upper-bound"
+    else if (answer.evalFlag === "upper-bound") answer.evalFlag = "lower-bound"
+  }
+  return prevDepthResults[0]
 }
 
 
@@ -123,7 +131,7 @@ function principalVariationSearch(
 
   // quiescent standing pat - helps prune away some of the quiescent search
   // if the evaluation already exceeds beta, prune (basically assume the evaluation is good enough to approximate alpha)
-  if(isQuiescent){
+  if (isQuiescent) {
     const evaluation = evaluatePosition(game)
     if (evaluation >= beta && !returnAllMoveResults) {
       return [{ eval: evaluation, evalFlag: "lower-bound", bestVariation: [] }]
@@ -244,11 +252,11 @@ export function* makeOrderedMoveIterator(
 ) {
   // because good moves often cause a cutoff, don't generate more less-good moves unless needed
   // so, create an iterator that generates moves as needed (using generator syntax for readability)
-
   // first move must be in center
   if (game.nMoves === 0) {
     const center = Math.floor(game.board.length / 2)
-    return [[center, center]]
+    yield [center, center]
+    return
   }
 
   // setup
@@ -487,10 +495,10 @@ export function evaluatePosition(game: GameState) {
     !game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
     initiativeSign = -1
   }
-  else if (game.linearShapes.some(shape => ["open-pair", "stretch-two"].includes(shape.type) && shape.owner === game.currentPlayer)){
+  else if (game.linearShapes.some(shape => ["open-pair", "stretch-two"].includes(shape.type) && shape.owner === game.currentPlayer)) {
     initiativeSign = 1
   }
-  else if (game.linearShapes.some(shape => shape.type === "open-pair" && shape.owner !== game.currentPlayer)){
+  else if (game.linearShapes.some(shape => shape.type === "open-pair" && shape.owner !== game.currentPlayer)) {
     initiativeSign = 1
   }
   const initiativeEval = initiativeSign * 30
