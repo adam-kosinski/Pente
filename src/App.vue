@@ -25,6 +25,32 @@ import { RouterLink, RouterView } from 'vue-router'
   --dark-brown: rgb(49, 29, 22);
   --medium-brown: rgb(102, 74, 63);
   font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
+  .gem {
+    width: 90%;
+    height: 90%;
+    border-radius: 90%;
+    position: relative;
+    z-index: 5;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    background-image: radial-gradient(circle at 35% 35%,
+            color-mix(in hsl, white 90%, var(--gem-color)) 0%,
+            color-mix(in hsl, white 40%, var(--gem-color)) 15%,
+            var(--gem-color) 40%,
+            color-mix(in hsl, black 20%, var(--gem-color)) 70%);
+}
+
+.gem[data-player="0"] {
+    --gem-color: rgb(0, 170, 57);
+    --gem-color: black;
+    --gem-color: #ddd;
+}
+
+.gem[data-player="1"] {
+    --gem-color: rgb(168, 104, 8);
+    --gem-color: #ddd;
+    --gem-color: black;
+}
 }
 body {
   margin: 0;
