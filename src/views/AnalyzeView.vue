@@ -94,7 +94,7 @@ onMounted(() => {
   <div class="analyze-view">
 
     <div class="board-container">
-      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c); analyzePosition(); }" />
+      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c) }" />
     </div>
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
@@ -156,7 +156,5 @@ onMounted(() => {
   font-size: 30px;
   text-align: center;
   margin: 0;
-}
-.analysis-lines {
 }
 </style>
