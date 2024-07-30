@@ -86,6 +86,8 @@ function tryToMakeMove(r: number, c: number) {
   justify-content: center;
   align-content: center;
   box-shadow: 4px 4px 4px 1px rgba(0, 0, 0, 0.5);
+
+  color: black;
 }
 
 .board-background {

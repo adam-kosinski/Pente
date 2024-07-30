@@ -12,12 +12,14 @@ import Board from '@/components/Board.vue';
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 // eval = 0 [[10,10],[8,8],[9,8],[11,11],[9,10],[9,9],[10,8],[9,9],[12,11],[9,12]] BUT the third move [9,8] is illegal
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult } from '@/engine_v12/model_v12';
+import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
 import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v12/engine_v12';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
 
 const game = ref(createNewGame(19))
+
+const futurePosition: Ref<GameState | undefined> = ref()
 
 
 // v12 thinks this lost-in-2 position is a win, b/c somehow the opponent will decide not to complete pente
@@ -32,6 +34,7 @@ game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|1
 
 // game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
+
 
 
 declare global {
@@ -99,7 +102,11 @@ onMounted(() => {
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
       <div class="analysis-lines">
-        <AnalysisLine :game="game" :result="result" />
+        <AnalysisLine :game="game" :result="result" @show-future-position="(position) => futurePosition = position"
+          @clear-future-position="futurePosition = undefined" />
+      </div>
+      <div class="future-position-container">
+        <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
       </div>
       <div class="button-panel">
         <button @click="analyzePosition()">Find Best Move</button><br>
@@ -156,5 +163,13 @@ onMounted(() => {
   font-size: 30px;
   text-align: center;
   margin: 0;
+}
+
+.future-position-container {
+  position: relative;
+  width: 100%;
+}
+.future-position-container > div {
+  position: absolute;
 }
 </style>
