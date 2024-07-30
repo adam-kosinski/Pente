@@ -30,7 +30,7 @@ export function findBestMove(game: GameState, absoluteEval: boolean = false): Se
 
   let prevDepthResults: SearchResult[] = []
 
-  for (let depth = 1; depth <= 5; depth++) {
+  for (let depth = 1; depth <= 1; depth++) {
     console.log(`searching depth ${depth}...`)
 
     killerMoves = []
@@ -106,6 +106,8 @@ function principalVariationSearch(
   }
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
+  const allMoveResults: SearchResult[] = []
+  let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
@@ -122,6 +124,7 @@ function principalVariationSearch(
     }
     if (alpha >= beta && !returnAllMoveResults) {
       // cutoff
+      console.log("ttable", JSON.stringify(tableEntry.result))
       return [tableEntry.result]
     }
   }
@@ -137,9 +140,6 @@ function principalVariationSearch(
       return [{ eval: evaluation, evalFlag: "lower-bound", bestVariation: [] }]
     }
   }
-
-  const allMoveResults: SearchResult[] = []
-  let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
   let moveIndex = 0
   const moveIterator = isQuiescent ? nonQuietMoves : makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, prevDepthResults)
@@ -170,7 +170,7 @@ function principalVariationSearch(
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
       eval: -childResult.eval,
-      evalFlag: childResult.evalFlag === "lower-bound" ? "upper-bound" : "upper-bound" ? "lower-bound" : "exact",
+      evalFlag: (childResult.evalFlag === "lower-bound") ? "upper-bound" : (childResult.evalFlag === "upper-bound") ? "lower-bound" : "exact",
       bestVariation: [[r, c], ...childResult.bestVariation]
     }
     allMoveResults.push(myResult)
@@ -200,7 +200,11 @@ function principalVariationSearch(
 
   // return
   if (returnAllMoveResults) {
-    allMoveResults.sort((a, b) => b.eval - a.eval)
+    allMoveResults.sort((a, b) => {
+      if(a.evalFlag === "exact" && b.evalFlag !== "exact") return -1
+      if(b.evalFlag === "exact" && a.evalFlag !== "exact") return 1
+      return b.eval - a.eval
+    })
     return allMoveResults
   }
   return [bestResult]
