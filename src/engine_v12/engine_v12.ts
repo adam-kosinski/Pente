@@ -170,7 +170,7 @@ function principalVariationSearch(
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
       eval: -childResult.eval,
-      evalFlag: childResult.evalFlag === "lower-bound" ? "upper-bound" : "exact",  // only possible result.evalFlag values are "lower-bound" and "exact"
+      evalFlag: childResult.evalFlag === "lower-bound" ? "upper-bound" : "upper-bound" ? "lower-bound" : "exact",
       bestVariation: [[r, c], ...childResult.bestVariation]
     }
     allMoveResults.push(myResult)
@@ -192,8 +192,8 @@ function principalVariationSearch(
     moveIndex++
   }
 
-  if (bestResult.eval <= alphaOrig) bestResult.evalFlag = "upper-bound"
-  else if (bestResult.eval >= beta) bestResult.evalFlag = "lower-bound"
+  if (bestResult.eval <= alphaOrig) bestResult.evalFlag = bestResult.eval === -Infinity ? "exact" : "upper-bound"
+  else if (bestResult.eval >= beta) bestResult.evalFlag = bestResult.eval === Infinity ? "exact" : "lower-bound"
   else bestResult.evalFlag = "exact"
 
   transpositionTableSet(game, bestResult, depth, isQuiescent)
