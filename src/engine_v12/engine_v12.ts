@@ -178,7 +178,7 @@ function principalVariationSearch(
     // if no result recorded yet, ours is the best (important not to skip this, so that we end up with a meaningful variation)
     if (bestResult.bestVariation.length === 0) bestResult = myResult
     // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
-    if (myResult.eval > bestResult.eval) {
+    if (myResult.eval > bestResult.eval && (myResult.evalFlag === "lower-bound" || myResult.evalFlag === "exact")) {
       bestResult = myResult
     }
 
@@ -294,6 +294,8 @@ export function* makeOrderedMoveIterator(
   }
 
   // rank by heuristics
+
+  // TODO - if there is a pente threat, the only relevant move for the owner is completing it, and the only relevant moves for the opponent are within it or captures or completing their own pente
 
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
