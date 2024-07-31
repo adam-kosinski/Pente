@@ -43,7 +43,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     ttableMiss = 0
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, false, [], principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, false, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
     prevDepthResults = results
 
     // log results
@@ -74,7 +74,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, ply: number, alpha: number, beta: number, isQuiescent: boolean, movesSoFar:number[][], principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState, depth: number, ply: number, alpha: number, beta: number, isQuiescent: boolean, movesSoFar:number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -96,7 +96,7 @@ function principalVariationSearch(
   if (depth === 0) {
     if (isQuiescent) return [{ eval: evaluatePosition(game), evalFlag: "exact", bestVariation: [] }]
     // else do quiescent search with some reasonable max depth
-    else return principalVariationSearch(game, 10, ply, alpha, beta, true, movesSoFar, principalVariation) // no move has been made so don't negate
+    else return principalVariationSearch(game, 10, ply, alpha, beta, true, movesSoFar, false, principalVariation) // no move has been made so don't negate
   }
   let nonQuietMoves: number[][] = []  // declare out here so we can use it later if needed
   if (isQuiescent) {
@@ -150,18 +150,18 @@ function principalVariationSearch(
     const restOfPrincipalVariation = principalVariation.slice(1)
 
     let childResult: SearchResult
-    
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], restOfPrincipalVariation)[0]
+    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], usingNullWindow, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       let searchDepth = (depth >= 3 && moveIndex >= 3) ? depth - 2 : depth - 1  // apply late move reduction
-      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, isQuiescent, [...movesSoFar, [r,c]], restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, isQuiescent, [...movesSoFar, [r,c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
+      // need to check equal to as well as the inequalities, because if the null window was -Infinity, -Infinity, any move will cause a cutoff by being equal to -Infinity
       // beta - alpha > 1 avoids a redundant null window search
-      if (-childResult.eval > alpha && beta - alpha > 1) {
+      if (alpha <= -childResult.eval && -childResult.eval <= beta && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], false, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
@@ -211,7 +211,8 @@ function principalVariationSearch(
   else if (bestResult.eval >= beta) bestResult.evalFlag = bestResult.eval === Infinity ? "exact" : "lower-bound"
   else bestResult.evalFlag = "exact"
 
-  transpositionTableSet(game, bestResult, depth, isQuiescent)
+  // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion)
+  if(!usingNullWindow) transpositionTableSet(game, bestResult, depth, isQuiescent)
 
   // return
   if (returnAllMoveResults) {
