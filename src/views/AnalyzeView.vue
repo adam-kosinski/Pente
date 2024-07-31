@@ -17,20 +17,21 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v13/model_v13';
-import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
+import { findBestMove, evaluatePosition, copyGame, getBlockingCaptures, canBlockAllPenteThreats } from '@/engine_v13/engine_v13';
 import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(1)
+const testPositionIndex = ref(5)
 const testPositions = [
   "19~",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
   "19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8",
   "19~9.9|9.7|7.7|7.9|10.6|8.6",
   // cool trap
-  "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11"
+  "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11",
+  "19~9.9|5.14|10.9|9.16|11.9|14.15|12.9|13.9|9.8|3.5|9.7|3.12|9.6|9.5|3.8|8.7|12.8|12.7"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -128,6 +129,7 @@ onMounted(() => {
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(game)">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
+        <button @click="console.log(canBlockAllPenteThreats(game, game.linearShapes.filter(s => s.type.includes('pente-threat'))))">Can Block All</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>
