@@ -207,6 +207,47 @@ for (const [type, pattern] of Object.entries(linearShapeDef)) {
 const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).join("|") + "))", "g")
 
 
+
+
+const start = performance.now()
+
+export const patternMatchMap = new Map()
+const characters = ['_', '0', '1'];
+
+function generateString(currentString: string, remainingLength: number) {
+  if (remainingLength === 0) {
+    const matches = []
+    for (const pattern of linearShapes.keys()) {
+      for (let start = 0; start <= currentString.length - pattern.length; start++) {
+        let matchHere = true
+        for (let i = 0; i < pattern.length; i++) {
+          if (currentString[start + i] !== pattern[i]) {
+            matchHere = false
+            break
+          }
+        }
+        if (matchHere) {
+          matches.push({ index: start, pattern: pattern })
+        }
+      }
+    }
+    if (matches.length > 0) patternMatchMap.set(currentString, matches);
+    return;
+  }
+  characters.forEach(char => {
+    generateString(currentString + char, remainingLength - 1);
+  });
+}
+generateString('', 11);
+
+// Generate all possible strings of length 11
+console.log("map built", performance.now() - start)
+console.log(patternMatchMap)
+
+
+window.queries = new Map()
+
+
 export function updateLinearShapes(game: GameState, r0: number, c0: number): LinearShapeUpdate {
   // Given a game state, update the game state's list of linear shapes.
   // Will only take into account shapes that include the r0,c0 location.
@@ -215,13 +256,13 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
 
   const update: LinearShapeUpdate = { added: [], removed: [] }
 
-  // remove any shapes that are no longer there - takes about 30% of time
+  // remove any shapes that are no longer there
   game.linearShapes = game.linearShapes.filter(shape => {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      const s = game.board[r][c] === undefined ? "_" : String(game.board[r][c])
-      if (s !== shape.pattern[i]) {
+      const s = game.board[r][c] === undefined ? "_" : game.board[r][c].toString()
+      if (s !== shape.pattern.charAt(i)) {
         update.removed.push(shape)
         return false
       }
@@ -230,7 +271,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
   })
 
 
-  // add new shapes - takes about 70% of time
+  // add new shapes
 
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
 
@@ -250,7 +291,86 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
       s += value === undefined ? "_" : value
     }
 
-    // search for each pattern - takes about 20% of time
+    // search for each pattern
+    const matches = patternMatchMap.get(s)
+    const count = queries.get(s)
+    queries.set(s, count === undefined ? 1 : queries.get(s) + 1)
+    if(!matches) continue
+    for (const match of matches) {
+      const pattern: string = match.pattern
+      const patternInfo = linearShapes.get(pattern)
+      const begin = [
+        rInit + dir[0] * match.index,
+        cInit + dir[1] * match.index
+      ]
+      const end = [  // inclusive index
+        rInit + dir[0] * (match.index + patternInfo.length - 1),
+        cInit + dir[1] * (match.index + patternInfo.length - 1)
+      ]
+      const shape: LinearShape = {
+        type: patternInfo.type,
+        pattern: pattern,
+        owner: patternInfo.owner,
+        begin: begin,
+        end: end,
+        length: patternInfo.length,
+        hash: [patternInfo.type, patternInfo.owner, begin, end].join()
+      }
+      if (!existingShapeHashes.has(shape.hash)) {
+        game.linearShapes.push(shape)
+        existingShapeHashes.add(shape.hash)
+        update.added.push(shape)
+      }
+    }
+  }
+  return update
+}
+
+
+export function oldUpdateLinearShapes(game: GameState, r0: number, c0: number): LinearShapeUpdate {
+  // Given a game state, update the game state's list of linear shapes.
+  // Will only take into account shapes that include the r0,c0 location.
+  // This takes advantage of the fact that a move can only create/affect
+  // shapes containing its location, or locations of captured stones
+
+  const update: LinearShapeUpdate = { added: [], removed: [] }
+
+  // remove any shapes that are no longer there
+  game.linearShapes = game.linearShapes.filter(shape => {
+    const dy = Math.sign(shape.end[0] - shape.begin[0])
+    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
+      const s = game.board[r][c] === undefined ? "_" : game.board[r][c].toString()
+      if (s !== shape.pattern.charAt(i)) {
+        update.removed.push(shape)
+        return false
+      }
+    }
+    return true
+  })
+
+
+  // add new shapes
+
+  const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
+
+  // iterate over each of four directions
+  for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
+    // construct string to search for patterns in - takes about 50% of time
+    let s = ""
+    let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
+    let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
+    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
+      // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
+      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
+        s += "x"
+        continue
+      }
+      const value = game.board[r][c]
+      s += value === undefined ? "_" : value
+    }
+
+    // search for each pattern
     for (const match of s.matchAll(allPatternsRegEx)) {
       const pattern: string = match[1]
       const patternInfo = linearShapes.get(pattern)

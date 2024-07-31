@@ -16,13 +16,13 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v13/model_v13';
+import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState, patternMatchMap } from '@/engine_v13/model_v13';
 import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
 import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(6)
+const testPositionIndex = ref(4)
 const testPositions = [
   "19~",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -58,9 +58,8 @@ function profile() {
 }
 
 function timeTest() {
-  const start = performance.now()
   // const query = "__11_1_00__"
-  // const big_re = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
+  const big_re = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
   // const compressed = /(?=(1{5}|0{5}|_1{4}_|_0{4}_|1{4}_|_1{4}|0{4}_|_0{4}|1{3}_1|1_1{3}|0{3}_0|0_0{3}|1{2}_1{2}|0{2}_0{2}|_1{3}_|_0{3}_|_1{2}_1_|_1_1{2}_|_0{2}_0_|_0_0{2}_|01{3}__|__1{3}0|10{3}__|__0{3}1|_1{2}_|_0{2}_|10{2}_|_0{2}1|01{2}_|_1{2}0|_1_1_|_0_0_))/g
   // const noFlip = /(?=(11111|00000|_1111_|_0000_|1111_|0000_|111_1|000_0|11_11|00_00|_111_|_000_|_11_1_|_00_0_|0111__|1000__|01_11_|10_00_|011_1_|100_0_|_11_|_00_|100_|011_|_1_1_|_0_0_))/g
   // const first_half = /(?=(11111|_1111_|1111_|_1111|111_1|1_111|_11_1_|_1_11_|0111__|__1110|11_11|100_|_110|_1_1_|_111_|_00_))/g
@@ -74,10 +73,18 @@ function timeTest() {
   // const all_re = [
   //  /11111/,/00000/,/_1111_/,/_0000_/,/1111_/,/_1111/,/0000_/,/_0000/,/111_1/,/1_111/,/000_0/,/0_000/,/11_11/,/00_00/,/_111_/,/_000_/,/_11_1_/,/_1_11_/,/_00_0_/,/_0_00_/,/0111__/,/__1110/,/1000__/,/__0001/,/_11_/,/_00_/,/100_/,/_001/,/011_/,/_110/,/_1_1_/,/_0_0_/ 
   // ]
-  for (let i = 0; i < 20000; i++) {
+  const iterations = 10000
+  let start = performance.now()
+  for (let i = 0; i < iterations; i++) {
     updateLinearShapes(game.value, 10, 10)
   }
-  console.log(performance.now() - start + " ms")
+  console.log("A:", performance.now() - start + " ms")
+  start = performance.now()
+  for (let i = 0; i < iterations; i++) {
+    oldUpdateLinearShapes(game.value, 10, 10)
+  }
+  console.log("B:", performance.now() - start + " ms")
+
 }
 
 function printMoves() {
@@ -95,6 +102,15 @@ function analyzePosition() {
 onMounted(() => {
   // analyzePosition()
 })
+
+
+function matchAll(str: string, q: string) {
+  const matches = []
+  for(let i=0; i<str.length-q.length; i++){
+    if(str.substring(i, i + q.length) === q) matches.push(i)
+  }
+  return matches
+}
 
 
 </script>

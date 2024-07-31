@@ -53,7 +53,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
     console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
     console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-    results.slice(0).forEach(r => {
+    results.slice(0, 1).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
     })
@@ -190,7 +190,7 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor
-    if(moveIndex >= 15) break
+    if (moveIndex >= 15) break
   }
   nMovesGenerated.push(moveIndex)
 
@@ -263,7 +263,7 @@ export function evaluatePosition(game: GameState) {
     }
   }
   // if opponent has multiple pente threats, check if we can block them all
-  if(!canBlockAllPenteThreats(game, opponentPenteThreats)) return -Infinity
+  if (!canBlockAllPenteThreats(game, opponentPenteThreats)) return -Infinity
 
   // get evaluation from linear shapes
   // below, higher eval is better for player owning this shape
@@ -374,7 +374,7 @@ export function canBlockAllPenteThreats(game: GameState, threats: LinearShape[])
   // function to check whether placing a gem can block all the pente threats
   // a threat can be blocked by placing a gem within it, or by capturing one of its gems
 
-  if(threats.length === 0) return true
+  if (threats.length === 0) return true
 
   let blockSpot: string = ""
   let normalBlockWorks = true
@@ -385,26 +385,26 @@ export function canBlockAllPenteThreats(game: GameState, threats: LinearShape[])
     for (let i = 0; i < threat.length; i++) {
       const r = threat.begin[0] + i * dy
       const c = threat.begin[1] + i * dx
-      if (threat.pattern[i] === "_"){
+      if (threat.pattern[i] === "_") {
         const s = r + "," + c
-        if(blockSpot === "") blockSpot = s  // if first spot we need to block, write it down
-        else if(blockSpot !== s) {  // if we found a second, different spot we need to block, can't do both at once
+        if (blockSpot === "") blockSpot = s  // if first spot we need to block, write it down
+        else if (blockSpot !== s) {  // if we found a second, different spot we need to block, can't do both at once
           normalBlockWorks = false
           break
         }
       }
     }
-    if(!normalBlockWorks) break
+    if (!normalBlockWorks) break
   }
 
-  if(normalBlockWorks) return true
+  if (normalBlockWorks) return true
   // otherwise, try blocking by capturing from all the threats
 
   let capturesBlockingAll = getBlockingCaptures(game.linearShapes, threats[0])
-  for (let i=1; i<threats.length; i++) {
+  for (let i = 1; i < threats.length; i++) {
     const captureHashSet = new Set(getBlockingCaptures(game.linearShapes, threats[i]).map(s => s.hash))
     capturesBlockingAll = capturesBlockingAll.filter(s => captureHashSet.has(s.hash))
   }
-  if(capturesBlockingAll.length === 0) return false
+  if (capturesBlockingAll.length === 0) return false
   return true
 }

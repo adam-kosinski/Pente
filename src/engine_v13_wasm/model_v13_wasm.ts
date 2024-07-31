@@ -169,48 +169,58 @@ export function undoMove(game: Game): void {
   game.isOver = false
 }
 
-/*
 
-const linearShapeDef = {
+
+const linearShapeDef: string[][] = [
   // shapes are defined from the perspective of me as player 1 and opponent as player 0
   // shapes should be defined so that they are "owned" by player 1, intuitively
   // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns
   // NOTE that if one of these is a prefix for another (i.e. share the same starting index), the one coming first in the list will be the only one found
   // - this is due to using one big union regex for better performance, and not really an issue as long as bigger threats are listed first in this list
   // - so generally, more pressing / threatening shapes should come first in this list
-  "pente": "11111",
-  "open-tessera": "_1111_",
-  "pente-threat-4": "1111_",
-  "pente-threat-31": "111_1",
-  "pente-threat-22": "11_11",
-  "open-tria": "_111_",
-  "stretch-tria": "_11_1_",  // should be recognized instead of open pair
-  "extendable-tria": "0111__",
-  "extendable-stretch-tria": "01_11_",
-  "extendable-stretch-tria-threatened": "011_1_",  // recognized instead of capture threat
-  "open-pair": "_11_",
-  "capture-threat": "100_",
-  "stretch-two": "_1_1_",
-  "double-stretch-two": "_1__1_"
+  ["pente", "11111"],
+  ["open-tessera", "_1111_"],
+  ["pente-threat-4", "1111_"],
+  ["pente-threat-31", "111_1"],
+  ["pente-threat-22", "11_11"],
+  ["open-tria", "_111_"],
+  ["stretch-tria", "_11_1_"],  // should be recognized instead of open pair
+  ["extendable-tria", "0111__"],
+  ["extendable-stretch-tria", "01_11_"],
+  ["extendable-stretch-tria-threatened", "011_1_"],  // recognized instead of capture threat
+  ["open-pair", "_11_"],
+  ["capture-threat", "100_"],
+  ["stretch-two", "_1_1_"],
+  ["double-stretch-two", "_1__1_"]
+]
+
+class LinearShapeInfo {
+  type: string = ""
+  owner: i32 = 0
+  length: i32 = 0
 }
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup
 // key is a string matching the pattern, e.g. 011_ for a capture threat
-export const linearShapes = new Map()
+export const linearShapes: Map<string, LinearShapeInfo> = new Map()
 let maxLinearShapeLength = 0
 
-for (const [type, pattern] of Object.entries(linearShapeDef)) {
+for(let i=0; i<linearShapeDef.length; i++){
+  const type = linearShapeDef[i][0]
+  const pattern = linearShapeDef[i][1]
   // add forward and backwards patterns
   linearShapes.set(pattern, { type: type, owner: 1, length: pattern.length })
   linearShapes.set(pattern.split("").reverse().join(""), { type: type, owner: 1, length: pattern.length })
   // do it for the other player
-  const patternSwitchPlayers = pattern.replace(/1/g, "x").replace(/0/g, "1").replace(/x/g, "0")
+  const patternSwitchPlayers = pattern.replaceAll("1", "x").replaceAll("0", "1").replace("x", "0")
   linearShapes.set(patternSwitchPlayers, { type: type, owner: 0, length: pattern.length })
   linearShapes.set(patternSwitchPlayers.split("").reverse().join(""), { type: type, owner: 0, length: pattern.length })
   // update max length
-  maxLinearShapeLength = Math.max(pattern.length, maxLinearShapeLength)
+  maxLinearShapeLength = i32(Math.max(pattern.length, maxLinearShapeLength))
 }
-const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).join("|") + "))", "g")
+// const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).join("|") + "))", "g")
+
+
 
 
 export function updateLinearShapes(game: Game, r0: number, c0: number): LinearShapeUpdate {
@@ -219,15 +229,15 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   // This takes advantage of the fact that a move can only create/affect
   // shapes containing its location, or locations of captured stones
 
-  const update: LinearShapeUpdate = { added: [], removed: [] }
+  const update: LinearShapeUpdate = new LinearShapeUpdate()
 
   // remove any shapes that are no longer there - takes about 30% of time
   game.linearShapes = game.linearShapes.filter(shape => {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      const s = game.board[r][c] === undefined ? "_" : String(game.board[r][c])
-      if (s !== shape.pattern[i]) {
+      const s = game.board[r][c] === -1 ? "_" : game.board[r][c].toString()
+      if (s !== shape.pattern.charAt(i)) {
         update.removed.push(shape)
         return false
       }
@@ -238,10 +248,16 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   
   // add new shapes - takes about 70% of time
 
-  const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
+  const existingShapeHashes = new Set()
+  for(let i=0; i<game.linearShapes.length; i++){
+    existingShapeHashes.add(game.linearShapes[i].hash)
+  }
 
   // iterate over each of four directions
-  for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
+  const dirs = [[0, 1], [1, 0], [1, 1], [-1, 1]]
+  for (let d=0; d<dirs.length; d++) { // row, col, (\) diagonal, (/) diagonal
+    const dir = dirs[d]
+    
     // construct string to search for patterns in - takes about 50% of time
     let s = ""
     let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
@@ -286,4 +302,3 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   }
   return update
 }
-  */
