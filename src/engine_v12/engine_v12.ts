@@ -151,7 +151,7 @@ function principalVariationSearch(
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], usingNullWindow, restOfPrincipalVariation)[0]
+    if (moveIndex == 0 || true) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], usingNullWindow, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       let searchDepth = (depth >= 3 && moveIndex >= 3) ? depth - 2 : depth - 1  // apply late move reduction
