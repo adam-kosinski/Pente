@@ -1,0 +1,33 @@
+Store all move results not just at the root node, but also from its children via the transposition table (for better move ordering)
+ - eh there are probably better ways to improve move ordering
+Cache linear shapes in the transposition table
+ - doesn't really help
+Store a better losing variation, e.g. in this position it suggests black play 10,8 which is dumb
+{"board":[{},{},{},{},{},{},{},{"11":0,"13":0},{"10":1},{"8":1,"9":0,"10":0,"11":0,"12":1,"13":0},{"9":1,"11":1},{"10":1},{},{},{},{},{},{},{}],"currentPlayer":0,"captures":{"0":0,"1":0},"nMoves":12,"prevMoves":[{"addedGems":[[9,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[10,9]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[9,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}],"removed":[]}},{"addedGems":[[8,10]],"removedGems":[],"linearShapeUpdate":{"added":[],"removed":[]}},{"addedGems":[[7,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}],"removed":[]}},{"addedGems":[[10,11]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,11],"end":[10,11],"length":5,"hash":"stretch-two,0,6,11,10,11"}]}},{"addedGems":[[9,10]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-tria","pattern":"_000_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"open-tria,0,9,8,9,12"}],"removed":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"stretch-two,0,9,8,9,12"}]}},{"addedGems":[[9,8]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"}],"removed":[{"type":"open-tria","pattern":"_000_","owner":0,"begin":[9,8],"end":[9,12],"length":5,"hash":"open-tria,0,9,8,9,12"}]}},{"addedGems":[[9,13]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"pente-threat-31","pattern":"000_0","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"pente-threat-31,0,9,9,9,13"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,10],"end":[10,14],"length":5,"hash":"stretch-two,0,6,10,10,14"}],"removed":[]}},{"addedGems":[[9,12]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-pair","pattern":"_11_","owner":1,"begin":[11,10],"end":[8,13],"length":4,"hash":"open-pair,1,11,10,8,13"}],"removed":[{"type":"pente-threat-31","pattern":"000_0","owner":0,"begin":[9,9],"end":[9,13],"length":5,"hash":"pente-threat-31,0,9,9,9,13"}]}},{"addedGems":[[7,13]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[7,10],"end":[7,14],"length":5,"hash":"stretch-two,0,7,10,7,14"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,13],"end":[10,13],"length":5,"hash":"stretch-two,0,6,13,10,13"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[10,10],"end":[6,14],"length":5,"hash":"stretch-two,0,10,10,6,14"}],"removed":[]}},{"addedGems":[[11,10]],"removedGems":[],"linearShapeUpdate":{"added":[{"type":"open-tria","pattern":"_111_","owner":1,"begin":[8,7],"end":[12,11],"length":5,"hash":"open-tria,1,8,7,12,11"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[12,9],"end":[8,13],"length":5,"hash":"open-tria,1,12,9,8,13"}],"removed":[{"type":"open-pair","pattern":"_11_","owner":1,"begin":[8,7],"end":[11,10],"length":4,"hash":"open-pair,1,8,7,11,10"},{"type":"open-pair","pattern":"_11_","owner":1,"begin":[11,10],"end":[8,13],"length":4,"hash":"open-pair,1,11,10,8,13"}]}}],"isOver":false,"linearShapes":[{"type":"stretch-two","pattern":"_1_1_","owner":1,"begin":[10,8],"end":[10,12],"length":5,"hash":"stretch-two,1,10,8,10,12"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,10],"end":[10,14],"length":5,"hash":"stretch-two,0,6,10,10,14"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[7,10],"end":[7,14],"length":5,"hash":"stretch-two,0,7,10,7,14"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[6,13],"end":[10,13],"length":5,"hash":"stretch-two,0,6,13,10,13"},{"type":"stretch-two","pattern":"_0_0_","owner":0,"begin":[10,10],"end":[6,14],"length":5,"hash":"stretch-two,0,10,10,6,14"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[8,7],"end":[12,11],"length":5,"hash":"open-tria,1,8,7,12,11"},{"type":"open-tria","pattern":"_111_","owner":1,"begin":[12,9],"end":[8,13],"length":5,"hash":"open-tria,1,12,9,8,13"}]}
+
+More efficient check for capture using capture-threat linear shapes - not high priority
+
+Fix bug where it finds the pair in a stretch tria when the stretch tria is oriented one way but not the other
+
+Better move generation - limit # moves generated in forcing situations
+
+(!!) Quiescence search gives different results if you reorder captures before creating trias; not expected
+ - on the surface, it seems to just look for one winning line and then go with that one
+ - sometimes it will miss a winning move because it gets pruned, since beta is -Infinity (any move will raise alpha above beta)
+ - beta being -Infinity can come from:
+   - normal recursion, where the previous call alpha was Infinity
+   - if previous call -alpha-1 = -Infinity  =>  alpha was Infinity
+ - alpha being Infinity can come from:
+   - a child reporting they lost
+
+(!!) I was wondering if quiescence search can trick us when finding a "forced" win, since we didn't look at all possible moves.
+Perhaps the opponent had some other non-tactical move along the search that could have stopped the win? 
+
+Implement mate in X (currently if QS finds a long-winded forced win, it stops looking)
+ - but don't search too much, a forced win is good enough
+
+Add more double threats to the eval
+ - two opponent pente threats (forced win if you don't have a pente threat, you can't block both at once i.e. no intersecting spots, and no captures)
+ - pente threat + tria (in some cases this is a forced win)
+
+Function to check if a capture blocks a threat - useful for QS, and for evaluating forced win situations

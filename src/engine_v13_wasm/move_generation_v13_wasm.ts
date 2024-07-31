@@ -1,5 +1,5 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v13";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13";
+import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v13_wasm";
+import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
 
 
 
