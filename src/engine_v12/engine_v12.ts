@@ -191,6 +191,10 @@ function principalVariationSearch(
       else if (myResult.eval === Infinity && myResult.bestVariation.length < bestResult.bestVariation.length) {
         bestResult = myResult
       }
+      // if dead lost, prefer the longer line
+      else if (myResult.eval === -Infinity && myResult.bestVariation.length > bestResult.bestVariation.length) {
+        bestResult = myResult
+      } 
     }
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (best eval),

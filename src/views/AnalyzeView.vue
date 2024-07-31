@@ -30,7 +30,7 @@ game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
 // hmm... now it's missing the trap
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
-game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11|8.9|10.8")
+// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11|8.9|10.8")
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11|8.9|10.8|8.11|12.11|13.11")
 
 // game.value = loadFromString("19~9.9|10.9|9.11|8.10|7.11|10.11|9.10|9.8")
@@ -88,7 +88,7 @@ function printMoves() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMove(game.value, 2, true)
+  result.value = findBestMove(game.value, 4, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
