@@ -25,6 +25,9 @@ const game = ref(createNewGame(19))
 // v12 blunders pente-in-1 here, again for some reason it thinks the opponent will go and do something else besides completing pente
 // game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
 
+// makes stupid move here
+// game.value = loadFromString("19~9.9|9.7|7.7|7.9|10.6|8.6")
+
 
 // cool trap
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
@@ -81,7 +84,7 @@ function printMoves() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMove(game.value, 4, true)
+  result.value = findBestMove(game.value, 6, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {

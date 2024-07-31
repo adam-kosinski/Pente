@@ -74,7 +74,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, ply: number, alpha: number, beta: number, isQuiescent: boolean, movesSoFar:number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState, depth: number, ply: number, alpha: number, beta: number, isQuiescent: boolean, movesSoFar: number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -134,6 +134,7 @@ function principalVariationSearch(
   // quiescent standing pat
   // assume the true evaluation will be better or the same as the current evaluation (assume some move exists to at least maintain the position)
   // if the evaluation already exceeds beta, we can then apply alpha-beta pruning now
+  // UPDATE - it turns out that in Pente, this assumption doesn't really hold up - sometimes a position will look good, but no matter what you do the opponent has a tactical win
   // if (isQuiescent) {
   //   const evaluation = evaluatePosition(game)
   //   if (evaluation >= beta && !returnAllMoveResults) {
@@ -151,17 +152,17 @@ function principalVariationSearch(
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0 || true) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], usingNullWindow, restOfPrincipalVariation)[0]
+    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r, c]], usingNullWindow, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       let searchDepth = (depth >= 3 && moveIndex >= 3) ? depth - 2 : depth - 1  // apply late move reduction
-      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, isQuiescent, [...movesSoFar, [r,c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, isQuiescent, [...movesSoFar, [r, c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // need to check equal to as well as the inequalities, because if the null window was -Infinity, -Infinity, any move will cause a cutoff by being equal to -Infinity
       // beta - alpha > 1 avoids a redundant null window search
       if (alpha <= -childResult.eval && -childResult.eval <= beta && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r,c]], false, restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, isQuiescent, [...movesSoFar, [r, c]], false, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
@@ -181,21 +182,21 @@ function principalVariationSearch(
     // - important not to skip this, so that we end up with a meaningful (i.e. at least "try" to stop the threat) variation in the case that all moves lead to -Infinity eval
     if (bestResult.bestVariation.length === 0) bestResult = myResult
     // check if best so far - exclude upper-bound results from being the best line, for all you know the true eval could be -Infinity
-    else if (myResult.evalFlag !== "upper-bound") {
-      if (myResult.eval > bestResult.eval) {  // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
-        bestResult = myResult
-      }
-      // if we found another way to force a win that's shorter, prefer that one
-      // - note: my eval being Infinity necessarily means it equals the best result eval
-      // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
-      else if (myResult.eval === Infinity && myResult.bestVariation.length < bestResult.bestVariation.length) {
-        bestResult = myResult
-      }
-      // if dead lost, prefer the longer line
-      else if (myResult.eval === -Infinity && myResult.bestVariation.length > bestResult.bestVariation.length) {
-        bestResult = myResult
-      } 
+    // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
+    else if (myResult.eval > bestResult.eval && myResult.evalFlag !== "upper-bound") {
+      bestResult = myResult
     }
+    // if we found another way to force a win that's shorter, prefer that one
+    // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
+    // UPDATE - commented out because seems buggy?
+    // else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
+    //   bestResult = myResult
+    // }
+    // // if dead lost, prefer the longer line
+    // else if (myResult.eval === -Infinity && myResult.evalFlag !== "lower-bound" && myResult.bestVariation.length > bestResult.bestVariation.length) {
+    //   bestResult = myResult
+    // }
+
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (best eval),
     // they would avoid coming here, so we can stop looking at this node
@@ -203,7 +204,8 @@ function principalVariationSearch(
     if (bestResult.evalFlag !== "upper-bound") {
       alpha = Math.max(alpha, bestResult.eval)
       if (bestResult.eval >= beta) {
-        if(bestResult.eval !== -Infinity) addKillerMove(r, c, ply)  // you don't get to be a killer move for just being any move in a losing position
+        if (bestResult.eval !== -Infinity) addKillerMove(r, c, ply)  // you don't get to be a killer move for just being any move in a losing position
+        bestResult.evalFlag = "lower-bound"
         break
       }
     }
@@ -216,7 +218,7 @@ function principalVariationSearch(
   else bestResult.evalFlag = "exact"
 
   // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion)
-  if(!usingNullWindow) transpositionTableSet(game, bestResult, depth, isQuiescent)
+  if (!usingNullWindow) transpositionTableSet(game, bestResult, depth, isQuiescent)
 
   // return
   if (returnAllMoveResults) {
@@ -429,7 +431,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
   let nonQuietShapes: LinearShape[] = []
   if (myPenteThreats.length > 0) nonQuietShapes = myPenteThreats
   else if (opponentPenteThreats.length > 0) nonQuietShapes = [...opponentPenteThreats, ...myCaptureThreats]
-  else nonQuietShapes = [...myOpenTrias, ...myExtendableTrias,...opponentOpenTrias, ...myCaptureThreats]
+  else nonQuietShapes = [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
 
   // get moves from shapes - similar logic to the main move generator
   const moves = []
