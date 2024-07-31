@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { onMounted, ref, type Ref } from 'vue';
+import { computed, onMounted, ref, watch, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
@@ -17,26 +17,26 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v13/model_v13';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v13/engine_v13';
+import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
+import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
 
 const game = ref(createNewGame(19))
 
-// v12 thinks this lost-in-2 position is a win, b/c somehow the opponent will decide not to complete pente
-// game.value = loadFromString("19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6")
+const testPositionIndex = ref(1)
+const testPositions = [
+  "19~",
+  "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
+  "19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8",
+  "19~9.9|9.7|7.7|7.9|10.6|8.6",
+  // cool trap
+  "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11"
+]
+game.value = loadFromString(testPositions[testPositionIndex.value])
+watch(testPositionIndex, i => {
+  game.value = loadFromString(testPositions[i])
+})
 
-// v12 blunders pente-in-1 here, again for some reason it thinks the opponent will go and do something else besides completing pente
-// game.value = loadFromString("19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8")
-
-// makes stupid move here
-// game.value = loadFromString("19~9.9|9.7|7.7|7.9|10.6|8.6")
-
-
-// cool trap
-// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9")
-// hmm... now it's missing the trap
-game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
-// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11|14.6")
 
 
 const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game changes, the analysis lines don't behave weirdly before we give them the next analysis result
@@ -127,7 +127,10 @@ onMounted(() => {
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(game)">Game Object</button><br>
-        <button @click="timeTest()">Time Test</button>
+        <button @click="timeTest()">Time Test</button><br>
+        <select v-model="testPositionIndex">
+          <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
+        </select>
       </div>
     </div>
   </div>
