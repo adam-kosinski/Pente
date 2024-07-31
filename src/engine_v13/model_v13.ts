@@ -184,7 +184,8 @@ const linearShapeDef = {
   "extendable-stretch-tria-threatened": "011_1_",  // recognized instead of capture threat
   "open-pair": "_11_",
   "capture-threat": "100_",
-  "stretch-two": "_1_1_"
+  "stretch-two": "_1_1_",
+  "double-stretch-two": "_1__1_"
 }
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup

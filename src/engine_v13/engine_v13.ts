@@ -7,6 +7,7 @@ let confirmAlpha = 0
 let failHigh = 0
 let ttableHit = 0
 let ttableMiss = 0
+let nMovesGenerated: number[] = []
 
 let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
 // will only store at most 2 killer moves per ply, as recommended by wikipedia, to keep them recent / relevant
@@ -40,6 +41,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     failHigh = 0
     ttableHit = 0
     ttableMiss = 0
+    nMovesGenerated = []
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
     const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
@@ -49,6 +51,8 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     console.log(normalNodesVisited + " normal nodes visited")
     console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
     console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
+    console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
+    console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
     results.slice(0, 2).forEach(r => {
       const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
       console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
@@ -184,7 +188,11 @@ function principalVariationSearch(
       }
     }
     moveIndex++
+
+    // limit branching factor
+    if(moveIndex >= 15) break
   }
+  nMovesGenerated.push(moveIndex)
 
   if (bestResult.eval <= alphaOrig) bestResult.evalFlag = bestResult.eval === -Infinity ? "exact" : "upper-bound"
   else if (bestResult.eval >= beta) bestResult.evalFlag = bestResult.eval === Infinity ? "exact" : "lower-bound"
@@ -269,7 +277,8 @@ export function evaluatePosition(game: GameState) {
     "pente-threat-22": 15,  // if pairs are vulnerable, the open-pair penalty will apply
     "capture-threat": 10, // compare with open pair (should be better to threaten), and with capture reward (should be more)
     "extendable-stretch-tria-threatened": -10,  // recognized instead of capture threat so give it capture threat score
-    "stretch-two": 10
+    "stretch-two": 10,
+    "double-stretch-two": 7
   }
   // go through shapes and count them, as well as sum up individual shape eval
   let shapeEval = 0
