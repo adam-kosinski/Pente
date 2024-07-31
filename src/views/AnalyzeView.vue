@@ -2,6 +2,7 @@
 
 import { onMounted, ref, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
+import AnalysisLine from '@/components/AnalysisLine.vue';
 
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, moveString, loadFromString } from '@/engine_v10/model_v10';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v10/engine_v10';
@@ -12,9 +13,11 @@ import Board from '@/components/Board.vue';
 // game.value = loadFromString("19~9.9|9.8|11.9|10.9|8.7|11.10|11.7|13.12|12.11|10.8|10.7")
 // eval = 0 [[10,10],[8,8],[9,8],[11,11],[9,10],[9,9],[10,8],[9,9],[12,11],[9,12]] BUT the third move [9,8] is illegal
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
-import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
-import AnalysisLine from '@/components/AnalysisLine.vue';
+// import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
+// import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
+
+import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v13/model_v13';
+import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v13/engine_v13';
 
 
 const game = ref(createNewGame(19))
