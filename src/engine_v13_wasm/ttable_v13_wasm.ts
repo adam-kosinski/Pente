@@ -1,4 +1,4 @@
-import { type GameState, type SearchResult } from "./model_v13_wasm"
+import { Game, type SearchResult } from "./model_v13_wasm"
 
 
 // transposition table - key comes from TTableKey(game) function below
@@ -9,7 +9,7 @@ export interface TTEntry {
 export const transpositionTable: Map<string, TTEntry> = new Map()
 const maxTTableEntries = 20000
 
-export function TTableKey(game: GameState) {
+export function TTableKey(game: Game) {
   let key = String(game.currentPlayer)
   game.board.forEach(row => {
     for (const col in row) {
@@ -19,7 +19,7 @@ export function TTableKey(game: GameState) {
   })
   return key
 }
-export function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
+export function transpositionTableSet(game: Game, result: SearchResult, depth: number) {
   const entry: TTEntry = {
     depth: depth,
     result: result

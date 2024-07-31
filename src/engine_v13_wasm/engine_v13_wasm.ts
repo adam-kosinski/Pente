@@ -1,7 +1,8 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v13_wasm";
+import { makeMove, undoMove, type Game, type SearchResult, type LinearShape } from "./model_v13_wasm";
 import { makeOrderedMoveIterator } from "./move_generation_v13_wasm";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
+import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
 
+/*
 let normalNodesVisited = 0
 let confirmAlpha = 0
 let failHigh = 0
@@ -22,7 +23,7 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function findBestMove(game: GameState, maxDepth: number, absoluteEval: boolean = false): SearchResult {
+export function findBestMove(game: Game, maxDepth: number, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if 1st player winning, negative if 2nd player winning (otherwise positive means current player winning)
@@ -76,7 +77,7 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, ply: number, alpha: number, beta: number, movesSoFar: number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: Game, depth: number, ply: number, alpha: number, beta: number, movesSoFar: number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -215,7 +216,7 @@ function principalVariationSearch(
 
 
 
-export function copyGame(game: GameState): GameState {
+export function copyGame(game: Game): Game {
   return {
     board: game.board.map(row => Object.assign({}, row)),
     currentPlayer: game.currentPlayer,
@@ -231,7 +232,7 @@ export function copyGame(game: GameState): GameState {
 
 
 
-export function evaluatePosition(game: GameState) {
+export function evaluatePosition(game: Game) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
   // because we used negamax for the search function, a higher evaluation is better for the current player, regardless of who that is
 
@@ -370,7 +371,7 @@ export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape):
 }
 
 
-export function canBlockAllPenteThreats(game: GameState, threats: LinearShape[]): boolean {
+export function canBlockAllPenteThreats(game: Game, threats: LinearShape[]): boolean {
   // function to check whether placing a gem can block all the pente threats
   // a threat can be blocked by placing a gem within it, or by capturing one of its gems
 
@@ -408,3 +409,4 @@ export function canBlockAllPenteThreats(game: GameState, threats: LinearShape[])
   if(capturesBlockingAll.length === 0) return false
   return true
 }
+  */

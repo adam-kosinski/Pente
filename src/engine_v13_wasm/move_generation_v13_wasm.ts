@@ -1,5 +1,5 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v13_wasm";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
+import { Game, type SearchResult, type LinearShape } from "./model_v13_wasm";
+import { type TTEntry } from "./ttable_v13_wasm";
 
 
 
@@ -24,7 +24,7 @@ const shapePriority: Record<string, number> = {
 
 
 export function* makeOrderedMoveIterator(
-  game: GameState,
+  game: Game,
   ply: number,
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
@@ -147,7 +147,7 @@ export function* makeOrderedMoveIterator(
 //   "capture-threats": LinearShape[]
 // }
 
-// export function categorizeLinearShapes(game: GameState) {
+// export function categorizeLinearShapes(game: Game) {
 //   const output = {
 //     "my": {},
 //     "opponent": {}
@@ -175,7 +175,7 @@ export function* makeOrderedMoveIterator(
 // }
 
 
-export function getNonQuietMoves(game: GameState): number[][] {
+export function getNonQuietMoves(game: Game): number[][] {
   // function to tell if a position is quiet, used for quiescence search (QS), and which moves relevant to the non-quietness should be considered for the QS
   // if the return move list has length 0, the position is quiet
 

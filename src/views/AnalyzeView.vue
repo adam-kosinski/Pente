@@ -17,9 +17,8 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v13/model_v13';
-import { findBestMove, evaluatePosition, copyGame, getBlockingCaptures, canBlockAllPenteThreats } from '@/engine_v13/engine_v13';
+import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
 import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
-
 
 const game = ref(createNewGame(19))
 
@@ -131,7 +130,6 @@ onMounted(() => {
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(game)">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
-        <button @click="console.log(canBlockAllPenteThreats(game, game.linearShapes.filter(s => s.type.includes('pente-threat'))))">Can Block All</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>

@@ -229,7 +229,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
     return true
   })
 
-  
+
   // add new shapes - takes about 70% of time
 
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
