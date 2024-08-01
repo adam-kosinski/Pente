@@ -220,9 +220,25 @@ function principalVariationSearch(
   return [bestResult]
 }
 
+*/
+
+// below, higher eval is better for player owning this shape
+const shapeEvalMap: Map<string, f32> = new Map()
+shapeEvalMap.set("open-tessera,10000", 0)
+shapeEvalMap.set("open-tria,35", 1)
+shapeEvalMap.set("stretch-tria,25", 2)
+shapeEvalMap.set("open-pair,-5", 3)
+shapeEvalMap.set("pente-threat-4,45", 4)
+shapeEvalMap.set("pente-threat-31,45", 5)
+shapeEvalMap.set("pente-threat-22,45", 6)
+shapeEvalMap.set("capture-threat,10", 7)  // compare with open pair (should be better to threaten), and with capture reward (should be more)
+shapeEvalMap.set("extendable-stretch-tria-threatened,-10", 8)
+shapeEvalMap.set("stretch-two,10", 9)
+shapeEvalMap.set("double-stretch-two,7", 10)
 
 
-export function evaluatePosition(game: Game) {
+
+export function evaluatePosition(game: Game): f32 {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
   // because we used negamax for the search function, a higher evaluation is better for the current player, regardless of who that is
 
@@ -243,7 +259,8 @@ export function evaluatePosition(game: Game) {
   // we now establish that we can't win immediately on our turn
   // look for unstoppable opponent threats
   const opponentPenteThreats: LinearShape[] = []
-  for (const shape of game.linearShapes) {
+  for (let i = 0; i < game.linearShapes.length; i++) {
+    const shape = game.linearShapes[i]
     // if the opponent has an open tessera that can't be blocked by a capture, they've won
     if (shape.owner !== game.currentPlayer && shape.type === "open-tessera") {
       const blockingCaptures = getBlockingCaptures(game.linearShapes, shape)
@@ -254,39 +271,27 @@ export function evaluatePosition(game: Game) {
     }
   }
   // if opponent has multiple pente threats, check if we can block them all
-  if(!canBlockAllPenteThreats(game, opponentPenteThreats)) return -Infinity
+  if (!canBlockAllPenteThreats(game, opponentPenteThreats)) return -Infinity
 
   // get evaluation from linear shapes
-  // below, higher eval is better for player owning this shape
-  const shapeEvalConfig: Record<string, number> = {
-    "open-tessera": 10000,
-    "open-tria": 35,
-    "stretch-tria": 25,
-    "open-pair": -5,
-    "pente-threat-4": 45,
-    "pente-threat-31": 45,
-    "pente-threat-22": 45,
-    "capture-threat": 10, // compare with open pair (should be better to threaten), and with capture reward (should be more)
-    "extendable-stretch-tria-threatened": -10,  // recognized instead of capture threat so give it capture threat score
-    "stretch-two": 10,
-    "double-stretch-two": 7
-  }
+
   // go through shapes and count them, as well as sum up individual shape eval
-  let shapeEval = 0
+  let shapeEval: f32 = 0
   let triaCountMe = 0
   let triaCountOpponent = 0
-  for (const shape of game.linearShapes) {
+  for (let i = 0; i < game.linearShapes.length; i++) {
+    const shape = game.linearShapes[i]
     if (["open-tria", "stretch-tria"].includes(shape.type)) {
       shape.owner === game.currentPlayer ? triaCountMe++ : triaCountOpponent++
     }
-    if (shape.type in shapeEvalConfig) {
-      shapeEval += (shape.owner === game.currentPlayer ? shapeEvalConfig[shape.type] : -shapeEvalConfig[shape.type])
+    if (shapeEvalMap.has(shape.type)) {
+      shapeEval += (shape.owner === game.currentPlayer ? shapeEvalMap.get(shape.type) : -shapeEvalMap.get(shape.type))
     }
   }
 
   // if someone has a double tria, that's essentially an open tessera if not cleverly stopped, score highly
   // if both people have a double tria, it's my move, so I can take advantage of it first and I get the bonus
-  const doubleTriaEval = 5000
+  const doubleTriaEval: f32 = 5000
   if (triaCountMe >= 2) shapeEval += doubleTriaEval
   else if (triaCountOpponent >= 2) shapeEval -= doubleTriaEval
 
@@ -299,7 +304,7 @@ export function evaluatePosition(game: Game) {
   // else you can threaten to capture a pair, you have the initiative
   // ignoring extendable trias for now
   // TODO - incorporate some measure of initiative over time, and how many threats you have waiting for the future
-  let initiativeSign = 0
+  let initiativeSign: f32 = 0
   if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer)) {
     // I don't have a pente threat b/c would have been caught higher up
     initiativeSign = -1  // opponent
@@ -315,21 +320,21 @@ export function evaluatePosition(game: Game) {
   else if (game.linearShapes.some(shape => shape.type === "open-pair" && shape.owner !== game.currentPlayer)) {
     initiativeSign = 1
   }
-  const initiativeEval = initiativeSign * 30
+  const initiativeEval: f32 = initiativeSign * 30
 
   // console.log("initiative", initiativeSign)
 
 
   // capture eval
   // TODO - 0 vs 1 capture is not quite as big a difference as 3 vs 4 captures
-  const captureEval = 30 * (game.captures[game.currentPlayer] - game.captures[Number(!game.currentPlayer) as 0 | 1])
+  const captureEval: f32 = 30 * f32(game.captures[game.currentPlayer] - game.captures[game.currentPlayer === 0 ? 1 : 0])
 
-  const currentPlayerBias = 15  // the current player has a bit of advantage from it being their turn, also helps reduce evaluation flip-flop depending on depth parity
+  const currentPlayerBias: f32 = 15  // the current player has a bit of advantage from it being their turn, also helps reduce evaluation flip-flop depending on depth parity
 
   return shapeEval + initiativeEval + captureEval + currentPlayerBias
 }
 
-
+/*
 
 export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape): LinearShape[] {
   const blockingCaptures: LinearShape[] = []
