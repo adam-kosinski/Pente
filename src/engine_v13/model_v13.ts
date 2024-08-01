@@ -209,43 +209,32 @@ const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).joi
 
 
 
-const start = performance.now()
-
+// map to memoize linear shape pattern matches
 export const patternMatchMap = new Map()
-const characters = ['_', '0', '1'];
 
-function generateString(currentString: string, remainingLength: number) {
-  if (remainingLength === 0) {
-    const matches = []
-    for (const pattern of linearShapes.keys()) {
-      for (let start = 0; start <= currentString.length - pattern.length; start++) {
-        let matchHere = true
-        for (let i = 0; i < pattern.length; i++) {
-          if (currentString[start + i] !== pattern[i]) {
-            matchHere = false
-            break
-          }
-        }
-        if (matchHere) {
-          matches.push({ index: start, pattern: pattern })
+function getPatternMatches(str: string) {
+  const existingAnswer = patternMatchMap.get(str)
+  if (existingAnswer) return existingAnswer
+
+  const matches = []
+  for (const pattern of linearShapes.keys()) {
+    for (let start = 0; start <= str.length - pattern.length; start++) {
+      let matchHere = true
+      for (let i = 0; i < pattern.length; i++) {
+        if (str[start + i] !== pattern[i]) {
+          matchHere = false
+          break
         }
       }
+      if (matchHere) {
+        matches.push({ index: start, pattern: pattern })
+      }
     }
-    if (matches.length > 0) patternMatchMap.set(currentString, matches);
-    return;
   }
-  characters.forEach(char => {
-    generateString(currentString + char, remainingLength - 1);
-  });
+  patternMatchMap.set(str, matches);
+  return matches
 }
-generateString('', 11);
 
-// Generate all possible strings of length 11
-console.log("map built", performance.now() - start)
-console.log(patternMatchMap)
-
-
-window.queries = new Map()
 
 
 export function updateLinearShapes(game: GameState, r0: number, c0: number): LinearShapeUpdate {
@@ -292,10 +281,8 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
     }
 
     // search for each pattern
-    const matches = patternMatchMap.get(s)
-    const count = queries.get(s)
-    queries.set(s, count === undefined ? 1 : queries.get(s) + 1)
-    if(!matches) continue
+    const matches = getPatternMatches(s)
+    if (!matches) continue
     for (const match of matches) {
       const pattern: string = match.pattern
       const patternInfo = linearShapes.get(pattern)
