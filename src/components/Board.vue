@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
-import { type GameState } from '@/engine_v12/model_v12';
+import { type Game } from '../../assembly/engine_v13_wasm/model';
 import CapturesArea from './CapturesArea.vue';
 
-const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
+const props = defineProps<{ game: Game, showCoordLabels: boolean }>()
 const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
@@ -19,7 +19,7 @@ function areCoordsSignificant(r: number, c: number): boolean {
 
 function isLegalMove(r: number, c: number) {
   if (props.game.isOver) return false
-  if (props.game.board[r][c] !== undefined) return false
+  if (props.game.board[r][c] !== -1) return false
   if (props.game.nMoves === 0 && (r !== center.value || c !== center.value)) return false
   return true
 }
@@ -45,7 +45,7 @@ function tryToMakeMove(r: number, c: number) {
         <p v-if="c === 1 && showCoordLabels" class="row-label">{{ r - 1 }}</p>
         <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
 
-        <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"
+        <div v-if="game.board[r - 1][c - 1] !== -1" class="real gem" :data-player="game.board[r - 1][c - 1]"
           :class="{'last-move': r - 1 === lastMove[0] && c - 1 === lastMove[1]}">
         </div>
         <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>

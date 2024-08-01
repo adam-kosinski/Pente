@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "asbuild": "asc assembly/engine_v13_wasm/model_v13_wasm.ts --target model",
+    "asbuild": "asc assembly/engine_v13_wasm/game.ts --target game",
     "asbuild:watch": "onchange -i 'assembly/**/*' -- npm run asbuild",
     "test": "node tests",
     "start": "npx serve ."

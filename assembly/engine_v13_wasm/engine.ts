@@ -1,5 +1,5 @@
-import { makeMove, undoMove, type Game, type SearchResult, type LinearShape } from "./model_v13_wasm";
-import { makeOrderedMoveIterator } from "./move_generation_v13_wasm";
+import { makeMove, undoMove, type Game, type SearchResult, type LinearShape } from "./model";
+import { makeOrderedMoveIterator } from "./move_generation";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
 
 /*
@@ -213,22 +213,6 @@ function principalVariationSearch(
   }
   return [bestResult]
 }
-
-
-
-export function copyGame(game: Game): Game {
-  return {
-    board: game.board.map(row => Object.assign({}, row)),
-    currentPlayer: game.currentPlayer,
-    captures: { ...game.captures },
-    nMoves: game.nMoves,
-    prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
-    isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
-  }
-}
-
-
 
 
 

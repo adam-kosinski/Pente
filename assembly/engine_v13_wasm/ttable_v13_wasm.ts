@@ -1,4 +1,4 @@
-import { Game, type SearchResult } from "./model_v13_wasm"
+import { Game, type SearchResult } from "./model"
 
 
 // transposition table - key comes from TTableKey(game) function below

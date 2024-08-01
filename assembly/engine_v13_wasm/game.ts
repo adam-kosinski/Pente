@@ -1,59 +1,6 @@
-class Game {
-  public board: i32[][] = []  // value is 0 or 1, or -1 if empty
-  public currentPlayer: i32 = 0  // 0 or 1
-  public captures: i32[] = [0, 0]  // key is player, value is n captures
-  public nMoves: i32 = 0
-  public prevMoves: MoveInfo[] = []
-  public isOver: boolean = false
-  public linearShapes: LinearShape[] = []
-}
-
-class MoveInfo {
-  addedGems: i32[][] = []  // list of [r,c]
-  removedGems: i32[][] = []  // list of [r,c,player]
-  linearShapeUpdate: LinearShapeUpdate = new LinearShapeUpdate()
-}
-class LinearShapeUpdate {
-  added: LinearShape[] = []
-  removed: LinearShape[] = []
-}
-
-// linear shape that's been located on the board
-// this is readonly b/c there's no reason to change it, and because there might be multiple references to the same LinearShape object
-// (e.g. transposition table, re-using game state object when searching) - want to avoid accidental bugs from mutation
-class LinearShape {
-  readonly type: string
-  readonly pattern: string
-  readonly owner: i32  // 0 or 1, player that "owns" this shape intuitively
-  readonly begin: i32[]
-  readonly end: i32[]
-  readonly length: i32
-  readonly hash: string  // uniquely identifies this, see constructor
-
-  constructor(type: string, pattern: string, owner: i32, begin: i32[], end: i32[]) {
-    this.type = type
-    this.pattern = pattern
-    this.owner = owner
-    this.begin = begin
-    this.end = end
-    this.length = pattern.length
-    this.hash = [type, owner.toString(), begin.join(), end.join()].join()
-  }
-}
-
-interface SearchResult {
-  eval: i32
-  evalFlag: EvalFlag
-  bestVariation: i32[][]
-}
-type EvalFlag = "exact" | "upper-bound" | "lower-bound"
-
+import { Game, MoveInfo, LinearShapeUpdate, LinearShape, createLinearShape } from "./model"
 
 export function main(): void { }
-
-export function hello(): void {
-  console.log("hello")
-}
 
 export function gameToString(game: Game): string {
   return `${game.board.length}~${game.prevMoves.map((m: MoveInfo) => m.addedGems[0].join(".")).join("|")}`
@@ -80,6 +27,14 @@ export function createNewGame(boardSize: i32): Game {
   }
   return game
 }
+
+
+export function copyGame(game: Game): Game {
+  // inefficient but simple copying technique
+  // this function isn't used frequently so being inefficient is fine
+  return loadFromString(gameToString(game))
+}
+
 
 
 export function makeMove(game: Game, r: i32, c: i32): void {
@@ -166,12 +121,14 @@ export function undoMove(game: Game): void {
 
   // remove added linear shapes
   const addedHashes = prevMove.linearShapeUpdate.added.map((shape: LinearShape) => shape.hash)
+  const filteredLinearShapes: LinearShape[] = []
   for (let i = 0; i < game.linearShapes.length; i++) {
     if (!addedHashes.includes(game.linearShapes[i].hash)) {
-      game.linearShapes.splice(i, 1)
-      i--
+      filteredLinearShapes.push(game.linearShapes[i])
     }
   }
+  game.linearShapes = filteredLinearShapes
+
   // add removed linear shapes
   const removed = prevMove.linearShapeUpdate.removed
   for (let i = 0; i < removed.length; i++) {
@@ -252,7 +209,7 @@ class Match {
 const patternMatchMap: Map<string, Match[]> = new Map()
 
 export function getPatternMatches(str: string): Match[] {
-  if(patternMatchMap.has(str)) return patternMatchMap.get(str)
+  if (patternMatchMap.has(str)) return patternMatchMap.get(str) || []
 
   const matches: Match[] = []
   const patterns = linearShapes.keys()
@@ -285,33 +242,26 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
 
   const update: LinearShapeUpdate = new LinearShapeUpdate()
 
-  // remove any shapes that are no longer there - takes about 30% of time
-  // game.linearShapes = game.linearShapes.filter(shape => {
-  //   const dy = Math.sign(shape.end[0] - shape.begin[0])
-  //   const dx = Math.sign(shape.end[1] - shape.begin[1])
-  //   for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-  //     const s = game.board[r][c] === -1 ? "_" : game.board[r][c].toString()
-  //     if (s !== shape.pattern.charAt(i)) {
-  //       update.removed.push(shape)
-  //       return false
-  //     }
-  //   }
-  //   return true
-  // })
+  // remove any shapes that are no longer there
+
+  const filteredLinearShapes: LinearShape[] = []
 
   for (let n = 0; n < game.linearShapes.length; n++) {
     const shape = game.linearShapes[n]
     const dy = i32(Math.sign(shape.end[0] - shape.begin[0]))
     const dx = i32(Math.sign(shape.end[1] - shape.begin[1]))
+    let stillThere = true
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       const s = game.board[r][c] === -1 ? "_" : game.board[r][c].toString()
       if (s !== shape.pattern.charAt(i)) {
         update.removed.push(shape)
-        game.linearShapes.splice(n, 1)
-        n--
+        stillThere = false
       }
     }
+    if (stillThere) filteredLinearShapes.push(shape)
   }
+
+  game.linearShapes = filteredLinearShapes
 
 
   // add new shapes - takes about 70% of time
@@ -345,7 +295,8 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
     if (!matches) continue
     for (let i = 0; i < matches.length; i++) {
       const pattern: string = matches[i].pattern
-      const patternInfo: LinearShapeInfo = linearShapes.get(pattern)
+      const patternInfo = linearShapes.get(pattern)
+      if (!patternInfo) continue
       const begin = [
         rInit + dir[0] * matches[i].index,
         cInit + dir[1] * matches[i].index
@@ -354,7 +305,7 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
         rInit + dir[0] * (matches[i].index + patternInfo.length - 1),
         cInit + dir[1] * (matches[i].index + patternInfo.length - 1)
       ]
-      const shape = new LinearShape(patternInfo.type, pattern, patternInfo.owner, begin, end)
+      const shape = createLinearShape(patternInfo.type, pattern, patternInfo.owner, begin, end)
       if (!existingShapeHashes.has(shape.hash)) {
         game.linearShapes.push(shape)
         existingShapeHashes.add(shape.hash)

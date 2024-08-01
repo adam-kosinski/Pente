@@ -1,4 +1,4 @@
-import { Game, type SearchResult, type LinearShape } from "./model_v13_wasm";
+import { Game, type SearchResult, type LinearShape } from "./model";
 import { type TTEntry } from "./ttable_v13_wasm";
 
 

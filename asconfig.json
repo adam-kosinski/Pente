@@ -19,6 +19,11 @@
       "outFile": "build/model.wasm",
       "sourceMap": true,
       "debug": true
+    },
+    "game": {
+      "outFile": "build/game.wasm",
+      "sourceMap": true,
+      "debug": true
     }
   },
   "options": {
