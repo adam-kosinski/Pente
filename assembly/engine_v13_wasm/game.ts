@@ -246,7 +246,7 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
 
   const update: LinearShapeUpdate = new LinearShapeUpdate()
 
-  // remove any shapes that are no longer there
+  // remove any shapes that are no longer there - 20% of time
 
   const filteredLinearShapes: LinearShape[] = []
 
@@ -268,7 +268,7 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   game.linearShapes = filteredLinearShapes
 
 
-  // add new shapes - takes about 70% of time
+  // add new shapes
 
   const existingShapeHashes: Set<string> = new Set()
   for (let i = 0; i < game.linearShapes.length; i++) {
@@ -280,7 +280,7 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   for (let d = 0; d < dirs.length; d++) { // row, col, (\) diagonal, (/) diagonal
     const dir = dirs[d]
 
-    // construct string to search for patterns in - takes about 50% of time
+    // construct string to search for patterns in - takes about 40% of time
     let s: string = ""
     let rInit: i32 = i32(r0 - (maxLinearShapeLength - 1) * dir[0])
     let cInit: i32 = i32(c0 - (maxLinearShapeLength - 1) * dir[1])
@@ -298,9 +298,8 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
     const matches: Match[] = getPatternMatches(s)
     if (!matches) continue
     for (let i = 0; i < matches.length; i++) {
-      const pattern: string = matches[i].pattern
-      const patternInfo = linearShapes.get(pattern)
-      if (!patternInfo) continue
+      // 40% of time spent here
+      const patternInfo = linearShapes.get(matches[i].pattern)
       const begin = [
         rInit + dir[0] * matches[i].index,
         cInit + dir[1] * matches[i].index
@@ -309,7 +308,7 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
         rInit + dir[0] * (matches[i].index + patternInfo.length - 1),
         cInit + dir[1] * (matches[i].index + patternInfo.length - 1)
       ]
-      const shape = createLinearShape(patternInfo.type, pattern, patternInfo.owner, begin, end)
+      const shape = createLinearShape(patternInfo.type, matches[i].pattern, patternInfo.owner, begin, end)
       if (!existingShapeHashes.has(shape.hash)) {
         game.linearShapes.push(shape)
         existingShapeHashes.add(shape.hash)

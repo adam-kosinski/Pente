@@ -24,6 +24,11 @@
       "outFile": "build/game.wasm",
       "sourceMap": true,
       "debug": true
+    },
+    "engine": {
+      "outFile": "build/engine.wasm",
+      "sourceMap": true,
+      "debug": true
     }
   },
   "options": {

@@ -1,28 +1,34 @@
-import { makeMove, undoMove, type Game, type SearchResult, type LinearShape } from "./model";
-import { makeOrderedMoveIterator } from "./move_generation";
-import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
+import { Game, SearchResult, LinearShape } from "./model";
+import { makeMove, undoMove } from "./game"
+// import { makeOrderedMoveIterator } from "./move_generation";
+// import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v13_wasm";
 
-/*
-let normalNodesVisited = 0
-let confirmAlpha = 0
-let failHigh = 0
-let ttableHit = 0
-let ttableMiss = 0
-let nMovesGenerated: number[] = []
+export function main(): void { }
 
-let killerMoves: number[][][] = []  // indexed by: ply, then move -> [r,c]
+
+let normalNodesVisited: i32 = 0
+let confirmAlpha: i32 = 0
+let failHigh: i32 = 0
+let ttableHit: i32 = 0
+let ttableMiss: i32 = 0
+let nMovesGenerated: i32[] = []
+
+let killerMoves: Map<i32, i32[][]> = new Map()  // indexed by: ply, then move -> [r,c]
 // will only store at most 2 killer moves per ply, as recommended by wikipedia, to keep them recent / relevant
-function addKillerMove(r: number, c: number, ply: number) {
-  if (!killerMoves[ply]) killerMoves[ply] = []
+function addKillerMove(r: i32, c: i32, ply: i32): void {
+  let moves: i32[][] = []
+  if (killerMoves.has(ply)) moves = killerMoves.get(ply)
   // make sure it's a new move
-  for (const m of killerMoves[ply]) {
+  for (let i = 0; i < moves.length; i++) {
+    const m: i32[] = moves[i]
     if (m[0] === r && m[1] === c) return
   }
-  killerMoves[ply].unshift([r, c])
-  if (killerMoves[ply].length >= 2) killerMoves[ply].splice(2)
+  moves.unshift([r, c])
+  if (moves.length >= 2) moves.splice(2)
+  killerMoves.set(ply, moves)
 }
 
-
+/*
 export function findBestMove(game: Game, maxDepth: number, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search

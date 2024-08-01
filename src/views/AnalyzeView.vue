@@ -74,14 +74,21 @@ function timeTest() {
   // const all_re = [
   //  /11111/,/00000/,/_1111_/,/_0000_/,/1111_/,/_1111/,/0000_/,/_0000/,/111_1/,/1_111/,/000_0/,/0_000/,/11_11/,/00_00/,/_111_/,/_000_/,/_11_1_/,/_1_11_/,/_00_0_/,/_0_00_/,/0111__/,/__1110/,/1000__/,/__0001/,/_11_/,/_00_/,/100_/,/_001/,/011_/,/_110/,/_1_1_/,/_0_0_/ 
   // ]
-  const iterations = 10000
+  const iterations = 1000000
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    updateLinearShapes(game.value, 10, 10)
+    let x = 1
+    for(let j=0; j<10; j++){
+      20000 === 20000
+    }
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
+    let s = ""
+    for(let j=0; j<10; j++){
+      "hello" === "hello"
+    }
   }
   console.log("B:", performance.now() - start + " ms")
 
