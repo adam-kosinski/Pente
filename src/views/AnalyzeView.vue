@@ -20,8 +20,8 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
 // import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
-import { createNewGame, loadFromString, copyGame } from "../../build/game"
-import { type Game } from "../../assembly/engine_v13_wasm/model"
+import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes } from "../../build/game"
+import { type Game, type SearchResult } from "../../assembly/engine_v13_wasm/model"
 
 const game = ref(createNewGame(19))
 
@@ -52,66 +52,50 @@ declare global {
     profileEnd: () => any
   }
 }
-// function profile() {
-//   console.profile()
-//   analyzePosition()
-//   console.profileEnd()
-// }
-
-// function timeTest() {
-//   // const query = "__11_1_00__"
-//   const big_re = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
-//   // const compressed = /(?=(1{5}|0{5}|_1{4}_|_0{4}_|1{4}_|_1{4}|0{4}_|_0{4}|1{3}_1|1_1{3}|0{3}_0|0_0{3}|1{2}_1{2}|0{2}_0{2}|_1{3}_|_0{3}_|_1{2}_1_|_1_1{2}_|_0{2}_0_|_0_0{2}_|01{3}__|__1{3}0|10{3}__|__0{3}1|_1{2}_|_0{2}_|10{2}_|_0{2}1|01{2}_|_1{2}0|_1_1_|_0_0_))/g
-//   // const noFlip = /(?=(11111|00000|_1111_|_0000_|1111_|0000_|111_1|000_0|11_11|00_00|_111_|_000_|_11_1_|_00_0_|0111__|1000__|01_11_|10_00_|011_1_|100_0_|_11_|_00_|100_|011_|_1_1_|_0_0_))/g
-//   // const first_half = /(?=(11111|_1111_|1111_|_1111|111_1|1_111|_11_1_|_1_11_|0111__|__1110|11_11|100_|_110|_1_1_|_111_|_00_))/g
-//   // const second_half = /(?=(_000_|00000|0000_|_0000_|_0000|000_0|0_000|00_00|_00_0_|011_|_0_00_|1000__|__0001|_001|_0_0_|_11_))/g
-
-//   // const most = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|100_|_001|011_|_110|_1_1_|_0_0_))/g
-//   // const pairs = /(?=(_11_|_00_))/g
-
-//   // const big_re_capture = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|(_11_)1_|_1_11_|(_00_)0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
-
-//   // const all_re = [
-//   //  /11111/,/00000/,/_1111_/,/_0000_/,/1111_/,/_1111/,/0000_/,/_0000/,/111_1/,/1_111/,/000_0/,/0_000/,/11_11/,/00_00/,/_111_/,/_000_/,/_11_1_/,/_1_11_/,/_00_0_/,/_0_00_/,/0111__/,/__1110/,/1000__/,/__0001/,/_11_/,/_00_/,/100_/,/_001/,/011_/,/_110/,/_1_1_/,/_0_0_/ 
-//   // ]
-//   const iterations = 10000
-//   let start = performance.now()
-//   for (let i = 0; i < iterations; i++) {
-//     updateLinearShapes(game.value, 10, 10)
-//   }
-//   console.log("A:", performance.now() - start + " ms")
-//   start = performance.now()
-//   for (let i = 0; i < iterations; i++) {
-//     oldUpdateLinearShapes(game.value, 10, 10)
-//   }
-//   console.log("B:", performance.now() - start + " ms")
-
-// }
-
-// function printMoves() {
-//   for (const move of makeOrderedMoveIterator(game.value, 1)) {
-//     console.log(move)
-//   }
-//   console.log("")
-// }
-
-// const result: Ref<SearchResult | undefined> = ref(undefined)
-// function analyzePosition() {
-//   result.value = findBestMove(game.value, 9, true)
-//   analysisLineGameCopy.value = copyGame(game.value)
-// }
-// onMounted(() => {
-//   // analyzePosition()
-// })
-
-
-function matchAll(str: string, q: string) {
-  const matches = []
-  for(let i=0; i<str.length-q.length; i++){
-    if(str.substring(i, i + q.length) === q) matches.push(i)
-  }
-  return matches
+function profile() {
+  console.profile()
+  analyzePosition()
+  console.profileEnd()
 }
+
+function timeTest() {
+  // const query = "__11_1_00__"
+  const big_re = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
+  // const compressed = /(?=(1{5}|0{5}|_1{4}_|_0{4}_|1{4}_|_1{4}|0{4}_|_0{4}|1{3}_1|1_1{3}|0{3}_0|0_0{3}|1{2}_1{2}|0{2}_0{2}|_1{3}_|_0{3}_|_1{2}_1_|_1_1{2}_|_0{2}_0_|_0_0{2}_|01{3}__|__1{3}0|10{3}__|__0{3}1|_1{2}_|_0{2}_|10{2}_|_0{2}1|01{2}_|_1{2}0|_1_1_|_0_0_))/g
+  // const noFlip = /(?=(11111|00000|_1111_|_0000_|1111_|0000_|111_1|000_0|11_11|00_00|_111_|_000_|_11_1_|_00_0_|0111__|1000__|01_11_|10_00_|011_1_|100_0_|_11_|_00_|100_|011_|_1_1_|_0_0_))/g
+  // const first_half = /(?=(11111|_1111_|1111_|_1111|111_1|1_111|_11_1_|_1_11_|0111__|__1110|11_11|100_|_110|_1_1_|_111_|_00_))/g
+  // const second_half = /(?=(_000_|00000|0000_|_0000_|_0000|000_0|0_000|00_00|_00_0_|011_|_0_00_|1000__|__0001|_001|_0_0_|_11_))/g
+
+  // const most = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|100_|_001|011_|_110|_1_1_|_0_0_))/g
+  // const pairs = /(?=(_11_|_00_))/g
+
+  // const big_re_capture = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|(_11_)1_|_1_11_|(_00_)0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
+
+  // const all_re = [
+  //  /11111/,/00000/,/_1111_/,/_0000_/,/1111_/,/_1111/,/0000_/,/_0000/,/111_1/,/1_111/,/000_0/,/0_000/,/11_11/,/00_00/,/_111_/,/_000_/,/_11_1_/,/_1_11_/,/_00_0_/,/_0_00_/,/0111__/,/__1110/,/1000__/,/__0001/,/_11_/,/_00_/,/100_/,/_001/,/011_/,/_110/,/_1_1_/,/_0_0_/ 
+  // ]
+  const iterations = 10000
+  let start = performance.now()
+  for (let i = 0; i < iterations; i++) {
+    updateLinearShapes(game.value, 10, 10)
+  }
+  console.log("A:", performance.now() - start + " ms")
+  start = performance.now()
+  for (let i = 0; i < iterations; i++) {
+  }
+  console.log("B:", performance.now() - start + " ms")
+
+}
+
+const result: Ref<SearchResult | undefined> = ref(undefined)
+function analyzePosition() {
+  // result.value = findBestMove(game.value, 9, true)
+  analysisLineGameCopy.value = copyGame(game.value)
+}
+onMounted(() => {
+  // analyzePosition()
+})
+
 
 
 </script>
@@ -123,9 +107,9 @@ function matchAll(str: string, q: string) {
   <div class="analyze-view">
 
     <div class="board-container">
-      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c) }" />
+      <Board :game="game" show-coord-labels @make-move="(r, c) => { game = makeMove(game, r, c) }" />
     </div>
-    <!--
+    
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
       <div class="analysis-lines">
@@ -138,9 +122,8 @@ function matchAll(str: string, q: string) {
       <div class="button-panel">
         <button @click="analyzePosition()">Find Best Move</button><br>
         <button @click="profile()">Profile</button><br>
-        <button @click="printMoves()">Generate Moves</button><br>
-        <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
-        <button @click="undoMove(game)">Undo Move</button><br>
+        <!-- <button @click="console.log(evaluatePosition(game))">Evaluate</button><br> -->
+        <button @click="game = undoMove(game)">Undo Move</button><br>
         <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
           Shapes</button><br>
         <button @click="console.log(gameToString(game))">Save Game</button><br>
@@ -152,7 +135,7 @@ function matchAll(str: string, q: string) {
         </select>
       </div>
     </div>
-  -->
+  
   </div>
 
 </template>

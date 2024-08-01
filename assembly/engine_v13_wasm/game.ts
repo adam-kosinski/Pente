@@ -37,14 +37,14 @@ export function copyGame(game: Game): Game {
 
 
 
-export function makeMove(game: Game, r: i32, c: i32): void {
-  if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
+export function makeMove(game: Game, r: i32, c: i32): Game {
+  if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return game
   // can't go in a place with a piece
-  if (game.board[r][c] !== -1) return
+  if (game.board[r][c] !== -1) return game
   // enforce first move in the center
   const center_r = Math.floor(game.board.length / 2)
   const center_c = Math.floor(game.board.length / 2)
-  if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
+  if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return game
 
   const moveInfo: MoveInfo = new MoveInfo()
   const shapeUpdate = moveInfo.linearShapeUpdate
@@ -96,14 +96,16 @@ export function makeMove(game: Game, r: i32, c: i32): void {
   game.prevMoves.push(moveInfo)
   game.currentPlayer = game.currentPlayer === 0 ? 1 : 0
   game.nMoves++
+
+  return game  // for convenience
 }
 
 
 
 
-export function undoMove(game: Game): void {
+export function undoMove(game: Game): Game {
   const prevMove = game.prevMoves.pop()
-  if (!prevMove) return
+  if (!prevMove) return game
 
   const prevPlayer = game.currentPlayer === 0 ? 1 : 0  // useful to just compute once
 
@@ -141,6 +143,8 @@ export function undoMove(game: Game): void {
   game.currentPlayer = prevPlayer
   game.nMoves -= 1
   game.isOver = false
+
+  return game
 }
 
 

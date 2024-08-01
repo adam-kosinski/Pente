@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { copyGame } from '@/engine_v12/engine_v12';
-import { type SearchResult, type GameState, createNewGame, makeMove } from '@/engine_v12/model_v12';
-import { computed, ref } from 'vue';
+import { copyGame, createNewGame, makeMove } from '../../build/game';
+import { type SearchResult, type Game } from '../../assembly/engine_v13_wasm/model';
+import { computed } from 'vue';
 
-const props = defineProps<{ result: SearchResult | undefined, game: GameState }>()
+const props = defineProps<{ result: SearchResult | undefined, game: Game }>()
 interface Emits {
-  (event: "show-future-position", position: GameState): void
+  (event: "show-future-position", position: Game): void
   (event: "clear-future-position"): void
-  (event: "go-to-position", position: GameState): void
+  (event: "go-to-position", position: Game): void
 }
 const emit = defineEmits<Emits>()
 
