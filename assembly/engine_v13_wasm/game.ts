@@ -319,3 +319,15 @@ export function updateLinearShapes(game: Game, r0: number, c0: number): LinearSh
   }
   return update
 }
+
+
+
+export function testShapeUpdate(): void {
+  const game = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
+  const iterations = 10000
+  let start = performance.now()
+  for (let i = 0; i < iterations; i++) {
+    updateLinearShapes(game, 10, 10)
+  }
+  console.log("A:" + (performance.now() - start).toString() + " ms")
+}

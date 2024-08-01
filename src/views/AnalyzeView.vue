@@ -20,7 +20,7 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
 // import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
-import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes } from "../../build/game"
+import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes, testShapeUpdate } from "../../build/game"
 import { type Game, type SearchResult } from "../../assembly/engine_v13_wasm/model"
 
 const game = ref(createNewGame(19))
@@ -129,7 +129,7 @@ onMounted(() => {
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(game)">Game Object</button><br>
-        <button @click="timeTest()">Time Test</button><br>
+        <button @click="testShapeUpdate()">Time Test</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>
