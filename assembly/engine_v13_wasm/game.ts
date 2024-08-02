@@ -190,7 +190,7 @@ for (let i = 0; i < linearShapeDef.length; i++) {
   linearShapes.set(pattern, { type: type, owner: 1, length: pattern.length })
   linearShapes.set(pattern.split("").reverse().join(""), { type: type, owner: 1, length: pattern.length })
   // do it for the other player
-  const patternSwitchPlayers = pattern.replaceAll("1", "x").replaceAll("0", "1").replace("x", "0")
+  const patternSwitchPlayers = pattern.replaceAll("1", ".").replaceAll("0", "1").replaceAll(".", "0")
   linearShapes.set(patternSwitchPlayers, { type: type, owner: 0, length: pattern.length })
   linearShapes.set(patternSwitchPlayers.split("").reverse().join(""), { type: type, owner: 0, length: pattern.length })
   // update max length
@@ -216,9 +216,11 @@ export function getPatternMatches(str: string): Match[] {
   if (patternMatchMap.has(str)) return patternMatchMap.get(str) || []
 
   const matches: Match[] = []
+  // loop through patterns, looking for matches
   const patterns = linearShapes.keys()
   for (let p = 0; p < patterns.length; p++) {
     const pattern = patterns[p]
+    // look for matches at each possible starting point
     for (let start = 0; start <= str.length - pattern.length; start++) {
       let matchHere = true
       for (let i = 0; i < pattern.length; i++) {

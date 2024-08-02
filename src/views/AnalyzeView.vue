@@ -20,12 +20,13 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
 // import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
-import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes, testShapeUpdate } from "../../build/game"
 import { type Game, type SearchResult } from "../../assembly/engine_v13_wasm/model"
+import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes, testShapeUpdate } from "../../build/game"
+import { evaluatePosition } from '../../build/engine';
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(4)
+const testPositionIndex = ref(5)
 const testPositions = [
   "19~",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -135,6 +136,7 @@ onMounted(() => {
           Shapes</button><br>
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
+        <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
         <button @click="console.log(game)">Game Object</button><br>
         <button @click="testShapeUpdate()">Time Test</button><br>
         <select v-model="testPositionIndex">

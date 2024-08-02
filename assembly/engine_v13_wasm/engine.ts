@@ -224,24 +224,23 @@ function principalVariationSearch(
 
 // below, higher eval is better for player owning this shape
 const shapeEvalMap: Map<string, f32> = new Map()
-shapeEvalMap.set("open-tessera,10000", 0)
-shapeEvalMap.set("open-tria,35", 1)
-shapeEvalMap.set("stretch-tria,25", 2)
-shapeEvalMap.set("open-pair,-5", 3)
-shapeEvalMap.set("pente-threat-4,45", 4)
-shapeEvalMap.set("pente-threat-31,45", 5)
-shapeEvalMap.set("pente-threat-22,45", 6)
-shapeEvalMap.set("capture-threat,10", 7)  // compare with open pair (should be better to threaten), and with capture reward (should be more)
-shapeEvalMap.set("extendable-stretch-tria-threatened,-10", 8)
-shapeEvalMap.set("stretch-two,10", 9)
-shapeEvalMap.set("double-stretch-two,7", 10)
+shapeEvalMap.set("open-tessera", 10000)
+shapeEvalMap.set("open-tria", 35)
+shapeEvalMap.set("stretch-tria", 30)  // btw, the open pair is counted separately
+shapeEvalMap.set("open-pair", -5)
+shapeEvalMap.set("pente-threat-4", 45)
+shapeEvalMap.set("pente-threat-31", 45)
+shapeEvalMap.set("pente-threat-22", 45)
+shapeEvalMap.set("capture-threat", 10)  // compare with open pair (should be better to threaten), and with capture reward (should be more)
+shapeEvalMap.set("stretch-two", 10)
+shapeEvalMap.set("double-stretch-two", 7)
 
 
 
 export function evaluatePosition(game: Game): f32 {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
   // because we used negamax for the search function, a higher evaluation is better for the current player, regardless of who that is
-
+  console.log(shapeEvalMap.keys().join())
   // check for won / forced winning position - worth expending some effort into this, because it allows the search tree to stop earlier
 
   if (game.isOver) {
@@ -249,36 +248,30 @@ export function evaluatePosition(game: Game): f32 {
     return -Infinity
   }
   // if current player has a pente threat, they've won
-  if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)) {
+  if (shapeExists(game, ["pente-threat-4", "pente-threat-31", "pente-threat-22"], true)) {
     return Infinity
   }
   // if current player can complete 5 captures, they've won
-  if (game.captures[game.currentPlayer] >= 4 && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
+  if (game.captures[game.currentPlayer] >= 4 && shapeExists(game, ["capture-threat"], true)) {
     return Infinity
   }
   // we now establish that we can't win immediately on our turn
-  // look for unstoppable opponent threats
+  // if opponent has multiple pente threats, check if we can block them all - this includes open tesseras, which are recognized as 2 pente threats
   const opponentPenteThreats: LinearShape[] = []
   for (let i = 0; i < game.linearShapes.length; i++) {
     const shape = game.linearShapes[i]
-    // if the opponent has an open tessera that can't be blocked by a capture, they've won
-    if (shape.owner !== game.currentPlayer && shape.type === "open-tessera") {
-      const blockingCaptures = getBlockingCaptures(game.linearShapes, shape)
-      if (blockingCaptures.length === 0) return -Infinity
-    }
-    else if (shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")) {
+    if (shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")) {
       opponentPenteThreats.push(shape)
     }
   }
-  // if opponent has multiple pente threats, check if we can block them all
   if (!canBlockAllPenteThreats(game, opponentPenteThreats)) return -Infinity
 
   // get evaluation from linear shapes
 
-  // go through shapes and count them, as well as sum up individual shape eval
+  // go through shapes and count trias, as well as sum up individual shape eval
   let shapeEval: f32 = 0
-  let triaCountMe = 0
-  let triaCountOpponent = 0
+  let triaCountMe: i32 = 0
+  let triaCountOpponent: i32 = 0
   for (let i = 0; i < game.linearShapes.length; i++) {
     const shape = game.linearShapes[i]
     if (["open-tria", "stretch-tria"].includes(shape.type)) {
@@ -305,19 +298,20 @@ export function evaluatePosition(game: Game): f32 {
   // ignoring extendable trias for now
   // TODO - incorporate some measure of initiative over time, and how many threats you have waiting for the future
   let initiativeSign: f32 = 0
-  if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer)) {
-    // I don't have a pente threat b/c would have been caught higher up
+  if(shapeExists(game, ["pente-threat-4", "pente-threat-31", "pente-threat-22"], false)) {
+    // note: I don't have a pente threat b/c would have been caught higher up
     initiativeSign = -1  // opponent
   }
-  else if (triaCountOpponent > 0 && triaCountMe === 0) initiativeSign = -1
-  else if (game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer) &&
-    !game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
+  else if (triaCountOpponent > 0 && triaCountMe === 0) {
     initiativeSign = -1
   }
-  else if (game.linearShapes.some(shape => ["open-pair", "stretch-two"].includes(shape.type) && shape.owner === game.currentPlayer)) {
+  else if (shapeExists(game, ["capture-threat"], false) && !shapeExists(game, ["capture-threat"], true)) {
+    initiativeSign = -1
+  }
+  else if (shapeExists(game, ["open-pair", "stretch-two", "double-stretch-two"], true)) {
     initiativeSign = 1
   }
-  else if (game.linearShapes.some(shape => shape.type === "open-pair" && shape.owner !== game.currentPlayer)) {
+  else if (shapeExists(game, ["open-pair"], false)) {
     initiativeSign = 1
   }
   const initiativeEval: f32 = initiativeSign * 30
@@ -334,32 +328,57 @@ export function evaluatePosition(game: Game): f32 {
   return shapeEval + initiativeEval + captureEval + currentPlayerBias
 }
 
-/*
+
+function shapeExists(game: Game, shapeTypes: string[], currentPlayerOwns: boolean): boolean {
+  for(let i=0; i<game.linearShapes.length; i++){
+    const shape = game.linearShapes[i]
+    if(shape.owner === game.currentPlayer && currentPlayerOwns && shapeTypes.includes(shape.type)){
+      return true
+    }
+    else if(shape.owner !== game.currentPlayer && !currentPlayerOwns && shapeTypes.includes(shape.type)){
+      return true
+    }
+  }
+  return false
+}
+
+
+
 
 export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape): LinearShape[] {
   const blockingCaptures: LinearShape[] = []
 
+  // figure out where the threat's gems are
   const threatGems: number[][] = []
   const threat_dy = Math.sign(threat.end[0] - threat.begin[0])
   const threat_dx = Math.sign(threat.end[1] - threat.begin[1])
   for (let i = 0; i < threat.length; i++) {
-    const r = threat.begin[0] + i * threat_dy
+    const r= threat.begin[0] + i * threat_dy
     const c = threat.begin[1] + i * threat_dx
-    if (threat.pattern[i] !== "_") threatGems.push([r, c])
+    if (threat.pattern.charAt(i) !== "_") threatGems.push([r, c])
   }
 
-  for (const shape of shapes) {
+  // go through the capture threats and see if any involve a gem from the threat
+  for (let i=0; i<shapes.length; i++) {
+    const shape = shapes[i]
     if (shape.type !== "capture-threat" || shape.owner === threat.owner) continue
+
+    let captureDoesBlock = false
 
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
-    for (const i of [1, 2]) {
+    // loop through the two gems that will be captured, check if they coincide with a threat gem
+    for (let i=1; i<=2; i++) {
       const r = shape.begin[0] + i * dy
       const c = shape.begin[1] + i * dx
-      if (threatGems.some(gem => gem[0] === r && gem[1] === c)) {
-        blockingCaptures.push(shape)
-        break
+      for(let g=0; g<threatGems.length; g++){
+        if(threatGems[g][0] === r && threatGems[g][1] === c){
+          blockingCaptures.push(shape)
+          captureDoesBlock = true
+          break
+        }
       }
+      if (captureDoesBlock) break
     }
   }
   return blockingCaptures
@@ -375,14 +394,15 @@ export function canBlockAllPenteThreats(game: Game, threats: LinearShape[]): boo
   let blockSpot: string = ""
   let normalBlockWorks = true
 
-  for (const threat of threats) {
+  for (let t=0; t<threats.length; t++) {
+    const threat = threats[t]
     const dy = Math.sign(threat.end[0] - threat.begin[0])
     const dx = Math.sign(threat.end[1] - threat.begin[1])
     for (let i = 0; i < threat.length; i++) {
       const r = threat.begin[0] + i * dy
       const c = threat.begin[1] + i * dx
-      if (threat.pattern[i] === "_"){
-        const s = r + "," + c
+      if (threat.pattern.charAt(i) === "_"){
+        const s = r.toString() + "," + c.toString()
         if(blockSpot === "") blockSpot = s  // if first spot we need to block, write it down
         else if(blockSpot !== s) {  // if we found a second, different spot we need to block, can't do both at once
           normalBlockWorks = false
@@ -396,12 +416,19 @@ export function canBlockAllPenteThreats(game: Game, threats: LinearShape[]): boo
   if(normalBlockWorks) return true
   // otherwise, try blocking by capturing from all the threats
 
-  let capturesBlockingAll = getBlockingCaptures(game.linearShapes, threats[0])
+  let capturesBlockingAll: LinearShape[] = getBlockingCaptures(game.linearShapes, threats[0])
   for (let i=1; i<threats.length; i++) {
-    const captureHashSet = new Set(getBlockingCaptures(game.linearShapes, threats[i]).map(s => s.hash))
-    capturesBlockingAll = capturesBlockingAll.filter(s => captureHashSet.has(s.hash))
+    // get captures blocking this threat
+    const blockingCaptureHashes: string[] = getBlockingCaptures(game.linearShapes, threats[i]).map((s: LinearShape) => s.hash)
+    // remove any captures from capturesBlockingAll that fail to block this threat
+    const filteredCapturesBlockingAll: LinearShape[] = []
+    for(let j=0; j<capturesBlockingAll.length; j++){
+      if(blockingCaptureHashes.includes(capturesBlockingAll[j].hash)){
+        filteredCapturesBlockingAll.push(capturesBlockingAll[j])
+      }
+    }
+    capturesBlockingAll = filteredCapturesBlockingAll
   }
   if(capturesBlockingAll.length === 0) return false
   return true
 }
-  */
