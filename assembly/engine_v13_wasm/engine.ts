@@ -240,7 +240,7 @@ shapeEvalMap.set("double-stretch-two", 7)
 export function evaluatePosition(game: Game): f32 {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
   // because we used negamax for the search function, a higher evaluation is better for the current player, regardless of who that is
-  console.log(shapeEvalMap.keys().join())
+  
   // check for won / forced winning position - worth expending some effort into this, because it allows the search tree to stop earlier
 
   if (game.isOver) {

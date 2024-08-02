@@ -25,6 +25,16 @@
       "sourceMap": true,
       "debug": true
     },
+    "ttable": {
+      "outFile": "build/ttable.wasm",
+      "sourceMap": true,
+      "debug": true
+    },
+    "move_generation": {
+      "outFile": "build/move_generation.wasm",
+      "sourceMap": true,
+      "debug": true
+    },
     "engine": {
       "outFile": "build/engine.wasm",
       "sourceMap": true,

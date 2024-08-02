@@ -1,90 +1,88 @@
-import { Game, type SearchResult, type LinearShape } from "./model";
-import { type TTEntry } from "./ttable_v13_wasm";
-
+import { Game, SearchResult, LinearShape, TTEntry } from "./model";
 
 
 // store which shapes should be looked at first, to use when ordering moves
-// lower number is more important
-// using an object instead of an array for faster lookup
-const shapePriority: Record<string, number> = {
-  "pente-threat-22": 2,
-  "pente-threat-4": 3,
-  "pente-threat-31": 4,
-  "open-tria": 5,
-  "stretch-tria": 6,
-  "extendable-stretch-tria-threatened": 7,
-  "extendable-tria": 8,
-  "extendable-stretch-tria": 9,
-  "capture-threat": 10,
-  "stretch-two": 11,
-  "open-pair": 12,
-  "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
-  "pente": 30  // nothing you can do
+// earlier in this array (= lower number in map) is more important
+// converting to a map for faster lookup
+const shapePriority = [
+  "pente-threat-22",
+  "pente-threat-4",
+  "pente-threat-31",
+  "open-tria",
+  "stretch-tria",
+  "extendable-stretch-tria-threatened",
+  "extendable-tria",
+  "extendable-stretch-tria",
+  "capture-threat",
+  "stretch-two",
+  "open-pair",
+  "open-tessera",  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
+  "pente" // nothing you can do
+]
+const shapePriorityMap: Map<string, i32> = new Map()
+for (let i = 0; i < shapePriority.length; i++) {
+  shapePriorityMap.set(shapePriority[i], i)
 }
 
 
-export function* makeOrderedMoveIterator(
+function isValidMove(game: Game, move: i32[]): boolean {
+  return game.board[move[0]][move[1]] === -1
+}
+
+function moveHash(move: i32[]): string {
+  return move[0].toString() + "," + move[1].toString()
+}
+
+
+export function generateOrderedMoves(
   game: Game,
-  ply: number,
-  principalVariationMove: number[] | undefined = undefined,
-  tableEntry: TTEntry | undefined = undefined,
-  killerMoves: number[][][] = [],
-  prevDepthResults: SearchResult[] = []
-) {
-  // because good moves often cause a cutoff, don't generate more less-good moves unless needed
-  // so, create an iterator that generates moves as needed (using generator syntax for readability)
-  // first move must be in center
-  if (game.nMoves === 0) {
-    const center = Math.floor(game.board.length / 2)
-    yield [center, center]
-    return
-  }
+  principalVariationMove: i32[],  // pass [] to ignore
+  tableEntry: TTEntry | null,  // pass null to ignore
+  killerMoves: i32[][],  // pass [] to ignore
+  prevDepthResults: SearchResult[]  // pass [] to ignore
+): i32[][] {
 
-  // setup
-  const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const isValidMove = function (move: number[]) {
-    return game.board[move[0]][move[1]] === undefined
-  }
-
-  // use order from prevDepthResults - this will contain all remaining moves, ranked
+  // if we have it, use order from prevDepthResults - this will contain all moves, ranked
+  // they are guaranteed to be valid because we used them for the last depth analysis
   // the principal variation move will come first by default
   if (prevDepthResults.length > 0) {
-    for (const result of prevDepthResults) {
-      const move = result.bestVariation[0]
-      if (!isValidMove(move)) continue
-      const hash = move[0] + "," + move[1]
-      if (!moveHashes.has(hash)) {
-        yield move
-        moveHashes.add(hash)
-      }
-    }
-    return
+    return prevDepthResults.map((r: SearchResult) => r.bestVariation[0])
   }
   // if we don't have such a nice list, use heuristics
 
+  const moves: i32[][] = []
+  const moveHashes: Set<string> = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
+
+  // first move must be in center
+  if (game.nMoves === 0) {
+    const center = i32(Math.floor(game.board.length / 2))
+    return[[center, center]]
+  }
+
   // first priority is principal variation move
-  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-    yield principalVariationMove
-    moveHashes.add(principalVariationMove.join(","))
+  if (principalVariationMove.length > 0 && isValidMove(game, principalVariationMove)) {
+    moves.push(principalVariationMove)
+    moveHashes.add(moveHash(principalVariationMove))
   }
   // second priority is transposition table entry (aka hash move)
-  if (tableEntry !== undefined) {
+  if (tableEntry !== null && tableEntry.result.bestVariation.length > 0) {
     const goodMove = tableEntry.result.bestVariation[0]
-    if (goodMove !== undefined && isValidMove(goodMove)) {
-      const hash = goodMove[0] + "," + goodMove[1]
+    if (isValidMove(game, goodMove)) {
+      const hash = moveHash(goodMove)
       if (!moveHashes.has(hash)) {
-        yield goodMove
+        moves.push(goodMove)
         moveHashes.add(hash)
       }
     }
   }
   // third priority are killer moves
-  if (killerMoves[ply]) {
-    for (const move of killerMoves[ply]) {
-      if (!isValidMove(move)) continue
-      const hash = move[0] + "," + move[1]
+  if (killerMoves.length > 0) {
+    for (let i=0; i<killerMoves.length; i++) {
+      const move = killerMoves[i]
+      if (!isValidMove(game, move)) continue
+      const hash = moveHash(move)
       if (!moveHashes.has(hash)) {
-        yield move
+        moves.push(move)
         moveHashes.add(hash)
       }
     }
@@ -95,85 +93,56 @@ export function* makeOrderedMoveIterator(
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
-  game.linearShapes.sort((a, b) => {
-    if (a.type in shapePriority && b.type in shapePriority) return shapePriority[a.type] - shapePriority[b.type]
+  game.linearShapes.sort((a: LinearShape, b: LinearShape) => {
+    if (shapePriorityMap.has(a.type) && shapePriorityMap.has(b.type)) return shapePriorityMap.get(a.type) - shapePriorityMap.get(b.type)
     return 0
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   const sortedShapes = game.linearShapes.slice()
 
-  for (const shape of sortedShapes) {
-    const dy = Math.sign(shape.end[0] - shape.begin[0])
-    const dx = Math.sign(shape.end[1] - shape.begin[1])
+  for (let i=0; i<sortedShapes.length; i++) {
+    const shape = sortedShapes[i]
+    const dy = i32(Math.sign(shape.end[0] - shape.begin[0]))
+    const dx = i32(Math.sign(shape.end[1] - shape.begin[1]))
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      if (!isValidMove([r, c])) continue
-      const hash = r + "," + c
+      if (!isValidMove(game, [r, c])) continue
+      const hash = moveHash([r,c])
       if (!moveHashes.has(hash)) {
-        yield [r, c]
+        moves.push([r,c])
         moveHashes.add(hash)
       }
     }
   }
 
-    // return all other spots near gems
-    for (let r = 0; r < game.board.length; r++) {
-      for (let c = 0; c < game.board.length; c++) {
-        if (game.board[r][c] === undefined) continue
-        // there is a gem here, suggest nearby locations
-        const dists = [0, -1, 1, -2, 2]
-        for (const dy of dists) {
-          for (const dx of dists) {
-            if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
-              const move = [r + dy, c + dx]
-              if (!isValidMove(move)) continue
-              const hash = move[0] + "," + move[1]
-              if (!moveHashes.has(hash)) {
-                yield move
-                moveHashes.add(hash)
-              }
+  // return all other spots near gems
+  for (let r = 0; r < game.board.length; r++) {
+    for (let c = 0; c < game.board.length; c++) {
+      if (game.board[r][c] === -1) continue
+      // there is a gem here, suggest nearby locations
+      const dists = [0, -1, 1, -2, 2]
+      for (let i=0; i<dists.length; i++) {
+        for (let j=0; j<dists.length; j++) {
+          const dx = dists[i]
+          const dy = dists[j]
+          if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
+            const move = [r + dy, c + dx]
+            if (!isValidMove(game, move)) continue
+            const hash = moveHash(move)
+            if (!moveHashes.has(hash)) {
+              moves.push(move)
+              moveHashes.add(hash)
             }
           }
         }
       }
     }
+  }
+
+  return moves
 }
 
 
-
-// interface GroupedLinearShapes {
-//   "pente-threats": LinearShape[]
-//   "open-trias": LinearShape[]
-//   "extendable-trias": LinearShape[]
-//   "capture-threats": LinearShape[]
-// }
-
-// export function categorizeLinearShapes(game: Game) {
-//   const output = {
-//     "my": {},
-//     "opponent": {}
-//   }
-//   for (const shape of game.linearShapes) {
-//     if (shape.type.includes("pente-threat")) {
-//       if (shape.owner === game.currentPlayer) {
-//         myPenteThreats.push(shape)
-//         break  // no need to keep looking, just play this move and win
-//       }
-//       else opponentPenteThreats.push(shape)
-//     }
-//     else if (["open-tria", "stretch-tria"].includes(shape.type)) {
-//       if (shape.owner === game.currentPlayer) myOpenTrias.push(shape)
-//       else opponentOpenTrias.push(shape)
-//     }
-//     else if (["extendable-tria", "extendable-stretch-tria", "extendable-stretch-tria-threatened"].includes(shape.type) && shape.owner === game.currentPlayer) {
-//       myExtendableTrias.push(shape)
-//     }
-//     else if (shape.type === "capture-threat" && shape.owner === game.currentPlayer) {
-//       myCaptureThreats.push(shape)
-//     }
-//   }
-//   return output
-// }
-
+/*
 
 export function getNonQuietMoves(game: Game): number[][] {
   // function to tell if a position is quiet, used for quiescence search (QS), and which moves relevant to the non-quietness should be considered for the QS
@@ -246,3 +215,5 @@ export function getNonQuietMoves(game: Game): number[][] {
   }
   return moves
 }
+
+*/

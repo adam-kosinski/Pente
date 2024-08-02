@@ -22,6 +22,7 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { type Game, type SearchResult } from "../../assembly/engine_v13_wasm/model"
 import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes, testShapeUpdate } from "../../build/game"
+import { generateOrderedMoves } from '../../build/move_generation';
 import { evaluatePosition } from '../../build/engine';
 
 const game = ref(createNewGame(19))
@@ -137,6 +138,7 @@ onMounted(() => {
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
+        <button @click="console.log(generateOrderedMoves(game, [], null, [], []))">Generate Moves</button><br>
         <button @click="console.log(game)">Game Object</button><br>
         <button @click="testShapeUpdate()">Time Test</button><br>
         <select v-model="testPositionIndex">

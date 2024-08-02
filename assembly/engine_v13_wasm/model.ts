@@ -1,11 +1,11 @@
 export class Game {
-  public board: i32[][] = []  // value is 0 or 1, or -1 if empty
-  public currentPlayer: i32 = 0  // 0 or 1
-  public captures: i32[] = [0, 0]  // key is player, value is n captures
-  public nMoves: i32 = 0
-  public prevMoves: MoveInfo[] = []
-  public isOver: boolean = false
-  public linearShapes: LinearShape[] = []
+  board: i32[][] = []  // value is 0 or 1, or -1 if empty
+  currentPlayer: i32 = 0  // 0 or 1
+  captures: i32[] = [0, 0]  // key is player, value is n captures
+  nMoves: i32 = 0
+  prevMoves: MoveInfo[] = []
+  isOver: boolean = false
+  linearShapes: LinearShape[] = []
 }
 
 export class MoveInfo {
@@ -43,9 +43,13 @@ export function createLinearShape(type: string, pattern: string, owner: i32, beg
   return shape
 }
 
-export interface SearchResult {
-  eval: i32
-  evalFlag: EvalFlag
-  bestVariation: i32[][]
+export class SearchResult {
+  eval: i32 = 0
+  evalFlag: string = "exact"  // or "upper-bound" or "lower-bound"
+  bestVariation: i32[][] = []
 }
-export type EvalFlag = "exact" | "upper-bound" | "lower-bound"
+
+export class TTEntry {
+  depth: number = 0
+  result: SearchResult = new SearchResult()
+}
