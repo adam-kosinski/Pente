@@ -1,7 +1,5 @@
 import { Game, MoveInfo, LinearShapeUpdate, LinearShape, createLinearShape } from "./model"
 
-export function main(): void { }
-
 export function gameToString(game: Game): string {
   return `${game.board.length}~${game.prevMoves.map((m: MoveInfo) => m.addedGems[0].join(".")).join("|")}`
 }

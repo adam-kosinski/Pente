@@ -3,8 +3,6 @@ import { makeMove, undoMove, copyGame } from "./game"
 import { generateOrderedMoves } from "./move_generation";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable";
 
-export function main(): void { }
-
 
 let normalNodesVisited: i32 = 0
 let confirmAlpha: i32 = 0
@@ -82,7 +80,7 @@ export function findBestMove(game: Game, maxDepth: number, absoluteEval: boolean
 
 
 function principalVariationSearch(
-  game: Game, depth: number, ply: i32, alpha: f64, beta: f64, usingNullWindow: boolean, principalVariation: i32[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: Game, depth: i32, ply: i32, alpha: f64, beta: f64, usingNullWindow: boolean, principalVariation: i32[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
   : SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -96,9 +94,12 @@ function principalVariationSearch(
 
   normalNodesVisited++
 
+  console.log([normalNodesVisited.toString(), depth.toString(), alpha.toString(), beta.toString()].join())
+  console.log("memory: " + memory.size().toString())
+
   // leaf node base cases
   const evaluation = evaluatePosition(game)
-  if (game.isOver || depth === 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply if we evaluate forcing win/loss, so that we will actually generate some move
+  if (game.isOver || depth <= 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply if we evaluate forcing win/loss, so that we will actually generate some move
     return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
   }
 
@@ -107,7 +108,7 @@ function principalVariationSearch(
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
   // transposition table cutoff / info
-  const tableKey = ""//TTableKey(game)
+  const tableKey = TTableKey(game)
   const tableEntry = transpositionTable.has(tableKey) ? transpositionTable.get(TTableKey(game)) : null
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
@@ -137,8 +138,6 @@ function principalVariationSearch(
   for (; moveIndex < moves.length && moveIndex <= 15; moveIndex++) {  // limit number of moves considered
     const r = moves[moveIndex][0]
     const c = moves[moveIndex][1]
-
-    console.log(r.toString() + "," + c.toString())
 
     // search child
     makeMove(game, r, c)
