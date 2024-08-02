@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { copyGame, createNewGame, makeMove } from '../../build/game';
+import { copyGame, createNewGame, makeMove, gameToString } from '../../build/game';
 import { type SearchResult, type Game } from '../../assembly/engine_v13_wasm/model';
 import { computed } from 'vue';
 
@@ -20,10 +20,10 @@ const evalString = computed(() => {
 
 function getFuturePosition(moveIndex: number) {
   if (!props.result) return createNewGame(19)  // shouldn't happen, but fallback
-  const gameCopy = copyGame(props.game)
+  let gameCopy = copyGame(props.game)
   for (let i = 0; i <= moveIndex; i++) {
     const m = props.result.bestVariation[i]
-    makeMove(gameCopy, m[0], m[1])
+    gameCopy = makeMove(gameCopy, m[0], m[1])
   }
   return gameCopy
 }

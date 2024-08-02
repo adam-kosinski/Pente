@@ -8,8 +8,10 @@ export function gameToString(game: Game): string {
 export function loadFromString(s: string): Game {
   const split = s.split("~")
   const boardSize = i32(parseInt(split[0]))
-  const moves: i32[][] = split[1].split("|").map((m: string) => m.split(".").map((x: string) => i32(parseInt(x))))
   const game = createNewGame(boardSize)
+  if(split[1].length === 0) return game
+
+  const moves: i32[][] = split[1].split("|").map((m: string) => m.split(".").map((x: string) => i32(parseInt(x))))
   for (let i = 0; i < moves.length; i++) {
     makeMove(game, moves[i][0], moves[i][1])
   }

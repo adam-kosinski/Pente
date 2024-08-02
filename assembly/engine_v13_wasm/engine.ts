@@ -107,7 +107,7 @@ function principalVariationSearch(
   let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
 
   // transposition table cutoff / info
-  const tableKey = TTableKey(game)
+  const tableKey = ""//TTableKey(game)
   const tableEntry = transpositionTable.has(tableKey) ? transpositionTable.get(TTableKey(game)) : null
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
@@ -137,6 +137,8 @@ function principalVariationSearch(
   for (; moveIndex < moves.length && moveIndex <= 15; moveIndex++) {  // limit number of moves considered
     const r = moves[moveIndex][0]
     const c = moves[moveIndex][1]
+
+    console.log(r.toString() + "," + c.toString())
 
     // search child
     makeMove(game, r, c)
