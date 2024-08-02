@@ -96,7 +96,7 @@ function printMoves() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMove(game.value, 9, true)
+  result.value = findBestMove(game.value, 8, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
