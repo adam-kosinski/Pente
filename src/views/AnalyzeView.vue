@@ -23,11 +23,11 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 import { type Game, type SearchResult } from "../../assembly/engine_v13_wasm/model"
 import { createNewGame, loadFromString, gameToString, copyGame, makeMove, undoMove, updateLinearShapes, testShapeUpdate } from "../../build/game"
 import { generateOrderedMoves } from '../../build/move_generation';
-import { evaluatePosition } from '../../build/engine';
+import { findBestMove, evaluatePosition } from '../../build/engine';
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(5)
+const testPositionIndex = ref(2)
 const testPositions = [
   "19~",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -98,7 +98,7 @@ function timeTest() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  // result.value = findBestMove(game.value, 9, true)
+  result.value = findBestMove(game.value, 6, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {

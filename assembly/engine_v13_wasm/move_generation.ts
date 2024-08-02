@@ -36,10 +36,10 @@ function moveHash(move: i32[]): string {
 
 export function generateOrderedMoves(
   game: Game,
-  principalVariationMove: i32[],  // pass [] to ignore
-  tableEntry: TTEntry | null,  // pass null to ignore
-  killerMoves: i32[][],  // pass [] to ignore
-  prevDepthResults: SearchResult[]  // pass [] to ignore
+  principalVariationMove: i32[] = [],
+  tableEntry: TTEntry | null = null,
+  killerMoves: i32[][] = [],
+  prevDepthResults: SearchResult[] = []
 ): i32[][] {
 
   // if we have it, use order from prevDepthResults - this will contain all moves, ranked

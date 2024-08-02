@@ -44,7 +44,7 @@ export function createLinearShape(type: string, pattern: string, owner: i32, beg
 }
 
 export class SearchResult {
-  eval: i32 = 0
+  eval: f64 = 0
   evalFlag: string = "exact"  // or "upper-bound" or "lower-bound"
   bestVariation: i32[][] = []
 }
