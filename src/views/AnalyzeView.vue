@@ -18,7 +18,7 @@ import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v14/move_gen
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(4)
+const testPositionIndex = ref(0)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",

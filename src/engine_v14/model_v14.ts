@@ -111,9 +111,7 @@ export function makeMove(game: GameState, r: number, c: number) {
   }
   // update linear shapes for all the locations we messed with
   moveInfo.addedGems.concat(moveInfo.removedGems).forEach(([r, c]) => {
-    const update = updateLinearShapes(game, r, c)
-    shapeUpdate.added = shapeUpdate.added.concat(update.added)
-    shapeUpdate.removed = shapeUpdate.removed.concat(update.removed)
+    updateLinearShapes(game, r, c, shapeUpdate)
   })
 
   // console.log("added", shapeUpdate.added.map(s => s.hash))
@@ -275,13 +273,13 @@ function clamp(x: number, boardSize: number): number {
   return Math.max(0, Math.min(boardSize, x))
 }
 
-export function updateLinearShapes(game: GameState, r0: number, c0: number): LinearShapeUpdate {
+export function updateLinearShapes(game: GameState, r0: number, c0: number,
+  update: LinearShapeUpdate = { added: [], removed: [] }) {
   // Given a game state, update the game state's list of linear shapes.
   // Will only take into account shapes that include the r0,c0 location.
   // This takes advantage of the fact that a move can only create/affect
-  // shapes containing its location, or locations of captured stones
-
-  const update: LinearShapeUpdate = { added: [], removed: [] }
+  // shapes containing its location, or locations of captured stones.
+  // Also, update the shape update object passed in with the shapes that were added and removed.
 
   // remove any shapes that are no longer there
   game.linearShapes = game.linearShapes.filter(shape => {
@@ -290,6 +288,7 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
 
     // if no overlap with the changed location, couldn't possibly be gone now
     // checking this for horizontal and vertical shapes is really cheap so do it
+    // not worth it for diagonal shapes
     if (dy === 0 && r0 !== shape.begin[0]) return true
     if (dx === 0 && c0 !== shape.begin[1]) return true
 
@@ -355,7 +354,6 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
       }
     }
   }
-  return update
 }
 
 
@@ -400,6 +398,12 @@ export function oldUpdateLinearShapes(game: GameState, r0: number, c0: number): 
   game.linearShapes = game.linearShapes.filter(shape => {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
+
+    // if no overlap with the changed location, couldn't possibly be gone now
+    // checking this for horizontal and vertical shapes is really cheap so do it
+    if (dy === 0 && r0 !== shape.begin[0]) return true
+    if (dx === 0 && c0 !== shape.begin[1]) return true
+
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       const s = game.board[r][c] === undefined ? "_" : game.board[r][c].toString()
       if (s !== shape.pattern.charAt(i)) {
@@ -423,10 +427,11 @@ export function oldUpdateLinearShapes(game: GameState, r0: number, c0: number): 
     let rEnd = clamp(r0 + (maxLinearShapeLength - 1) * dir[0], game.board.length - 1)
     let cBegin = clamp(c0 - (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
     let cEnd = clamp(c0 + (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
-    // for stop condition, direction can be negative - flip the inequality if so by multiplying both sides by -1 (the direction)
-    // x <= 5 when x increasing - 3,4,5 stop
-    // -x <= -5 when x decreasing - 7 (-7), 6 (-6), 5 (-5) stop
-    for (let r = rBegin, c = cBegin; dir[0] * r <= dir[0] * rEnd && dir[1] * c <= dir[1] * cEnd; r += dir[0], c += dir[1]) {
+    // for stop condition, direction can be negative - flip the inequality if so
+    for (let r = rBegin, c = cBegin;
+      (dir[0] === -1 ? r >= rEnd : r <= rEnd) && (dir[1] === -1 ? c >= cEnd : c <= cEnd);
+      r += dir[0], c += dir[1]
+    ) {
       const value = game.board[r][c]
       s += value === undefined ? "_" : value
     }
