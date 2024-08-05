@@ -42,6 +42,7 @@
     }
   },
   "options": {
-    "bindings": "esm"
+    "bindings": "esm",
+    "optimizeLevel": 3
   }
 }

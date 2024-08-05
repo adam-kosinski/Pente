@@ -1,4 +1,4 @@
-import { Game, SearchResult, LinearShape } from "./model";
+import { Game, SearchResult, LinearShape, TTEntry } from "./model";
 import { makeMove, undoMove, copyGame } from "./game"
 import { generateOrderedMoves } from "./move_generation";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable";
@@ -99,9 +99,11 @@ function principalVariationSearch(
 
   // leaf node base cases
   const evaluation = evaluatePosition(game)
+  console.log("eep")
   if (game.isOver || depth <= 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply if we evaluate forcing win/loss, so that we will actually generate some move
     return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
   }
+  console.log("oop")
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
   const allMoveResults: SearchResult[] = []
@@ -130,18 +132,26 @@ function principalVariationSearch(
     ttableMiss++
   }
 
+  console.log("boo")
+
   const killerMovesAtPly = killerMoves.has(ply) ? killerMoves.get(ply) : []
   const pvMove = principalVariation.length > 0 ? principalVariation[0] : []
   const moves: i32[][] = generateOrderedMoves(game, pvMove, tableEntry, killerMovesAtPly, prevDepthResults)
+
+  console.log("bee")
 
   let moveIndex = 0  // declare in this scope so we can collect this value once the for loop exits
   for (; moveIndex < moves.length && moveIndex <= 15; moveIndex++) {  // limit number of moves considered
     const r = moves[moveIndex][0]
     const c = moves[moveIndex][1]
 
+    console.log("a")
+
     // search child
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
+
+    console.log("b")
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
@@ -161,7 +171,9 @@ function principalVariationSearch(
         confirmAlpha++
       }
     }
+    console.log("c")
     undoMove(game)
+    console.log("d")
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const moveSequence: i32[][] = [[r, c]].concat(childResult.bestVariation)
@@ -191,6 +203,7 @@ function principalVariationSearch(
       bestResult = myResult
     }
 
+    console.log("e")
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (best eval),
     // they would avoid coming here, so we can stop looking at this node
@@ -202,6 +215,8 @@ function principalVariationSearch(
         break
       }
     }
+
+    console.log("f")
   }
   nMovesGenerated.push(moveIndex)
 
