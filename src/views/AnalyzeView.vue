@@ -20,7 +20,7 @@ const game = ref(createNewGame(19))
 
 const testPositionIndex = ref(4)
 const testPositions = [
-  "19~",
+  "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
   "19~9.9|9.10|11.9|7.8|10.11|8.9|10.9|5.8|10.10|5.6|6.7|10.12|10.8",
   "19~9.9|9.7|7.7|7.9|10.6|8.6",
@@ -140,7 +140,7 @@ function matchAll(str: string, q: string) {
           Shapes</button><br>
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
-        <button @click="console.log(game)">Game Object</button><br>
+        <button @click="console.log(JSON.stringify(game))">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>

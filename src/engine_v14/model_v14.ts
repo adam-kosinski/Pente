@@ -204,9 +204,9 @@ for (const [type, pattern] of Object.entries(linearShapeDef)) {
 }
 const allPatternsRegEx = new RegExp("(?=(" + Array.from(linearShapes.keys()).join("|") + "))", "g")
 
-for(const [pattern, info] of linearShapes) {
+for (const [pattern, info] of linearShapes) {
   let x = 0b11
-  for(const s of pattern){
+  for (const s of pattern) {
     x <<= 2
     x |= s === "_" ? 0b10 : Number(s)
   }
@@ -215,31 +215,57 @@ for(const [pattern, info] of linearShapes) {
 
 
 
+// // map to memoize linear shape pattern matches
+// export const binaryPatternMatchMap = new Map()
+
+// function ones(x: number){
+//   return (1 << x) - 1
+// }
+
+// function getPatternMatchesBinary(x: number) {
+//   const existingAnswer = binaryPatternMatchMap.get(x)
+//   if (existingAnswer) return existingAnswer
+
+//   const matches = []
+//   const inputLength = (Math.ceil(Math.log2(x)) - 2) / 2  // -2 for the two bit leading blocker
+
+//   for (const [pattern, info] of linearShapes.entries()) {
+//     const patternBinary = info.binary
+//     const mask = ones(pattern.length * 2)
+//     for (let start = 0; start <= inputLength - pattern.length; start++) {
+//       const shift = inputLength - pattern.length - start
+//       if((mask & patternBinary) === (mask & (x >> 2*shift))){
+//         matches.push({ index: start, pattern: pattern })
+//       }
+//     }
+//   }
+//   binaryPatternMatchMap.set(x, matches);
+//   return matches
+// }
+
 // map to memoize linear shape pattern matches
-export const binaryPatternMatchMap = new Map()
+export const patternMatchMap = new Map()
 
-function ones(x: number){
-  return (1 << x) - 1
-}
-
-function getPatternMatchesBinary(x: number) {
-  const existingAnswer = binaryPatternMatchMap.get(x)
+function getPatternMatches(str: string) {
+  const existingAnswer = patternMatchMap.get(str)
   if (existingAnswer) return existingAnswer
 
   const matches = []
-  const inputLength = (Math.ceil(Math.log2(x)) - 2) / 2  // -2 for the two bit leading blocker
-
-  for (const [pattern, info] of linearShapes.entries()) {
-    const patternBinary = info.binary
-    const mask = ones(pattern.length * 2)
-    for (let start = 0; start <= inputLength - pattern.length; start++) {
-      const shift = inputLength - pattern.length - start
-      if((mask & patternBinary) === (mask & (x >> 2*shift))){
+  for (const pattern of linearShapes.keys()) {
+    for (let start = 0; start <= str.length - pattern.length; start++) {
+      let matchHere = true
+      for (let i = 0; i < pattern.length; i++) {
+        if (str[start + i] !== pattern[i]) {
+          matchHere = false
+          break
+        }
+      }
+      if (matchHere) {
         matches.push({ index: start, pattern: pattern })
       }
     }
   }
-  binaryPatternMatchMap.set(x, matches);
+  patternMatchMap.set(str, matches);
   return matches
 }
 
@@ -261,6 +287,12 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
   game.linearShapes = game.linearShapes.filter(shape => {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
+
+    // if no overlap with the changed location, couldn't possibly be gone now
+    // checking this for horizontal and vertical shapes is really cheap so do it
+    if (dy === 0 && r0 !== shape.begin[0]) return true
+    if (dx === 0 && c0 !== shape.begin[1]) return true
+
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       const s = game.board[r][c] === undefined ? "_" : game.board[r][c].toString()
       if (s !== shape.pattern.charAt(i)) {
@@ -279,22 +311,22 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
   // iterate over each of four directions
   for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
     // construct string to search for patterns in - takes about 50% of time
-    let x = 0b11  // blocker
+    let s = ""
     let rBegin = clamp(r0 - (maxLinearShapeLength - 1) * dir[0], game.board.length - 1)
     let rEnd = clamp(r0 + (maxLinearShapeLength - 1) * dir[0], game.board.length - 1)
     let cBegin = clamp(c0 - (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
     let cEnd = clamp(c0 + (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
-    // for stop condition, direction can be negative - flip the inequality if so by multiplying both sides by -1 (the direction)
-    // x <= 5 when x increasing - 3,4,5 stop
-    // -x <= -5 when x decreasing - 7 (-7), 6 (-6), 5 (-5) stop
-    for (let r = rBegin, c = cBegin; dir[0] * r <= dir[0] * rEnd && dir[1] * c <= dir[1] * cEnd; r += dir[0], c += dir[1]) {
+    // for stop condition, direction can be negative - flip the inequality if so
+    for (let r = rBegin, c = cBegin;
+      (dir[0] === -1 ? r >= rEnd : r <= rEnd) && (dir[1] === -1 ? c >= cEnd : c <= cEnd);
+      r += dir[0], c += dir[1]
+    ) {
       const value = game.board[r][c]
-      x <<= 2
-      x |= value === undefined ? 0b10 : value
+      s += value === undefined ? "_" : value
     }
 
     // search for each pattern
-    const matches = getPatternMatchesBinary(x)
+    const matches = getPatternMatches(s)
     if (!matches) continue
     for (const match of matches) {
       const pattern: string = match.pattern
@@ -331,10 +363,10 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number): Lin
 
 
 // map to memoize linear shape pattern matches
-export const patternMatchMap = new Map()
+export const oldPatternMatchMap = new Map()
 
-function getPatternMatches(str: string) {
-  const existingAnswer = patternMatchMap.get(str)
+function oldGetPatternMatches(str: string) {
+  const existingAnswer = oldPatternMatchMap.get(str)
   if (existingAnswer) return existingAnswer
 
   const matches = []
@@ -352,7 +384,7 @@ function getPatternMatches(str: string) {
       }
     }
   }
-  patternMatchMap.set(str, matches);
+  oldPatternMatchMap.set(str, matches);
   return matches
 }
 
@@ -400,7 +432,7 @@ export function oldUpdateLinearShapes(game: GameState, r0: number, c0: number): 
     }
 
     // search for each pattern
-    const matches = getPatternMatches(s)
+    const matches = oldGetPatternMatches(s)
     if (!matches) continue
     for (const match of matches) {
       const pattern: string = match.pattern
