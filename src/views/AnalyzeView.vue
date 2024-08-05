@@ -35,6 +35,11 @@ watch(testPositionIndex, i => {
   game.value = loadFromString(testPositions[i])
 })
 
+onMounted(() => {
+  const searchParams = new URL(window.location.href).searchParams
+  const gameString = searchParams.get("s")
+  if(gameString) game.value = loadFromString(gameString)
+})
 
 
 const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game changes, the analysis lines don't behave weirdly before we give them the next analysis result
