@@ -12,12 +12,13 @@ const shapePriority: Record<string, number> = {
   "pente-threat-31": 4,
   "open-tria": 5,
   "stretch-tria": 6,
-  "extendable-stretch-tria-threatened": 7,
-  "extendable-tria": 8,
-  "extendable-stretch-tria": 9,
-  "capture-threat": 10,
-  "stretch-two": 11,
-  "open-pair": 12,
+  "extendable-stretch-tria-2": 7,
+  "extendable-stretch-tria-1": 8,
+  "extendable-tria": 9,
+  "extendable-stretch-tria": 10,
+  "capture-threat": 11,
+  "stretch-two": 12,
+  "open-pair": 13,
   "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
   "pente": 30  // nothing you can do
 }
@@ -140,41 +141,6 @@ export function* makeOrderedMoveIterator(
 
 
 
-// interface GroupedLinearShapes {
-//   "pente-threats": LinearShape[]
-//   "open-trias": LinearShape[]
-//   "extendable-trias": LinearShape[]
-//   "capture-threats": LinearShape[]
-// }
-
-// export function categorizeLinearShapes(game: GameState) {
-//   const output = {
-//     "my": {},
-//     "opponent": {}
-//   }
-//   for (const shape of game.linearShapes) {
-//     if (shape.type.includes("pente-threat")) {
-//       if (shape.owner === game.currentPlayer) {
-//         myPenteThreats.push(shape)
-//         break  // no need to keep looking, just play this move and win
-//       }
-//       else opponentPenteThreats.push(shape)
-//     }
-//     else if (["open-tria", "stretch-tria"].includes(shape.type)) {
-//       if (shape.owner === game.currentPlayer) myOpenTrias.push(shape)
-//       else opponentOpenTrias.push(shape)
-//     }
-//     else if (["extendable-tria", "extendable-stretch-tria", "extendable-stretch-tria-threatened"].includes(shape.type) && shape.owner === game.currentPlayer) {
-//       myExtendableTrias.push(shape)
-//     }
-//     else if (shape.type === "capture-threat" && shape.owner === game.currentPlayer) {
-//       myCaptureThreats.push(shape)
-//     }
-//   }
-//   return output
-// }
-
-
 export function getNonQuietMoves(game: GameState): number[][] {
   // function to tell if a position is quiet, used for quiescence search (QS), and which moves relevant to the non-quietness should be considered for the QS
   // if the return move list has length 0, the position is quiet
@@ -211,7 +177,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
       if (shape.owner === game.currentPlayer) myOpenTrias.push(shape)
       else opponentOpenTrias.push(shape)
     }
-    else if (["extendable-tria", "extendable-stretch-tria", "extendable-stretch-tria-threatened"].includes(shape.type) && shape.owner === game.currentPlayer) {
+    else if (["extendable-tria", "extendable-stretch-tria-1", "extendable-stretch-tria-2"].includes(shape.type) && shape.owner === game.currentPlayer) {
       myExtendableTrias.push(shape)
     }
     else if (shape.type === "capture-threat" && shape.owner === game.currentPlayer) {
