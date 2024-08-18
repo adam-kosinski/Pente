@@ -163,7 +163,7 @@ export function undoMove(game: GameState) {
 
 
 
-const linearShapeDef = {
+export const linearShapeDef = {
   // shapes are defined from the perspective of me as player 1 and opponent as player 0
   // shapes should be defined so that they are "owned" by player 1, intuitively
   // they will be automatically flipped by the code, so don't have to include both forwards/backwards versions of asymmetrical patterns

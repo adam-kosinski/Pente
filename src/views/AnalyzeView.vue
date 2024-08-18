@@ -12,8 +12,9 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v14/model_v14';
-import { findBestMove, evaluatePosition, copyGame } from '@/engine_v14/engine_v14';
+import { findBestMove, copyGame } from '@/engine_v14/engine_v14';
 import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v14/move_generation_v14'
+import { evaluatePosition, positionFeatureDict } from '@/engine_v14/evaluation_v14';
 // import { updateLinearShapes as oldUpdateLinearShapes } from '@/engine_v13/model_v13';
 
 const game = ref(createNewGame(19))
@@ -147,6 +148,7 @@ function matchAll(str: string, q: string) {
         <button @click="game = createNewGame(19)">Clear Game</button><br>
         <button @click="console.log(JSON.stringify(game))">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
+        <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>
