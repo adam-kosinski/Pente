@@ -18,6 +18,10 @@ async function playerMove(r: number, c: number){
   makeMove(game.value, compR, compC)
 }
 
+function goToAnalysis(){
+  window.location.href = "/analyze?s=" + gameToString(game.value)
+}
+
 </script>
 
 
@@ -26,6 +30,7 @@ async function playerMove(r: number, c: number){
 <template>
   <button @click="console.log(gameToString(game))">Save Game</button><br>
   <button @click="undoMove(game)">Undo Move</button><br>
+  <button @click="goToAnalysis()">Analyze</button><br>
 
 
   <Board class="board" :game="game" :show-coord-labels="false" @make-move="playerMove" />
