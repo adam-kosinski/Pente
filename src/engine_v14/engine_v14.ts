@@ -23,71 +23,76 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function findBestMove(game: GameState, maxDepth: number, maxMs: number = Infinity, absoluteEval: boolean = false): SearchResult {
+export function findBestMoves(game: GameState, variations: number = 1, maxDepth: number, maxMsPerVariation: number = Infinity, absoluteEval: boolean = false): SearchResult[] {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
 
-  const startTime = performance.now()
-
   game = copyGame(game)  // don't mess with the game object we got
 
-  const deadlineMs = performance.now() + maxMs
+  let resultsToReturn: SearchResult[] = []
 
-  let prevDepthResults: SearchResult[] = []
+  for (let v = 0; v < variations; v++) {
+    const startTime = performance.now()
+    const deadlineMs = performance.now() + maxMsPerVariation
 
-  for (let depth = 1; depth <= maxDepth; depth++) {
-    console.log(`searching depth ${depth}...`)
+    let prevDepthResults: SearchResult[] = []
 
-    killerMoves = []
+    for (let depth = 1; depth <= maxDepth; depth++) {
+      console.log(`searching depth ${depth}...`)
 
-    normalNodesVisited = 0
-    confirmAlpha = 0
-    failHigh = 0
-    ttableHit = 0
-    ttableMiss = 0
-    nMovesGenerated = []
+      killerMoves = []
 
-    const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
-    
-    // if ran out of time, disregard this result and stop looking
-    if(isNaN(results[0].eval)) {
-      console.log("ran out of time")
-      break
+      normalNodesVisited = 0
+      confirmAlpha = 0
+      failHigh = 0
+      ttableHit = 0
+      ttableMiss = 0
+      nMovesGenerated = []
+
+      const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
+      const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+
+      // if ran out of time, disregard this result and stop looking
+      if (isNaN(results[0].eval)) {
+        console.log("ran out of time")
+        break
+      }
+
+      prevDepthResults = results
+
+      // log results
+      console.log(normalNodesVisited + " normal nodes visited")
+      console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
+      console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
+      console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
+      console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
+      results.slice(0, 5).forEach(r => {
+        const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
+        console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
+      })
+      console.log("")
+
+      // if found a forced win for either player, no need to keep looking
+      if (Math.abs(results[0].eval) === Infinity) break
     }
 
-    prevDepthResults = results
+    const answer = prevDepthResults[0]
 
-    // log results
-    console.log(normalNodesVisited + " normal nodes visited")
-    console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
-    console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
-    console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
-    console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-    results.slice(0, 1).forEach(r => {
-      const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
-      console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
-    })
-    console.log("")
+    if (absoluteEval && game.currentPlayer === 1) {
+      // flip eval sign
+      answer.eval = -answer.eval
+      if (answer.evalFlag === "lower-bound") answer.evalFlag = "upper-bound"
+      else if (answer.evalFlag === "upper-bound") answer.evalFlag = "lower-bound"
+    }
 
-    // if found a forced win for either player, no need to keep looking
-    if (Math.abs(results[0].eval) === Infinity) break
+    resultsToReturn.push(answer)
+
+    console.log("time taken", performance.now() - startTime)
+    console.log("---------------------")
   }
 
-  const answer = prevDepthResults[0]
-
-  if (absoluteEval && game.currentPlayer === 1) {
-    // flip eval sign
-    answer.eval = -answer.eval
-    if (answer.evalFlag === "lower-bound") answer.evalFlag = "upper-bound"
-    else if (answer.evalFlag === "upper-bound") answer.evalFlag = "lower-bound"
-  }
-
-  console.log("time taken", performance.now() - startTime)
-  console.log("---------------------")
-
-  return prevDepthResults[0]
+  return resultsToReturn
 }
 
 
@@ -184,7 +189,7 @@ function principalVariationSearch(
     undoMove(game)
 
     // check for run out of time result
-    if(isNaN(childResult.eval)){
+    if (isNaN(childResult.eval)) {
       return [childResult]  // return another dummy result indicating ran out of time
     }
 

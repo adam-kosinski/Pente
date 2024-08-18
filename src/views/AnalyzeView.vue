@@ -12,7 +12,7 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 // import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
 
 import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v14/model_v14';
-import { findBestMove, copyGame } from '@/engine_v14/engine_v14';
+import { findBestMoves, copyGame } from '@/engine_v14/engine_v14';
 import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v14/move_generation_v14'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v14/evaluation_v14';
 // import { updateLinearShapes as oldUpdateLinearShapes } from '@/engine_v13/model_v13';
@@ -98,7 +98,7 @@ function printMoves() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMove(game.value, 4, Infinity, true)
+  result.value = findBestMoves(game.value, 1, 6, Infinity, true)[0]
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
