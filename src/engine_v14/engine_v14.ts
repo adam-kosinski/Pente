@@ -225,8 +225,8 @@ function principalVariationSearch(
     }
     moveIndex++
 
-    // limit branching factor
-    if (moveIndex >= 20) break
+    // limit branching factor - NOTE: this causes embarassingly wrong evaluations sometimes
+    // if (moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 
