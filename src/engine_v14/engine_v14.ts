@@ -23,6 +23,23 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
+
+export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity): number[] {
+  // in the opening, look into several variations and choose one randomly (to create game variation)
+  // in middlegame etc. just choose the best move
+  if(game.nMoves <= 4){
+    const nVariations = 3
+    const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations)
+    // because only several moves were made, unlikely that any of the proposed moves will be losing
+    // so just choose one at random
+    const chosen = results[Math.floor(Math.random() * results.length)]
+    return chosen.bestVariation[0]
+  }
+  return findBestMoves(game, 1, maxDepth, maxMs)[0].bestVariation[0]
+}
+
+
+
 export function findBestMoves(game: GameState, variations: number = 1, maxDepth: number, maxMsPerVariation: number = Infinity, absoluteEval: boolean = false): SearchResult[] {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
