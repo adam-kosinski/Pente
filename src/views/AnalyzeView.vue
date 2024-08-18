@@ -38,11 +38,30 @@ watch(testPositionIndex, i => {
   game.value = loadFromString(testPositions[i])
 })
 
-onMounted(() => {
-  const searchParams = new URL(window.location.href).searchParams
-  const gameString = searchParams.get("s")
-  if(gameString) game.value = loadFromString(gameString)
-})
+
+// move navigation -----------------------
+
+const moveList: Ref<number[][]> = ref([])
+const moveIndex = ref(-1)  // -1 if no moves, so that when displaying it reads move 0
+
+function updateMoveList() {
+  moveList.value = game.value.prevMoves.map(m => m.addedGems[0])
+  moveIndex.value = moveList.value.length - 1
+  console.log(JSON.stringify(moveList.value))
+}
+function incrementMoveIndex(){
+  if(moveIndex.value >= moveList.value.length - 1) return
+  moveIndex.value++
+  const move = moveList.value[moveIndex.value]
+  makeMove(game.value, move[0], move[1])
+}
+function decrementMoveIndex(){
+  if(moveIndex.value <= -1) return
+  moveIndex.value--
+  undoMove(game.value)
+}
+
+// ------------------------------
 
 
 const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game changes, the analysis lines don't behave weirdly before we give them the next analysis result
@@ -103,18 +122,14 @@ function analyzePosition() {
   results.value = findBestMoves(game.value, 2, 6, Infinity, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
+
+
 onMounted(() => {
-  // analyzePosition()
+  const searchParams = new URL(window.location.href).searchParams
+  const gameString = searchParams.get("s")
+  if (gameString) game.value = loadFromString(gameString)
+  updateMoveList()
 })
-
-
-function matchAll(str: string, q: string) {
-  const matches = []
-  for(let i=0; i<str.length-q.length; i++){
-    if(str.substring(i, i + q.length) === q) matches.push(i)
-  }
-  return matches
-}
 
 
 </script>
@@ -126,16 +141,28 @@ function matchAll(str: string, q: string) {
   <div class="analyze-view">
 
     <div class="board-container">
-      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c) }" />
+      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c); updateMoveList(); }" />
     </div>
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
       <div v-for="result in results" class="analysis-lines">
-        <AnalysisLine :game="analysisLineGameCopy" :result="result" @show-future-position="(position) => futurePosition = position"
-          @clear-future-position="futurePosition = undefined" @go-to-position="(position) => game = position" />
+        <AnalysisLine :game="analysisLineGameCopy" :result="result"
+          @show-future-position="(position) => futurePosition = position"
+          @clear-future-position="futurePosition = undefined"
+          @go-to-position="(position) => { game = position; updateMoveList(); }" />
       </div>
       <div class="future-position-container">
         <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
+      </div>
+      <div class="move-navigation">
+        <button>begin</button>
+        <button @click="decrementMoveIndex()">back</button>
+        <div>
+          <p>Move</p>
+          <p><span>{{ moveIndex + 1 }}</span>/<span>{{ moveList.length }}</span></p>
+        </div>
+        <button @click="incrementMoveIndex()">forward</button>
+        <button>end</button>
       </div>
       <div class="button-panel">
         <button @click="analyzePosition()">Analyze</button><br>
@@ -204,7 +231,8 @@ function matchAll(str: string, q: string) {
   position: relative;
   width: 100%;
 }
-.future-position-container > div {
+
+.future-position-container>div {
   position: absolute;
 }
 </style>
