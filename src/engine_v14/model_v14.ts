@@ -32,7 +32,7 @@ export interface LinearShape {
 }
 
 export interface SearchResult {
-  eval: number
+  eval: number  // NaN indicates ran out of time
   evalFlag: EvalFlag
   bestVariation: number[][]
 }

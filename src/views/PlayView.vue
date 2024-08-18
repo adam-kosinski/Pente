@@ -14,7 +14,7 @@ async function playerMove(r: number, c: number){
   makeMove(game.value, r, c)
   if(game.value.isOver) return
   await new Promise(resolve => setTimeout(resolve, 10))
-  const [compR, compC] = findBestMove(game.value, 8).bestVariation[0]
+  const [compR, compC] = findBestMove(game.value, 8, 500).bestVariation[0]
   makeMove(game.value, compR, compC)
 }
 

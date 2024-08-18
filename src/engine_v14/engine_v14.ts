@@ -1,6 +1,6 @@
 import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v14";
 import { makeOrderedMoveIterator } from "./move_generation_v14";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v14";
+import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v14";
 
 let normalNodesVisited = 0
 let confirmAlpha = 0
@@ -22,12 +22,16 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function findBestMove(game: GameState, maxDepth: number, absoluteEval: boolean = false): SearchResult {
+export function findBestMove(game: GameState, maxDepth: number, maxMs: number = Infinity, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if 1st player winning, negative if 2nd player winning (otherwise positive means current player winning)
 
-  game = copyGame(game)
+  const startTime = performance.now()
+
+  game = copyGame(game)  // don't mess with the game object we got
+
+  const deadlineMs = performance.now() + maxMs
 
   let prevDepthResults: SearchResult[] = []
 
@@ -44,7 +48,14 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
     nMovesGenerated = []
 
     const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+    const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+    
+    // if ran out of time, disregard this result and stop looking
+    if(isNaN(results[0].eval)) {
+      console.log("ran out of time")
+      break
+    }
+
     prevDepthResults = results
 
     // log results
@@ -64,20 +75,34 @@ export function findBestMove(game: GameState, maxDepth: number, absoluteEval: bo
   }
 
   const answer = prevDepthResults[0]
+
   if (absoluteEval && game.currentPlayer === 1) {
     // flip eval sign
     answer.eval = -answer.eval
     if (answer.evalFlag === "lower-bound") answer.evalFlag = "upper-bound"
     else if (answer.evalFlag === "upper-bound") answer.evalFlag = "lower-bound"
   }
+
+  console.log("time taken", performance.now() - startTime)
   return prevDepthResults[0]
 }
 
 
 
 function principalVariationSearch(
-  game: GameState, depth: number, ply: number, alpha: number, beta: number, movesSoFar: number[][], usingNullWindow: boolean, principalVariation: number[][] = [], prevDepthResults: SearchResult[] = [], returnAllMoveResults: boolean = false)
+  game: GameState,
+  depth: number,
+  ply: number,
+  alpha: number,
+  beta: number,
+  deadlineMs: number,  // performance.now() time we need to finish by
+  movesSoFar: number[][],
+  usingNullWindow: boolean,
+  principalVariation: number[][] = [],
+  prevDepthResults: SearchResult[] = [],
+  returnAllMoveResults: boolean = false)
   : SearchResult[] {
+
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
 
@@ -90,9 +115,15 @@ function principalVariationSearch(
 
   normalNodesVisited++
 
+  // ran out of time base case
+  if (performance.now() > deadlineMs) {
+    // return eval = NaN to indicate ran out of time and to disregard
+    return [{ eval: NaN, evalFlag: "exact", bestVariation: [] }]
+  }
+
   // leaf node base cases
   const evaluation = evaluatePosition(game)
-  if (game.isOver || depth === 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply if we evaluate forcing win/loss, so that we will actually generate some move
+  if (game.isOver || depth === 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
     return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
   }
 
@@ -131,23 +162,28 @@ function principalVariationSearch(
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, [...movesSoFar, [r, c]], usingNullWindow, restOfPrincipalVariation)[0]
+    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, deadlineMs, [...movesSoFar, [r, c]], usingNullWindow, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       let searchDepth = (depth >= 3 && moveIndex >= 5) ? depth - 2 : depth - 1  // apply late move reduction
-      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, [...movesSoFar, [r, c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
+      childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, deadlineMs, [...movesSoFar, [r, c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // need to check equal to as well as the inequalities, because if the null window was -Infinity, -Infinity, any move will cause a cutoff by being equal to -Infinity
       // beta - alpha > 1 avoids a redundant null window search
       if (alpha <= -childResult.eval && -childResult.eval <= beta && beta - alpha > 1) {
         failHigh++
-        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, [...movesSoFar, [r, c]], false, restOfPrincipalVariation)[0]
+        childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, deadlineMs, [...movesSoFar, [r, c]], false, restOfPrincipalVariation)[0]
       }
       else {
         confirmAlpha++
       }
     }
     undoMove(game)
+
+    // check for run out of time result
+    if(isNaN(childResult.eval)){
+      return [childResult]  // return another dummy result indicating ran out of time
+    }
 
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
@@ -190,7 +226,7 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor
-    if (moveIndex >= 15) break
+    if (moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 
