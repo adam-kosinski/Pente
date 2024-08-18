@@ -49,14 +49,14 @@ function updateMoveList() {
   moveIndex.value = moveList.value.length - 1
   console.log(JSON.stringify(moveList.value))
 }
-function incrementMoveIndex(){
-  if(moveIndex.value >= moveList.value.length - 1) return
+function incrementMoveIndex() {
+  if (moveIndex.value >= moveList.value.length - 1) return
   moveIndex.value++
   const move = moveList.value[moveIndex.value]
   makeMove(game.value, move[0], move[1])
 }
-function decrementMoveIndex(){
-  if(moveIndex.value <= -1) return
+function decrementMoveIndex() {
+  if (moveIndex.value <= -1) return
   moveIndex.value--
   undoMove(game.value)
 }
@@ -144,27 +144,39 @@ onMounted(() => {
       <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c); updateMoveList(); }" />
     </div>
     <div class="analysis-panel">
-      <p class="analysis-title">Analysis</p>
-      <div v-for="result in results" class="analysis-lines">
-        <AnalysisLine :game="analysisLineGameCopy" :result="result"
+      <div class="analysis-panel-top">
+        <p class="analysis-title">Analysis</p>
+        <AnalysisLine v-for="result in results" :game="analysisLineGameCopy" :result="result"
           @show-future-position="(position) => futurePosition = position"
           @clear-future-position="futurePosition = undefined"
           @go-to-position="(position) => { game = position; updateMoveList(); }" />
       </div>
-      <div class="future-position-container">
-        <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
-      </div>
-      <div class="move-navigation">
-        <button>begin</button>
-        <button @click="decrementMoveIndex()">back</button>
-        <div>
-          <p>Move</p>
-          <p><span>{{ moveIndex + 1 }}</span>/<span>{{ moveList.length }}</span></p>
+      <div class="future-position-space">
+        <div class="future-position-container">
+          <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
         </div>
-        <button @click="incrementMoveIndex()">forward</button>
-        <button>end</button>
       </div>
-      <div class="button-panel">
+
+      <div class="move-navigation">
+        <button @click="() => { while (moveIndex > -1) decrementMoveIndex() }">
+          <img src="/public/begin.svg">
+        </button>
+        <button @click="decrementMoveIndex()">
+          <img src="/public/back.svg">
+        </button>
+        <div>
+          <p>Move <span>{{ moveIndex + 1 }}</span>/<span>{{ moveList.length }}</span></p>
+        </div>
+        <button @click="incrementMoveIndex()">
+          <img src="/public/back.svg" style="transform: rotateY(180deg)">
+        </button>
+        <button @click="() => { while (moveIndex < moveList.length - 1) incrementMoveIndex() }">
+          <img src="/public/begin.svg" style="transform: rotateY(180deg)">
+        </button>
+      </div>
+    </div>
+
+    <div class="button-panel">
         <button @click="analyzePosition()">Analyze</button><br>
         <button @click="profile()">Profile</button><br>
         <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
@@ -183,7 +195,6 @@ onMounted(() => {
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>
       </div>
-    </div>
   </div>
 
 </template>
@@ -209,6 +220,7 @@ onMounted(() => {
 
 .analysis-panel {
   flex: 0 1 500px;
+  gap: 20px;
   height: 90vh;
   padding: 20px;
   box-sizing: border-box;
@@ -218,21 +230,71 @@ onMounted(() => {
 
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: space-between;
+  position: relative;
+}
+
+.analysis-panel-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .analysis-title {
   font-size: 30px;
   text-align: center;
   margin: 0;
+  margin-bottom: 10px;
+}
+
+.future-position-space {
+  position: relative;
+  min-height: 0;
 }
 
 .future-position-container {
-  position: relative;
-  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 100%;
+  margin: auto;
 }
 
-.future-position-container>div {
-  position: absolute;
+.move-navigation {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  text-wrap: nowrap;
 }
+
+.move-navigation button {
+  background-color: var(--medium-brown);
+  border: none;
+  border-radius: 5px;
+  height: 100%;
+  flex-grow: 1;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.move-navigation p {
+  margin: 0 10px;
+  font-size: 18px;
+}
+
+.move-navigation button img {
+  height: 100%;
+}
+
+.move-navigation button:hover {
+  background-color: color-mix(in srgb, var(--medium-brown), tan 20%);
+}
+
+.button-panel {
+  position: absolute;
+  left: -110px;
+  bottom: 0;
+}
+
 </style>

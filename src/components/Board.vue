@@ -60,16 +60,16 @@ function tryToMakeMove(r: number, c: number) {
 
 <style scoped>
 .board-wrapper {
-  width: 100%;
-  height: auto;
+  height: 100%;
+  width: auto;
   aspect-ratio: 1 / 1;
   align-self: center;
 }
 
 .board-element {
-  width: 100%;
-  max-width: 90vh;
-  height: auto;
+  height: 100%;
+  max-height: 90vh;
+  width: auto;
   aspect-ratio: 1 / 1;
   /* need to override align stretch, so will play nice with flexbox and grid layouts */
   align-self: center;
