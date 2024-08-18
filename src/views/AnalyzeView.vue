@@ -4,6 +4,8 @@ import { onMounted, ref, watch, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
+import { playGame } from '@/computerMatchup';
+
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
 
@@ -136,7 +138,7 @@ function matchAll(str: string, q: string) {
         <Board v-if="futurePosition" :game="futurePosition" :show-coord-labels="true" />
       </div>
       <div class="button-panel">
-        <button @click="analyzePosition()">Find Best Move</button><br>
+        <button @click="analyzePosition()">Analyze</button><br>
         <button @click="profile()">Profile</button><br>
         <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
         <button @click="printMoves()">Generate Moves</button><br>
@@ -149,6 +151,7 @@ function matchAll(str: string, q: string) {
         <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
         <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
+        <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
         <select v-model="testPositionIndex">
           <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
         </select>

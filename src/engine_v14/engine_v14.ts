@@ -24,23 +24,23 @@ function addKillerMove(r: number, c: number, ply: number) {
 
 
 
-export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity): number[] {
+export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
   // in the opening, look into several variations and choose one randomly (to create game variation)
   // in middlegame etc. just choose the best move
-  if(game.nMoves <= 4){
-    const nVariations = 3
-    const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations)
+  if (game.nMoves <= 4) {
+    const nVariations = 5
+    const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
     // because only several moves were made, unlikely that any of the proposed moves will be losing
     // so just choose one at random
     const chosen = results[Math.floor(Math.random() * results.length)]
     return chosen.bestVariation[0]
   }
-  return findBestMoves(game, 1, maxDepth, maxMs)[0].bestVariation[0]
+  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0].bestVariation[0]
 }
 
 
 
-export function findBestMoves(game: GameState, variations: number = 1, maxDepth: number, maxMsPerVariation: number = Infinity, absoluteEval: boolean = false): SearchResult[] {
+export function findBestMoves(game: GameState, variations: number = 1, maxDepth: number, maxMsPerVariation: number = Infinity, absoluteEval: boolean = false, verbose: boolean = true): SearchResult[] {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
@@ -50,20 +50,19 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
   let resultsToReturn: SearchResult[] = []
 
   for (let v = 0; v < variations; v++) {
-    console.log("\nVARIATION " + (v+1) + " ======================")
+    if (verbose) console.log("\nVARIATION " + (v + 1) + " ======================")
 
     const startTime = performance.now()
     const deadlineMs = performance.now() + maxMsPerVariation
 
     // exclude previously found best moves, to force it to find the next best move
     const movesToExclude = resultsToReturn.map(x => x.bestVariation[0])
-    console.log("excluding", JSON.stringify(movesToExclude))
-    console.log("")
+    if (verbose) console.log("excluding " + JSON.stringify(movesToExclude) + "\n")
 
     let prevDepthResults: SearchResult[] = []
 
     for (let depth = 1; depth <= maxDepth; depth++) {
-      console.log(`searching depth ${depth}...`)
+      if (verbose) console.log(`searching depth ${depth}...`)
 
       killerMoves = []
 
@@ -77,25 +76,33 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
       const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
       const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
 
+      if (results.length === 0) {
+        // ran out of moves
+        if (verbose) console.log("No moves left, returning what we have")
+        return resultsToReturn
+      }
+
       // if ran out of time, disregard this result and stop looking
       if (isNaN(results[0].eval)) {
-        console.log("ran out of time")
+        if (verbose) console.log("ran out of time")
         break
       }
 
       prevDepthResults = results
 
       // log results
-      console.log(normalNodesVisited + " normal nodes visited")
-      console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
-      console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
-      console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
-      console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-      results.slice(0, 1).forEach(r => {
-        const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
-        console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
-      })
-      console.log("")
+      if (verbose) {
+        console.log(normalNodesVisited + " normal nodes visited")
+        console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
+        console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
+        console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
+        console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
+        results.slice(0, 1).forEach(r => {
+          const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
+          console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
+        })
+        console.log("")
+      }
 
       // if found a forced win for either player, no need to keep looking
       if (Math.abs(results[0].eval) === Infinity) break
@@ -112,8 +119,10 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
 
     resultsToReturn.push(answer)
 
-    console.log("time taken", performance.now() - startTime)
-    console.log("---------------------")
+    if (verbose) {
+      console.log("time taken", performance.now() - startTime)
+      console.log("---------------------")
+    }
   }
 
   return resultsToReturn
@@ -189,7 +198,7 @@ function principalVariationSearch(
   let moveIndex = 0
   const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
-    if(movesToExclude.some(move => move[0] === r && move[1] === c)){
+    if (movesToExclude.some(move => move[0] === r && move[1] === c)) {
       continue
     }
 
