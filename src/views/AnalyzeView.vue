@@ -98,7 +98,7 @@ function printMoves() {
 
 const result: Ref<SearchResult | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMove(game.value, 6, Infinity, true)
+  result.value = findBestMove(game.value, 4, Infinity, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
@@ -146,7 +146,7 @@ function matchAll(str: string, q: string) {
           Shapes</button><br>
         <button @click="console.log(gameToString(game))">Save Game</button><br>
         <button @click="game = createNewGame(19)">Clear Game</button><br>
-        <button @click="console.log(JSON.stringify(game))">Game Object</button><br>
+        <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
         <button @click="timeTest()">Time Test</button><br>
         <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
         <select v-model="testPositionIndex">

@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v14";
+import { makeMove, undoMove, type GameState, type SearchResult } from "./model_v14";
 import { makeOrderedMoveIterator } from "./move_generation_v14";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v14";
 import { evaluatePosition } from "./evaluation_v14";
@@ -26,7 +26,7 @@ function addKillerMove(r: number, c: number, ply: number) {
 export function findBestMove(game: GameState, maxDepth: number, maxMs: number = Infinity, absoluteEval: boolean = false): SearchResult {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
-  // if absoluteEval is true, return positive eval if 1st player winning, negative if 2nd player winning (otherwise positive means current player winning)
+  // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
 
   const startTime = performance.now()
 

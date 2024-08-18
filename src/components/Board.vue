@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
-import { type GameState } from '@/engine_v12/model_v12';
+import { type GameState } from '@/engine_v14/model_v14';
 import CapturesArea from './CapturesArea.vue';
 
 const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
