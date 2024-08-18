@@ -116,27 +116,33 @@ export function* makeOrderedMoveIterator(
     }
   }
 
-    // return all other spots near gems
-    for (let r = 0; r < game.board.length; r++) {
-      for (let c = 0; c < game.board.length; c++) {
-        if (game.board[r][c] === undefined) continue
-        // there is a gem here, suggest nearby locations
-        const dists = [0, -1, 1, -2, 2]
-        for (const dy of dists) {
-          for (const dx of dists) {
-            if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
-              const move = [r + dy, c + dx]
-              if (!isValidMove(move)) continue
-              const hash = move[0] + "," + move[1]
-              if (!moveHashes.has(hash)) {
-                yield move
-                moveHashes.add(hash)
-              }
+  // return all other spots near gems
+  for (let r = 0; r < game.board.length; r++) {
+    for (let c = 0; c < game.board.length; c++) {
+      if (game.board[r][c] === undefined) continue
+      // there is a gem here, suggest nearby locations
+      const dists = [0, -1, 1, -2, 2]
+      for (const dy of dists) {
+        for (const dx of dists) {
+          // filter symmetric moves in the opening
+          // TODO extend this past move 1 using symmetry checking
+          if (game.nMoves === 1) {
+            if (dy <= 0 || dx < 0 || dx > dy) continue
+          }
+
+          if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
+            const move = [r + dy, c + dx]
+            if (!isValidMove(move)) continue
+            const hash = move[0] + "," + move[1]
+            if (!moveHashes.has(hash)) {
+              yield move
+              moveHashes.add(hash)
             }
           }
         }
       }
     }
+  }
 }
 
 

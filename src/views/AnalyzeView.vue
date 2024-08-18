@@ -96,9 +96,9 @@ function printMoves() {
   console.log("")
 }
 
-const result: Ref<SearchResult | undefined> = ref(undefined)
+const results: Ref<SearchResult[] | undefined> = ref(undefined)
 function analyzePosition() {
-  result.value = findBestMoves(game.value, 1, 6, Infinity, true)[0]
+  results.value = findBestMoves(game.value, 2, 6, Infinity, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 onMounted(() => {
@@ -128,7 +128,7 @@ function matchAll(str: string, q: string) {
     </div>
     <div class="analysis-panel">
       <p class="analysis-title">Analysis</p>
-      <div class="analysis-lines">
+      <div v-for="result in results" class="analysis-lines">
         <AnalysisLine :game="analysisLineGameCopy" :result="result" @show-future-position="(position) => futurePosition = position"
           @clear-future-position="futurePosition = undefined" @go-to-position="(position) => game = position" />
       </div>

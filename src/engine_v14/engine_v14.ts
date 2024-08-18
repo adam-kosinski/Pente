@@ -33,8 +33,15 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
   let resultsToReturn: SearchResult[] = []
 
   for (let v = 0; v < variations; v++) {
+    console.log("\nVARIATION " + (v+1) + " ======================")
+
     const startTime = performance.now()
     const deadlineMs = performance.now() + maxMsPerVariation
+
+    // exclude previously found best moves, to force it to find the next best move
+    const movesToExclude = resultsToReturn.map(x => x.bestVariation[0])
+    console.log("excluding", JSON.stringify(movesToExclude))
+    console.log("")
 
     let prevDepthResults: SearchResult[] = []
 
@@ -51,7 +58,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
       nMovesGenerated = []
 
       const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-      const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, true)  // start alpha and beta at worst possible scores, and return results for all moves
+      const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
 
       // if ran out of time, disregard this result and stop looking
       if (isNaN(results[0].eval)) {
@@ -67,7 +74,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
       console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
       console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
       console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-      results.slice(0, 5).forEach(r => {
+      results.slice(0, 1).forEach(r => {
         const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
         console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
       })
@@ -108,6 +115,7 @@ function principalVariationSearch(
   usingNullWindow: boolean,
   principalVariation: number[][] = [],
   prevDepthResults: SearchResult[] = [],
+  movesToExclude: number[][] = [],  // used for searching multiple variations, by excluding best moves from prev variations
   returnAllMoveResults: boolean = false)
   : SearchResult[] {
 
@@ -164,6 +172,10 @@ function principalVariationSearch(
   let moveIndex = 0
   const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
+    if(movesToExclude.some(move => move[0] === r && move[1] === c)){
+      continue
+    }
+
     // search child
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
