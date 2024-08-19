@@ -4,7 +4,7 @@ import { onMounted, ref, watch, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
-import { playGame } from '@/computerMatchup';
+import { playGame, runCompetition } from '@/computerMatchup';
 
 // import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
 // import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
@@ -69,12 +69,12 @@ const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game change
 const futurePosition: Ref<GameState | undefined> = ref()
 
 
-declare global {
-  interface Console {
-    profile: () => any
-    profileEnd: () => any
-  }
-}
+// declare global {
+//   interface Console {
+//     profile: () => any
+//     profileEnd: () => any
+//   }
+// }
 function profile() {
   console.profile()
   analyzePosition()
@@ -167,19 +167,19 @@ onMounted(() => {
 
       <div class="move-navigation">
         <button @click="() => { while (moveIndex > -1) decrementMoveIndex() }">
-          <img src="/public/begin.svg">
+          <img src="/begin.svg">
         </button>
         <button @click="decrementMoveIndex()">
-          <img src="/public/back.svg">
+          <img src="/back.svg">
         </button>
         <div>
           <p>Move <span>{{ moveIndex + 1 }}</span>/<span>{{ moveList.length }}</span></p>
         </div>
         <button @click="incrementMoveIndex()">
-          <img src="/public/back.svg" style="transform: rotateY(180deg)">
+          <img src="/back.svg" style="transform: rotateY(180deg)">
         </button>
         <button @click="() => { while (moveIndex < moveList.length - 1) incrementMoveIndex() }">
-          <img src="/public/begin.svg" style="transform: rotateY(180deg)">
+          <img src="/begin.svg" style="transform: rotateY(180deg)">
         </button>
       </div>
     </div>
@@ -199,6 +199,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
+      <button @click="runCompetition(0, 1)">Run Competition</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>
@@ -249,6 +250,10 @@ onMounted(() => {
   color: white;
   cursor: pointer;
   padding: 10px;
+}
+
+.analysis-panel button:hover {
+  background-color: color-mix(in srgb, var(--medium-brown), tan 20%);
 }
 
 .analysis-panel-top {
@@ -303,10 +308,6 @@ onMounted(() => {
 
 .move-navigation button img {
   height: 100%;
-}
-
-.move-navigation button:hover {
-  background-color: color-mix(in srgb, var(--medium-brown), tan 20%);
 }
 
 .button-panel {
