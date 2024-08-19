@@ -118,6 +118,11 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
     }
 
     resultsToReturn.push(answer)
+    // because of late move reductions, variations aren't guaranteed to be in order of best to worst, so sort them
+    resultsToReturn.sort((a,b) => {
+      if (absoluteEval && game.currentPlayer === 1) return a.eval - b.eval
+      return b.eval - a.eval
+    })
 
     if (verbose) {
       console.log("time taken", performance.now() - startTime)

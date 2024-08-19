@@ -30,8 +30,10 @@ const testPositions = [
   // cool trap
   "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11",
   "19~9.9|5.14|10.9|9.16|11.9|14.15|12.9|13.9|9.8|3.5|9.7|3.12|9.6|9.5|3.8|8.7|12.8|12.7",
-  // blunders b/c thinks it's dead lost when it isn't
-  "19~9.9|9.8|12.7|7.8|11.7|10.7|8.9|11.6|7.9|6.9|11.9|10.9|11.10|11.11|8.7|10.9|5.10|5.9|6.9|7.8|10.8|8.10|13.7|12.6|14.7|15.7|12.10|9.7|14.12|13.11|14.10|13.10|14.11"
+  // used to blunder b/c thought it was dead lost when it wasn't
+  "19~9.9|9.8|12.7|7.8|11.7|10.7|8.9|11.6|7.9|6.9|11.9|10.9|11.10|11.11|8.7|10.9|5.10|5.9|6.9|7.8|10.8|8.10|13.7|12.6|14.7|15.7|12.10|9.7|14.12|13.11|14.10|13.10|14.11",
+  // variations are presented out of order - second variation finds a better result
+  "19~9.9|10.10|9.11|9.12|7.9|10.12|8.9|10.9|6.9|5.9|10.11|10.8|8.11|10.7|10.6|7.11|8.12"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -47,7 +49,6 @@ const moveIndex = ref(-1)  // -1 if no moves, so that when displaying it reads m
 function updateMoveList() {
   moveList.value = game.value.prevMoves.map(m => m.addedGems[0])
   moveIndex.value = moveList.value.length - 1
-  console.log(JSON.stringify(moveList.value))
 }
 function incrementMoveIndex() {
   if (moveIndex.value >= moveList.value.length - 1) return
@@ -118,10 +119,14 @@ function printMoves() {
 }
 
 const results: Ref<SearchResult[] | undefined> = ref(undefined)
+
 function analyzePosition() {
-  results.value = findBestMoves(game.value, 2, 6, Infinity, true)
+  results.value = findBestMoves(game.value, 2, 6, 3000, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
+
+
+const analysisStarted = ref(false)
 
 
 onMounted(() => {
@@ -146,6 +151,9 @@ onMounted(() => {
     <div class="analysis-panel">
       <div class="analysis-panel-top">
         <p class="analysis-title">Analysis</p>
+        <button v-if="!analysisStarted" class="start-analysis" @click="analysisStarted = true; analyzePosition();">
+          Start Analysis
+        </button>
         <AnalysisLine v-for="result in results" :game="analysisLineGameCopy" :result="result"
           @show-future-position="(position) => futurePosition = position"
           @clear-future-position="futurePosition = undefined"
@@ -177,24 +185,24 @@ onMounted(() => {
     </div>
 
     <div class="button-panel">
-        <button @click="analyzePosition()">Analyze</button><br>
-        <button @click="profile()">Profile</button><br>
-        <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
-        <button @click="printMoves()">Generate Moves</button><br>
-        <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
-        <button @click="undoMove(game)">Undo Move</button><br>
-        <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
-          Shapes</button><br>
-        <button @click="console.log(gameToString(game))">Save Game</button><br>
-        <button @click="game = createNewGame(19)">Clear Game</button><br>
-        <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
-        <button @click="timeTest()">Time Test</button><br>
-        <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
-        <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-        <select v-model="testPositionIndex">
-          <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
-        </select>
-      </div>
+      <button @click="analyzePosition()">Analyze</button><br>
+      <button @click="profile()">Profile</button><br>
+      <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
+      <button @click="printMoves()">Generate Moves</button><br>
+      <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
+      <button @click="undoMove(game)">Undo Move</button><br>
+      <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
+        Shapes</button><br>
+      <button @click="console.log(gameToString(game))">Save Game</button><br>
+      <button @click="game = createNewGame(19)">Clear Game</button><br>
+      <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
+      <button @click="timeTest()">Time Test</button><br>
+      <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
+      <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
+      <select v-model="testPositionIndex">
+        <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
+      </select>
+    </div>
   </div>
 
 </template>
@@ -234,6 +242,15 @@ onMounted(() => {
   position: relative;
 }
 
+.analysis-panel button {
+  background-color: var(--medium-brown);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+}
+
 .analysis-panel-top {
   display: flex;
   flex-direction: column;
@@ -245,6 +262,13 @@ onMounted(() => {
   text-align: center;
   margin: 0;
   margin-bottom: 10px;
+}
+
+.start-analysis {
+  font-size: 18px;
+  margin: auto;
+  margin-top: 10px;
+  text-wrap: nowrap;
 }
 
 .future-position-space {
@@ -268,14 +292,8 @@ onMounted(() => {
 }
 
 .move-navigation button {
-  background-color: var(--medium-brown);
-  border: none;
-  border-radius: 5px;
   height: 100%;
   flex-grow: 1;
-  color: white;
-  cursor: pointer;
-  padding: 10px;
 }
 
 .move-navigation p {
@@ -296,5 +314,4 @@ onMounted(() => {
   left: -110px;
   bottom: 0;
 }
-
 </style>
