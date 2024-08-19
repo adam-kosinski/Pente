@@ -54,7 +54,7 @@ export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: nu
 }
 
 
-export function runCompetition(engineA: number, engineB: number) {
+export function runCompetition(engineA: number, engineB: number, nGames: number) {
   // engine A and B are indices in the engines array
 
   const winCounts = {
@@ -64,13 +64,16 @@ export function runCompetition(engineA: number, engineB: number) {
   const gameStrings = new Set()
   const featureDictArray: Record<string, number>[] = []
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < nGames; i++) {
     const engineAFirst = i % 2 === 0
     const result = engineAFirst ? playGame(engineA, engineB, 6, 100) : playGame(engineB, engineA, 6, 100)
     console.log(result.gameString)
 
     // don't count duplicate games
-    if(gameStrings.has(result.gameString)) continue
+    if(gameStrings.has(result.gameString)){
+      console.log("DUPLICATE!")
+      continue
+    }
     gameStrings.add(result.gameString)
 
     // tally who won
