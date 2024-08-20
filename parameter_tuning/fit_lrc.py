@@ -7,6 +7,13 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 import json
 
 
+def split_data(X, y, train_size):
+    assert len(X) == len(y)
+    assert train_size >=0 and train_size <= 1
+    split_idx = int(len(X) * train_size)
+    # split (note that pandas slice indices are both inclusive)
+    return X.loc[:split_idx-1], X.loc[split_idx:], y.loc[:split_idx-1], y.loc[split_idx:]
+
 
 def fit(csv_file):
     data = pd.read_csv(csv_file)
@@ -22,7 +29,7 @@ def fit(csv_file):
     print(vif_data)
 
     # fit model
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=7)
+    X_train, X_test, y_train, y_test = split_data(X, y, train_size=0.9)
     lrc = LogisticRegression()
     lrc.fit(X_train, y_train)
 
@@ -41,5 +48,6 @@ def fit(csv_file):
     plt.show()
 
 
-fit("features.csv")
-# fit("selectedFeatures.csv")
+if __name__ == "__main__":
+    fit("features.csv")
+    # fit("selectedFeatures.csv")
