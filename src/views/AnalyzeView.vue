@@ -13,7 +13,7 @@ import { evaluatePosition, positionFeatureDict } from '@/engine_v17/evaluation_v
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(4)
+const testPositionIndex = ref(0)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -173,7 +173,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(1, 2, 10)">Run Competition</button><br>
+      <button @click="runCompetition(1, 2, 50)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>

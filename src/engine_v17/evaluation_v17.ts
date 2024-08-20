@@ -1,4 +1,5 @@
 import { type GameState, type LinearShape, linearShapeDef } from "./model_v17";
+import { getNonQuietMoves } from "./move_generation_v17";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -37,29 +38,31 @@ export function evaluatePosition(game: GameState) {
   // use position feature dict along with weights and bias to compute evaluation
   const featureDict = positionFeatureDict(game)
   let evaluation = currentPlayerBias
-  for(const [k,v] of Object.entries(featureDict)){
+  for (const [k, v] of Object.entries(featureDict)) {
     evaluation += featureWeights[k] * v
   }
   return 10 * evaluation  // arbitrary scaling
 }
 
 const featureWeights: Record<string, number> = {
-  "open-tessera": 1.1868073502089318,
-  "pente-threat-4": 1.028773249585836,
-  "pente-threat-31": 0.8492275323761941,
-  "pente-threat-22": 0.43880061636750634,
-  "open-tria": 1.0988100726169734,
-  "stretch-tria": 0.6220374723186679,
-  "open-pair": 0.10502850489370798,
-  "capture-threat": 0.513260276704002,
-  "stretch-two": 0.2059345613334288,
-  "double-stretch-two": -0.03778235135713175,
-  "double-tria": -0.4645117350741567,
-  "initiative": 0.14992715004549748,
-  "captures": 0.8401533277663981,
-  "4-captures": 0.032544141400891326
+  "open-tessera": 1.5939910031498628,
+  "pente-threat-4": 1.3473289025030872,
+  "pente-threat-31": 0.9779149978765185,
+  "pente-threat-22": 0.5581765756874775,
+  "open-tria": 1.2165966226601612,
+  "stretch-tria": 0.920863365562939,
+  "open-pair": 0.12507814020211527,
+  "capture-threat": 0.4205678544444044,
+  "stretch-two": 0.22891201660022714,
+  "double-stretch-two": -0.032559842536416805,
+  "captures": 0.7604620476575394,
+  "4-captures": 0.7612332715434451,
+  "threats": 0.26216170694371144,
+  "can-block-trias": 0.41992121017097844,
+  "my-open-trias": 0.18451162467512888,
+  "my-stretch-trias": 0.024331955906516444
 }
-const currentPlayerBias = 0.4887017961289513
+const currentPlayerBias = -0.2506872305311969
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -75,72 +78,41 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
 
   // init feature dict with all possible fields
   const featureDict: Record<string, number> = {}
-  for(const shapeType in linearShapeDef) {
-    if(shapeType === "pente") continue  // not helpful, we already know who won if we find this
-    if(shapesToExclude.includes(shapeType)) continue
+  for (const shapeType in linearShapeDef) {
+    if (shapeType === "pente") continue  // not helpful, we already know who won if we find this
+    if (shapesToExclude.includes(shapeType)) continue
     featureDict[shapeType] = 0  // counts number I have minus number opponent has
   }
-  featureDict["double-tria"] = 0
-  featureDict["initiative"] = 0
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
+  featureDict["threats"] = getNonQuietMoves(game).length
+  featureDict["can-block-trias"] = 0
+  featureDict["my-open-trias"] = 0
+  featureDict['my-stretch-trias'] = 0
 
   // count linear shapes, for me (current player) and for the opponent
-  // keep track of double trias
-
-  let triaCountMe = 0
-  let triaCountOpponent = 0
-
+  const opponentTrias: LinearShape[] = []
   for (const shape of game.linearShapes) {
-    if(shape.type === "pente") continue  // not helpful, we already know who won if we find this
-    if(shapesToExclude.includes(shape.type)) continue
-
+    if (shape.type === "pente") continue  // not helpful, we already know who won if we find this
+    if (shapesToExclude.includes(shape.type)) continue
     featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
-    if (["open-tria", "stretch-tria"].includes(shape.type)) {
-      shape.owner === game.currentPlayer ? triaCountMe++ : triaCountOpponent++
+
+    if(shape.type.includes("tria") && shape.owner !== game.currentPlayer){
+      opponentTrias.push(shape)
     }
+    if(shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++
+    if(shape.type === "stretch-tria" && shape.owner === game.currentPlayer) featureDict["my-stretch-trias"]++
   }
 
-  // record double tria
-  // if both people have a double tria, it's my move, so I can take advantage of it first and I get the bonus
-  if (triaCountMe >= 2) featureDict["double-tria"] = 1
-  else if (triaCountOpponent >= 2) featureDict["double-tria"] = -1
-
-
-  // initiative
-  // if the opponent has a pente threat and you don't, you don't have the initative
-  // else if the opponent has a tria and you don't, you don't have the initiative
-  // else if the opponent has a capture threat and you don't, you don't have the initiative
-  // else (opponent has no threats), and you can make a tria (i.e. you have pairs or stretch twos), you have the initiative
-  // else you can threaten to capture a pair, you have the initiative
-  // ignoring extendable trias for now
-  // TODO - incorporate some measure of initiative over time, and how many threats you have waiting for the future
-  
-  if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer)) {
-    // if I have a pente threat, then I've won since it's my turn, and the position feature vector won't be used
-    // so we assume here that I don't have a pente threat
-    featureDict["initiative"] = -1  // opponent
-  }
-  else if (triaCountOpponent > 0 && triaCountMe === 0){
-    featureDict["initiative"] = -1
-  }
-  else if (game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer) &&
-    !game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
-      featureDict["initiative"] = -1
-  }
-  else if (game.linearShapes.some(shape => ["open-pair", "stretch-two"].includes(shape.type) && shape.owner === game.currentPlayer)) {
-    featureDict["initiative"] = 1
-  }
-  else if (game.linearShapes.some(shape => shape.type === "open-pair" && shape.owner !== game.currentPlayer)) {
-    featureDict["initiative"] = 1
-  }
-
-  // capture eval
+  // count captures
   const myCaptures = game.captures[game.currentPlayer]
   const opponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1]
   featureDict["captures"] = myCaptures - opponentCaptures
-  if(myCaptures === 4) featureDict["4-captures"] += 1
-  if(opponentCaptures === 4) featureDict["4-captures"] -= 1
+  if (myCaptures === 4) featureDict["4-captures"] += 1
+  if (opponentCaptures === 4) featureDict["4-captures"] -= 1
+
+  // see if we can block all opponent trias
+  featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
 
   return featureDict
 }

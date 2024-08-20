@@ -24,7 +24,7 @@ function addKillerMove(r: number, c: number, ply: number) {
 
 
 
-export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
+export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] | undefined {
   // in the opening, look into several variations and choose one randomly (to create game variation)
   // in middlegame etc. just choose the best move
   if (game.nMoves <= 4) {
@@ -35,7 +35,7 @@ export function chooseMove(game: GameState, maxDepth: number, maxMs: number = In
     const chosen = results[Math.floor(Math.random() * results.length)]
     return chosen.bestVariation[0]
   }
-  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0].bestVariation[0]
+  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0]?.bestVariation[0]
 }
 
 
@@ -49,6 +49,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
 
   let resultsToReturn: SearchResult[] = []
 
+  searchLoop:
   for (let v = 0; v < variations; v++) {
     if (verbose) console.log("\nVARIATION " + (v + 1) + " ======================")
 
@@ -56,6 +57,12 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
     const deadlineMs = performance.now() + maxMsPerVariation
 
     // exclude previously found best moves, to force it to find the next best move
+    try {  // test for weird bug
+      resultsToReturn.map(x => x.bestVariation[0])
+    }
+    catch {
+      console.log(resultsToReturn)
+    }
     const movesToExclude = resultsToReturn.map(x => x.bestVariation[0])
     if (verbose) console.log("excluding " + JSON.stringify(movesToExclude) + "\n")
 
@@ -79,7 +86,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
       if (results.length === 0) {
         // ran out of moves
         if (verbose) console.log("No moves left, returning what we have")
-        return resultsToReturn
+        break searchLoop
       }
 
       // if ran out of time, disregard this result and stop looking
@@ -162,8 +169,8 @@ function principalVariationSearch(
 
   normalNodesVisited++
 
-  // ran out of time base case
-  if (performance.now() > deadlineMs) {
+  // ran out of time base case - don't allow for original depth 1 search because need to return something
+  if (performance.now() > deadlineMs && !(ply === 1 && depth === 1)) {
     // return eval = NaN to indicate ran out of time and to disregard
     return [{ eval: NaN, evalFlag: "exact", bestVariation: [] }]
   }
@@ -277,7 +284,7 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor - NOTE: this causes embarassingly wrong evaluations sometimes
-    // if (moveIndex >= 20) break
+    if (moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 

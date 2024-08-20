@@ -34,10 +34,10 @@ def fit(csv_file):
     lrc.fit(X_train, y_train)
 
     # assess accuracy
-    pred_train = lrc.predict(X_train)
-    pred_test = lrc.predict(X_test)
-    print("Train accuracy:", accuracy_score(y_train, pred_train))
-    print("Test accuracy:", accuracy_score(y_test, pred_test))
+    accuracy_train = accuracy_score(y_train, lrc.predict(X_train))
+    accuracy_test = accuracy_score(y_test, lrc.predict(X_test))
+    print("Train accuracy:", accuracy_train)
+    print("Test accuracy:", accuracy_test)
 
     # Get the coefficients and intercept
     coef_dict = dict(zip(X.columns, lrc.coef_[0]))
@@ -45,6 +45,9 @@ def fit(csv_file):
     print("const featureWeights: Record<string, number> = " + json.dumps(coef_dict, indent=2))
     print("const currentPlayerBias = " + str(intercept))
     plt.barh(X.columns, lrc.coef_[0])
+    plt.barh(["bias"], intercept)
+    plt.title(f"Train accuracy: {accuracy_train}\nTest accuracy: {accuracy_test}")
+    plt.tight_layout()
     plt.show()
 
 

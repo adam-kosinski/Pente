@@ -9,7 +9,7 @@ import { gameStrings } from "./gameStrings";
 const engines = [
   engine14,  // manual eval values
   engine15,  // fitted eval values
-  engine17
+  engine17  // more eval features
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
@@ -38,7 +38,13 @@ export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: nu
     // make move
     const engine = game.currentPlayer === 0 ? engines[firstPlayer] : engines[secondPlayer]
     const move = engine(game, maxDepth, msPerMove, false)
-    makeMove(game, move[0], move[1])
+    if(move !== undefined){
+      makeMove(game, move[0], move[1])
+    }
+    else {
+      console.log("ERROR, game string:", gameToString(game))
+      console.error("Couldn't find a move")
+    }
   }
 
   // update feature dicts to include who won
@@ -71,7 +77,7 @@ export function runCompetition(engineA: number, engineB: number, nGames: number)
     console.log("Game", i + 1)
 
     const engineAFirst = i % 2 === 0
-    const result = engineAFirst ? playGame(engineA, engineB, 6, 100) : playGame(engineB, engineA, 6, 100)
+    const result = engineAFirst ? playGame(engineA, engineB, 15, 100) : playGame(engineB, engineA, 15, 100)
     console.log(result.gameString)
 
     // don't count duplicate games
