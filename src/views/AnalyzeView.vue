@@ -6,10 +6,10 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v16/model_v16';
-import { findBestMoves, copyGame } from '@/engine_v16/engine_v16';
-import { makeOrderedMoveIterator } from '@/engine_v16/move_generation_v16'
-import { evaluatePosition, positionFeatureDict } from '@/engine_v16/evaluation_v16';
+import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v16_diag_orthog/model_v16';
+import { findBestMoves, copyGame } from '@/engine_v16_diag_orthog/engine_v16';
+import { makeOrderedMoveIterator } from '@/engine_v16_diag_orthog/move_generation_v16'
+import { evaluatePosition, positionFeatureDict } from '@/engine_v16_diag_orthog/evaluation_v16';
 
 const game = ref(createNewGame(19))
 

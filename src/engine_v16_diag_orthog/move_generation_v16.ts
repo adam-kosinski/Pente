@@ -95,9 +95,14 @@ export function* makeOrderedMoveIterator(
 
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
-  // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
+  // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up future sorts)
   game.linearShapes.sort((a, b) => {
-    if (a.type in shapePriority && b.type in shapePriority) return shapePriority[a.type] - shapePriority[b.type]
+    if (a.type in shapePriority && b.type in shapePriority){
+      const priorityDiff = shapePriority[a.type] - shapePriority[b.type]
+      if(priorityDiff !== 0) return priorityDiff
+      // if same priority, pick orthogonal over diagonal because those are better (sort descending by if orthogonal)
+      return Number(b.orthogonal) - Number(a.orthogonal)
+    }
     return 0
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
