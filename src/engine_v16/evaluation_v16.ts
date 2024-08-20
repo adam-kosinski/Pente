@@ -40,7 +40,7 @@ export function evaluatePosition(game: GameState) {
   for(const [k,v] of Object.entries(featureDict)){
     evaluation += featureWeights[k] * v
   }
-  return 10 * evaluation  // arbitrary scaling
+  return 10 * evaluation  // arbitrary scaling, puts evaluations in a nice -30 to 30 range
 }
 
 const featureWeights: Record<string, number> = {
