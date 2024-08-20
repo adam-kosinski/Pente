@@ -4,6 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+import json
 
 data = pd.read_csv("features.csv")
 X = data.drop("won", axis=1)
@@ -30,7 +31,7 @@ print("Test accuracy:", accuracy_score(y_test, pred_test))
 # Get the coefficients and intercept
 coef_dict = dict(zip(X.columns, lrc.coef_[0]))
 intercept = lrc.intercept_[0]
-print(coef_dict)
-print(intercept)
+print("const featureWeights: Record<string, number> = " + json.dumps(coef_dict, indent=2))
+print("const currentPlayerBias = " + str(intercept))
 plt.barh(X.columns, lrc.coef_[0])
 plt.show()

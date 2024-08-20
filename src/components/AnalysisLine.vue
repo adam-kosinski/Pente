@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { copyGame } from '@/engine_v14/engine_v14';
-import { type SearchResult, type GameState, createNewGame, makeMove } from '@/engine_v14/model_v14';
+import { copyGame } from '@/engine_v15/engine_v15';
+import { type SearchResult, type GameState, createNewGame, makeMove } from '@/engine_v15/model_v15';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{ result: SearchResult | undefined, game: GameState }>()
@@ -15,7 +15,7 @@ const evalString = computed(() => {
   if (props.result === undefined) return "..."
   const flagChar = props.result.evalFlag === "exact" ? "" : props.result.evalFlag === "upper-bound" ? "≤" : "≥"
   const sign = props.result.eval > 0 ? "+" : ""
-  return flagChar + " " + sign + props.result.eval
+  return flagChar + " " + sign + props.result.eval.toPrecision(3)
 })
 
 function getFuturePosition(moveIndex: number) {

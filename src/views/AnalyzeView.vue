@@ -6,18 +6,10 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-// import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v12/model_v12';
-// import { findBestMove, evaluatePosition, makeOrderedMoveIterator, getNonQuietMoves, copyGame } from '@/engine_v12/engine_v12';
-
-// import { createNewGame, makeMove, undoMove, updateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState, patternMatchMap } from '@/engine_v13/model_v13';
-// import { findBestMove, evaluatePosition, copyGame } from '@/engine_v13/engine_v13';
-// import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v13/move_generation_v13'
-
-import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v14/model_v14';
-import { findBestMoves, copyGame } from '@/engine_v14/engine_v14';
-import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v14/move_generation_v14'
-import { evaluatePosition, positionFeatureDict } from '@/engine_v14/evaluation_v14';
-// import { updateLinearShapes as oldUpdateLinearShapes } from '@/engine_v13/model_v13';
+import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v15/model_v15';
+import { findBestMoves, copyGame } from '@/engine_v15/engine_v15';
+import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v15/move_generation_v15'
+import { evaluatePosition, positionFeatureDict } from '@/engine_v15/evaluation_v15';
 
 const game = ref(createNewGame(19))
 
@@ -199,7 +191,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(0, 1, 5)">Run Competition</button><br>
+      <button @click="runCompetition(0, 1, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>

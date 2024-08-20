@@ -1,13 +1,13 @@
-import { chooseMove as engine0 } from "./engine_v14/engine_v14";
-import { chooseMove as engine1 } from "./engine_v14/engine_v14";
+import { chooseMove as engine14 } from "./engine_v14/engine_v14";
+import { chooseMove as engine15} from "./engine_v15/engine_v15";
 import { evaluatePosition, positionFeatureDict } from "./engine_v14/evaluation_v14";
 import { createNewGame, gameToString, makeMove } from "./engine_v14/model_v14";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
 
 const engines = [
-  engine0,
-  engine1
+  engine14,
+  engine15
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
