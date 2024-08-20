@@ -188,8 +188,8 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(1, 2, 100)">Run Competition</button><br>
-      <button @click="generateFeatureCSV(5)">Get CSV</button><br>
+      <button @click="runCompetition(2, 2, 600)">Run Competition</button><br>
+      <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>
