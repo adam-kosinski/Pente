@@ -97,6 +97,8 @@ export function* makeOrderedMoveIterator(
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
   game.linearShapes.sort((a, b) => {
     if (a.type in shapePriority && b.type in shapePriority) return shapePriority[a.type] - shapePriority[b.type]
+    else if (a.type in shapePriority) return -1
+    else if (b.type in shapePriority) return 1
     return 0
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
