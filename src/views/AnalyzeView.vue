@@ -6,10 +6,10 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v16_diag_orthog/model_v16';
-import { findBestMoves, copyGame } from '@/engine_v16_diag_orthog/engine_v16';
-import { makeOrderedMoveIterator } from '@/engine_v16_diag_orthog/move_generation_v16'
-import { evaluatePosition, positionFeatureDict } from '@/engine_v16_diag_orthog/evaluation_v16';
+import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v17/model_v17';
+import { findBestMoves, copyGame } from '@/engine_v17/engine_v17';
+import { makeOrderedMoveIterator } from '@/engine_v17/move_generation_v17'
+import { evaluatePosition, positionFeatureDict } from '@/engine_v17/evaluation_v17';
 
 const game = ref(createNewGame(19))
 
@@ -173,7 +173,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(1, 2, 50)">Run Competition</button><br>
+      <button @click="runCompetition(1, 2, 10)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>

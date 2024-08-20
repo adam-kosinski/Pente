@@ -3,8 +3,8 @@
 import { ref } from 'vue';
 import Board from '@/components/Board.vue';
 
-import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v16_diag_orthog/model_v16';
-import { chooseMove } from '@/engine_v16_diag_orthog/engine_v16';
+import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v17/model_v17';
+import { chooseMove } from '@/engine_v17/engine_v17';
 
 const game = ref(createNewGame(19))
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
