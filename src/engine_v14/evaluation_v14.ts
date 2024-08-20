@@ -43,40 +43,24 @@ export function evaluatePosition(game: GameState) {
   return evaluation
 }
 
-
 const featureWeights: Record<string, number> = {
-  "open-tessera-me": 10000,
-  "open-tessera-opponent": -10000,
-  "pente-threat-4-me": 45,
-  "pente-threat-4-opponent": -45,
-  "pente-threat-31-me": 45,
-  "pente-threat-31-opponent": -45,
-  "pente-threat-22-me": 45,
-  "pente-threat-22-opponent": -45,
-  "open-tria-me": 45,
-  "open-tria-opponent": -45,
-  "stretch-tria-me": 25,
-  "stretch-tria-opponent": -25,
-  "extendable-tria-me": 0,
-  "extendable-tria-opponent": 0,
-  "extendable-stretch-tria-me": 0,
-  "extendable-stretch-tria-opponent": 0,
-  "extendable-stretch-tria-1-me": 0,
-  "extendable-stretch-tria-1-opponent": 0,
-  "extendable-stretch-tria-2-me": 0,
-  "extendable-stretch-tria-2-opponent": 0,
-  "open-pair-me": -5,
-  "open-pair-opponent": 5,
-  "capture-threat-me": 10,
-  "capture-threat-opponent": -10,
-  "stretch-two-me": 10,
-  "stretch-two-opponent": -10,
-  "double-stretch-two-me": 7,
-  "double-stretch-two-opponent": -7,
+  "open-tessera": 10000,
+  "pente-threat-4": 45,
+  "pente-threat-31": 45,
+  "pente-threat-22": 45,
+  "open-tria": 45,
+  "stretch-tria": 45,
+  "extendable-tria": 0,
+  "extendable-stretch-tria-1": 0,
+  "extendable-stretch-tria-2": 0,
+  "open-pair": -5,
+  "capture-threat": 10,
+  "stretch-two": 10,
+  "double-stretch-two": 7,
   "double-tria": 5000,
   "initiative": 30,
-  "captures-me": 30,
-  "captures-opponent": -30
+  "captures": 30,
+  "4-captures": 0
 }
 const currentPlayerBias  = 15
 
@@ -88,13 +72,12 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   const featureDict: Record<string, number> = {}
   for(const shapeType in linearShapeDef) {
     if(shapeType === "pente") continue  // not helpful, we already know who won if we find this
-    featureDict[shapeType + "-me"] = 0
-    featureDict[shapeType + "-opponent"] = 0
+    featureDict[shapeType] = 0  // counts number I have minus number opponent has
   }
   featureDict["double-tria"] = 0
   featureDict["initiative"] = 0
-  featureDict["captures-me"] = 0
-  featureDict["captures-opponent"] = 0
+  featureDict["captures"] = 0  // me minus opponent
+  featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
 
   // count linear shapes, for me (current player) and for the opponent
   // keep track of double trias
@@ -104,8 +87,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
 
   for (const shape of game.linearShapes) {
     if(shape.type === "pente") continue  // not helpful, we already know who won if we find this
-    const ownership = shape.owner === game.currentPlayer ? "me" : "opponent"
-    featureDict[shape.type + "-" + ownership]++
+    featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
     if (["open-tria", "stretch-tria"].includes(shape.type)) {
       shape.owner === game.currentPlayer ? triaCountMe++ : triaCountOpponent++
     }
@@ -146,9 +128,11 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   }
 
   // capture eval
-  // TODO - 0 vs 1 capture is not quite as big a difference as 3 vs 4 captures
-  featureDict["captures-me"] = game.captures[game.currentPlayer]
-  featureDict["captures-opponent"] = game.captures[Number(!game.currentPlayer) as 0 | 1]
+  const myCaptures = game.captures[game.currentPlayer]
+  const opponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1]
+  featureDict["captures"] = myCaptures - opponentCaptures
+  if(myCaptures === 4) featureDict["4-captures"] += 1
+  if(opponentCaptures === 4) featureDict["4-captures"] -= 1
 
   return featureDict
 }

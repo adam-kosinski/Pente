@@ -29,15 +29,15 @@ const testPositions = [
   "19~9.9|9.7|7.7|7.9|10.6|8.6",
   // cool trap
   "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11",
-  "19~9.9|5.14|10.9|9.16|11.9|14.15|12.9|13.9|9.8|3.5|9.7|3.12|9.6|9.5|3.8|8.7|12.8|12.7",
   // used to blunder b/c thought it was dead lost when it wasn't
   "19~9.9|9.8|12.7|7.8|11.7|10.7|8.9|11.6|7.9|6.9|11.9|10.9|11.10|11.11|8.7|10.9|5.10|5.9|6.9|7.8|10.8|8.10|13.7|12.6|14.7|15.7|12.10|9.7|14.12|13.11|14.10|13.10|14.11",
-  // variations are presented out of order - second variation finds a better result
+  // variations originally out of order - second variation finds a better result
   "19~9.9|10.10|9.11|9.12|7.9|10.12|8.9|10.9|6.9|5.9|10.11|10.8|8.11|10.7|10.6|7.11|8.12"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
   game.value = loadFromString(testPositions[i])
+  updateMoveList()
 })
 
 
@@ -172,7 +172,7 @@ onMounted(() => {
         <button @click="decrementMoveIndex()">
           <img src="/back.svg">
         </button>
-        <div>
+        <div class="move-index-display">
           <p>Move <span>{{ moveIndex + 1 }}</span>/<span>{{ moveList.length }}</span></p>
         </div>
         <button @click="incrementMoveIndex()">
@@ -308,6 +308,11 @@ onMounted(() => {
 
 .move-navigation button img {
   height: 100%;
+}
+
+.move-index-display {
+  min-width: 100px;
+  text-align: center;
 }
 
 .button-panel {
