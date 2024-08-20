@@ -308,21 +308,22 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
 
   // iterate over each of four directions
+  console.log("dir search")
   for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
     // construct string to search for patterns in - takes about 50% of time
     let s = ""
-    let rBegin = clamp(r0 - (maxLinearShapeLength - 1) * dir[0], game.board.length - 1)
-    let rEnd = clamp(r0 + (maxLinearShapeLength - 1) * dir[0], game.board.length - 1)
-    let cBegin = clamp(c0 - (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
-    let cEnd = clamp(c0 + (maxLinearShapeLength - 1) * dir[1], game.board.length - 1)
-    // for stop condition, direction can be negative - flip the inequality if so
-    for (let r = rBegin, c = cBegin;
-      (dir[0] === -1 ? r >= rEnd : r <= rEnd) && (dir[1] === -1 ? c >= cEnd : c <= cEnd);
-      r += dir[0], c += dir[1]
-    ) {
+    let rInit = r0 - (maxLinearShapeLength - 1) * dir[0]
+    let cInit = c0 - (maxLinearShapeLength - 1) * dir[1]
+    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dir[0], c += dir[1]) {
+      // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
+      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
+        s += "x"
+        continue
+      }
       const value = game.board[r][c]
       s += value === undefined ? "_" : value
     }
+    console.log(s)
 
     // search for each pattern
     const matches = getPatternMatches(s)
@@ -331,12 +332,12 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
       const pattern: string = match.pattern
       const patternInfo = linearShapes.get(pattern)
       const begin = [
-        rBegin + dir[0] * match.index,
-        cBegin + dir[1] * match.index
+        rInit + dir[0] * match.index,
+        cInit + dir[1] * match.index
       ]
       const end = [  // inclusive index
-        rBegin + dir[0] * (match.index + patternInfo.length - 1),
-        cBegin + dir[1] * (match.index + patternInfo.length - 1)
+        rInit + dir[0] * (match.index + patternInfo.length - 1),
+        cInit + dir[1] * (match.index + patternInfo.length - 1)
       ]
       const shape: LinearShape = {
         type: patternInfo.type,

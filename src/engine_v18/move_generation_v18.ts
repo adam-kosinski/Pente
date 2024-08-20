@@ -19,8 +19,7 @@ const shapePriority: Record<string, number> = {
   "capture-threat": 11,
   "stretch-two": 12,
   "open-pair": 13,
-  "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
-  "pente": 30  // nothing you can do
+  "open-tessera": 20  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
 }
 
 
@@ -91,8 +90,6 @@ export function* makeOrderedMoveIterator(
     }
   }
 
-  // TODO - if there is a pente threat, the only relevant move for the owner is completing it, and the only relevant moves for the opponent are within it or captures or completing their own pente
-
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
@@ -101,7 +98,16 @@ export function* makeOrderedMoveIterator(
     return 0
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
-  const sortedShapes = game.linearShapes.slice()
+  let sortedShapes = game.linearShapes.slice()
+
+  console.log(game.linearShapes)
+  console.log(sortedShapes.length)
+  console.log(sortedShapes.map(s => s.hash).join("\n"))
+  
+  // if there is a pente threat (either player), the only relevant moves are within it or making a capture
+  // if(sortedShapes.some(shape => shape.type.includes("pente-threat"))){
+  //   sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
+  // }
 
   for (const shape of sortedShapes) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])

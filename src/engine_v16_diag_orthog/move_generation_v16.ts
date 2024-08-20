@@ -19,8 +19,7 @@ const shapePriority: Record<string, number> = {
   "capture-threat": 11,
   "stretch-two": 12,
   "open-pair": 13,
-  "open-tessera": 20,  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
-  "pente": 30  // nothing you can do
+  "open-tessera": 20  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
 }
 
 

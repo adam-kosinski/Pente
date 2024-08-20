@@ -104,7 +104,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
         console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
         console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
         console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-        results.slice(0, 1).forEach(r => {
+        results.slice(0).forEach(r => {
           const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
           console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
         })
