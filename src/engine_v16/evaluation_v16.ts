@@ -1,4 +1,4 @@
-import { type GameState, type LinearShape, linearShapeDef } from "./model_v15";
+import { type GameState, type LinearShape, linearShapeDef } from "./model_v16";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -44,22 +44,22 @@ export function evaluatePosition(game: GameState) {
 }
 
 const featureWeights: Record<string, number> = {
-  "open-tessera": 0.9597090956578818,
-  "pente-threat-4": 0.9639137934210631,
-  "pente-threat-31": 0.8212529355259715,
-  "pente-threat-22": 0.5337899404600266,
-  "open-tria": 0.9794271090853309,
-  "stretch-tria": 0.5406901887145167,
-  "open-pair": 0.08010523642802479,
-  "capture-threat": 0.40030274764903767,
-  "stretch-two": 0.19502983086862793,
-  "double-stretch-two": -0.018179512648357127,
-  "double-tria": -0.6454666651231737,
-  "initiative": 0.13899734693697027,
-  "captures": 0.9376777339067837,
-  "4-captures": 0.06949122595119926
+  "open-tessera": 0.8178735747485648,
+  "pente-threat-4": 0.8057834640275531,
+  "pente-threat-31": 0.7281473710322616,
+  "pente-threat-22": 0.2695763827619882,
+  "open-tria": 1.1870365992120395,
+  "stretch-tria": 0.3410846252379514,
+  "open-pair": 0.04713584072788781,
+  "capture-threat": 0.3420697970667865,
+  "stretch-two": 0.22501262893834223,
+  "double-stretch-two": -0.14682248367769365,
+  "double-tria": -0.3300206387883896,
+  "initiative": 0.24646582645067114,
+  "captures": 0.918341020810495,
+  "4-captures": 0.048757720498999686
 }
-const currentPlayerBias = 0.4327102166455096
+const currentPlayerBias = 0.42594143219890385
 
 
 export function positionFeatureDict(game: GameState): Record<string, number> {

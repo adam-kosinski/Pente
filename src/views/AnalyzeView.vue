@@ -179,20 +179,17 @@ onMounted(() => {
     <div class="button-panel">
       <button @click="analyzePosition()">Analyze</button><br>
       <button @click="profile()">Profile</button><br>
-      <button @click="console.log(JSON.stringify(getNonQuietMoves(game)))">Get QS Moves</button><br>
       <button @click="printMoves()">Generate Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
-      <button @click="undoMove(game)">Undo Move</button><br>
       <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
         Shapes</button><br>
       <button @click="console.log(gameToString(game))">Save Game</button><br>
-      <button @click="game = createNewGame(19)">Clear Game</button><br>
       <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(0, 1, 30)">Run Competition</button><br>
-      <button @click="generateFeatureCSV">Get CSV</button><br>
+      <button @click="runCompetition(1, 2, 100)">Run Competition</button><br>
+      <button @click="generateFeatureCSV(5)">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>

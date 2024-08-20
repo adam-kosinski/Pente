@@ -1,5 +1,6 @@
 import { chooseMove as engine14 } from "./engine_v14/engine_v14";
-import { chooseMove as engine15} from "./engine_v15/engine_v15";
+import { chooseMove as engine15 } from "./engine_v15/engine_v15";
+import { chooseMove as engine16 } from "./engine_v16/engine_v16";
 import { evaluatePosition, positionFeatureDict } from "./engine_v14/evaluation_v14";
 import { createNewGame, gameToString, makeMove } from "./engine_v14/model_v14";
 import * as papa from "papaparse";
@@ -7,7 +8,8 @@ import { gameStrings } from "./gameStrings";
 
 const engines = [
   engine14,
-  engine15
+  engine15,
+  engine16
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
@@ -99,7 +101,7 @@ export function runCompetition(engineA: number, engineB: number, nGames: number)
 
 
 
-export function generateFeatureCSV() {
+export function generateFeatureCSV(nFeaturesPerGame: number) {
 
   const featureDictArray: Record<string, number>[] = []
 
@@ -135,8 +137,16 @@ export function generateFeatureCSV() {
       featureDict["won"] = (winner === 1 ? 1 : 0)
     }
 
-    // add to big list
-    featureDictArray.push.apply(featureDictArray, player0FeatureDicts.concat(player1FeatureDicts))
+    // add to big list, only keeping some features
+    const allFeatureDicts = player0FeatureDicts.concat(player1FeatureDicts)
+    const selectedFeatureDicts: Record<string, number>[] = []
+    for (let i = 0; i < nFeaturesPerGame; i++) {
+      if (allFeatureDicts.length === 0) break
+      const idx = Math.floor(Math.random() * allFeatureDicts.length)
+      const selected = allFeatureDicts.splice(idx, 1)[0]
+      selectedFeatureDicts.push(selected)
+    }
+    featureDictArray.push.apply(featureDictArray, selectedFeatureDicts)
   }
 
   console.log(papa.unparse(featureDictArray))
