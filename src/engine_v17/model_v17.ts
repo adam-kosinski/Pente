@@ -308,7 +308,6 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
 
   // iterate over each of four directions
-  console.log("dir search")
   for (const dir of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
     // construct string to search for patterns in - takes about 50% of time
     let s = ""

@@ -309,7 +309,6 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
   const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
 
   // iterate over each of four directions
-  console.log("dir search")
   const dirs = [[0, 1], [1, 0], [1, 1], [-1, 1]] // row, col, (\) diagonal, (/) diagonal
   for (let d = 0; d < dirs.length; d++) {
     const dir = dirs[d]
