@@ -6,14 +6,14 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-import { createNewGame, makeMove, undoMove, updateLinearShapes, oldUpdateLinearShapes, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v16/model_v16';
+import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v16/model_v16';
 import { findBestMoves, copyGame } from '@/engine_v16/engine_v16';
-import { makeOrderedMoveIterator, getNonQuietMoves } from '@/engine_v16/move_generation_v16'
+import { makeOrderedMoveIterator } from '@/engine_v16/move_generation_v16'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v16/evaluation_v16';
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(0)
+const testPositionIndex = ref(4)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -74,30 +74,15 @@ function profile() {
 }
 
 function timeTest() {
-  // const query = "__11_1_00__"
-  const big_re = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
-  // const compressed = /(?=(1{5}|0{5}|_1{4}_|_0{4}_|1{4}_|_1{4}|0{4}_|_0{4}|1{3}_1|1_1{3}|0{3}_0|0_0{3}|1{2}_1{2}|0{2}_0{2}|_1{3}_|_0{3}_|_1{2}_1_|_1_1{2}_|_0{2}_0_|_0_0{2}_|01{3}__|__1{3}0|10{3}__|__0{3}1|_1{2}_|_0{2}_|10{2}_|_0{2}1|01{2}_|_1{2}0|_1_1_|_0_0_))/g
-  // const noFlip = /(?=(11111|00000|_1111_|_0000_|1111_|0000_|111_1|000_0|11_11|00_00|_111_|_000_|_11_1_|_00_0_|0111__|1000__|01_11_|10_00_|011_1_|100_0_|_11_|_00_|100_|011_|_1_1_|_0_0_))/g
-  // const first_half = /(?=(11111|_1111_|1111_|_1111|111_1|1_111|_11_1_|_1_11_|0111__|__1110|11_11|100_|_110|_1_1_|_111_|_00_))/g
-  // const second_half = /(?=(_000_|00000|0000_|_0000_|_0000|000_0|0_000|00_00|_00_0_|011_|_0_00_|1000__|__0001|_001|_0_0_|_11_))/g
-
-  // const most = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|_11_1_|_1_11_|_00_0_|_0_00_|0111__|__1110|1000__|__0001|100_|_001|011_|_110|_1_1_|_0_0_))/g
-  // const pairs = /(?=(_11_|_00_))/g
-
-  // const big_re_capture = /(?=(11111|00000|_1111_|_0000_|1111_|_1111|0000_|_0000|111_1|1_111|000_0|0_000|11_11|00_00|_111_|_000_|(_11_)1_|_1_11_|(_00_)0_|_0_00_|0111__|__1110|1000__|__0001|_11_|_00_|100_|_001|011_|_110|_1_1_|_0_0_))/g
-
-  // const all_re = [
-  //  /11111/,/00000/,/_1111_/,/_0000_/,/1111_/,/_1111/,/0000_/,/_0000/,/111_1/,/1_111/,/000_0/,/0_000/,/11_11/,/00_00/,/_111_/,/_000_/,/_11_1_/,/_1_11_/,/_00_0_/,/_0_00_/,/0111__/,/__1110/,/1000__/,/__0001/,/_11_/,/_00_/,/100_/,/_001/,/011_/,/_110/,/_1_1_/,/_0_0_/ 
-  // ]
   const iterations = 10000
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    updateLinearShapes(game.value, 10, 10)
+
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    oldUpdateLinearShapes(game.value, 10, 10)
+
   }
   console.log("B:", performance.now() - start + " ms")
 
@@ -188,7 +173,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
-      <button @click="runCompetition(0, 2, 50)">Run Competition</button><br>
+      <button @click="runCompetition(1, 2, 50)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>

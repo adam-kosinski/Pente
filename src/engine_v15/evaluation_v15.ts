@@ -44,22 +44,22 @@ export function evaluatePosition(game: GameState) {
 }
 
 const featureWeights: Record<string, number> = {
-  "open-tessera": 0.9597090956578818,
-  "pente-threat-4": 0.9639137934210631,
-  "pente-threat-31": 0.8212529355259715,
-  "pente-threat-22": 0.5337899404600266,
-  "open-tria": 0.9794271090853309,
-  "stretch-tria": 0.5406901887145167,
-  "open-pair": 0.08010523642802479,
-  "capture-threat": 0.40030274764903767,
-  "stretch-two": 0.19502983086862793,
-  "double-stretch-two": -0.018179512648357127,
-  "double-tria": -0.6454666651231737,
-  "initiative": 0.13899734693697027,
-  "captures": 0.9376777339067837,
-  "4-captures": 0.06949122595119926
+  "open-tessera": 1.1868073502089318,
+  "pente-threat-4": 1.028773249585836,
+  "pente-threat-31": 0.8492275323761941,
+  "pente-threat-22": 0.43880061636750634,
+  "open-tria": 1.0988100726169734,
+  "stretch-tria": 0.6220374723186679,
+  "open-pair": 0.10502850489370798,
+  "capture-threat": 0.513260276704002,
+  "stretch-two": 0.2059345613334288,
+  "double-stretch-two": -0.03778235135713175,
+  "double-tria": -0.4645117350741567,
+  "initiative": 0.14992715004549748,
+  "captures": 0.8401533277663981,
+  "4-captures": 0.032544141400891326
 }
-const currentPlayerBias = 0.4327102166455096
+const currentPlayerBias = 0.4887017961289513
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering

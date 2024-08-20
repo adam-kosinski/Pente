@@ -44,22 +44,32 @@ export function evaluatePosition(game: GameState) {
 }
 
 const featureWeights: Record<string, number> = {
-  "open-tessera": 1.2936796149379353,
-  "pente-threat-4": 1.07136646668422,
-  "pente-threat-31": 0.8187602181027599,
-  "pente-threat-22": 0.42412821301463854,
-  "open-tria": 1.0937836836888641,
-  "stretch-tria": 0.5582851205292404,
-  "open-pair": 0.10520418800900287,
-  "capture-threat": 0.531706606163437,
-  "stretch-two": 0.20962329322106518,
-  "double-stretch-two": -0.07587105857351031,
-  "double-tria": -0.49062088110894214,
-  "initiative": 0.12461570055148648,
-  "captures": 0.853069218819979,
-  "4-captures": 0.3727330793549188
+  "open-tessera-ortho": 0.898130357242619,
+  "open-tessera-diag": 1.5856472006071625,
+  "pente-threat-4-ortho": 1.004242353616707,
+  "pente-threat-4-diag": 1.053053634013468,
+  "pente-threat-31-ortho": 0.8443269407094933,
+  "pente-threat-31-diag": 0.8371669866941427,
+  "pente-threat-22-ortho": 0.25881273157021656,
+  "pente-threat-22-diag": 0.7813980408693104,
+  "open-tria-ortho": 1.141599240141442,
+  "open-tria-diag": 1.0363224764528929,
+  "stretch-tria-ortho": 0.6370989719841627,
+  "stretch-tria-diag": 0.5698271005247311,
+  "open-pair-ortho": 0.13200094521616643,
+  "open-pair-diag": 0.08328099069726733,
+  "capture-threat-ortho": 0.4491910099383167,
+  "capture-threat-diag": 0.5849706412620426,
+  "stretch-two-ortho": 0.2375696819085504,
+  "stretch-two-diag": 0.16584025593676321,
+  "double-stretch-two-ortho": 0.006756795137809742,
+  "double-stretch-two-diag": -0.11175603290400325,
+  "double-tria": -0.4541515356502728,
+  "initiative": 0.15463418481516306,
+  "captures": 0.8468732062848765,
+  "4-captures": 0.07719359458301614
 }
-const currentPlayerBias = 0.48740194988791286
+const currentPlayerBias = 0.48800402174019253
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -78,7 +88,8 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   for(const shapeType in linearShapeDef) {
     if(shapeType === "pente") continue  // not helpful, we already know who won if we find this
     if(shapesToExclude.includes(shapeType)) continue
-    featureDict[shapeType] = 0  // counts number I have minus number opponent has
+    featureDict[shapeType + "-ortho"] = 0  // counts number I have minus number opponent has
+    featureDict[shapeType + "-diag"] = 0
   }
   featureDict["double-tria"] = 0
   featureDict["initiative"] = 0
@@ -95,7 +106,8 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if(shape.type === "pente") continue  // not helpful, we already know who won if we find this
     if(shapesToExclude.includes(shape.type)) continue
 
-    featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
+    const orientation = shape.orthogonal ? "-ortho" : "-diag"
+    featureDict[shape.type + orientation] += (shape.owner === game.currentPlayer ? 1 : -1)
     if (["open-tria", "stretch-tria"].includes(shape.type)) {
       shape.owner === game.currentPlayer ? triaCountMe++ : triaCountOpponent++
     }
