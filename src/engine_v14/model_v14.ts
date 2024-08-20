@@ -323,7 +323,6 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
       const value = game.board[r][c]
       s += value === undefined ? "_" : value
     }
-    console.log(s)
 
     // search for each pattern
     const matches = getPatternMatches(s)
