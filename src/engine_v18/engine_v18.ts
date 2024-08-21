@@ -104,7 +104,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
         console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
         console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
         console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
-        results.slice(0).forEach(r => {
+        results.slice(0, 1).forEach(r => {
           const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
           console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
         })
@@ -154,7 +154,8 @@ function principalVariationSearch(
   principalVariation: number[][] = [],
   prevDepthResults: SearchResult[] = [],
   movesToExclude: number[][] = [],  // used for searching multiple variations, by excluding best moves from prev variations
-  returnAllMoveResults: boolean = false)
+  returnAllMoveResults: boolean = false
+)
   : SearchResult[] {
 
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
@@ -189,19 +190,19 @@ function principalVariationSearch(
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
-    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
-      return [tableEntry.result]
-    }
-    else if (tableEntry.result.evalFlag === "lower-bound") {
-      alpha = Math.max(alpha, tableEntry.result.eval)
-    }
-    else if (tableEntry.result.evalFlag === "upper-bound") {
-      beta = Math.min(beta, tableEntry.result.eval)
-    }
-    if (alpha >= beta && !returnAllMoveResults) {
-      // cutoff
-      return [tableEntry.result]
-    }
+    // if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
+    //   return [tableEntry.result]
+    // }
+    // else if (tableEntry.result.evalFlag === "lower-bound") {
+    //   alpha = Math.max(alpha, tableEntry.result.eval)
+    // }
+    // else if (tableEntry.result.evalFlag === "upper-bound") {
+    //   beta = Math.min(beta, tableEntry.result.eval)
+    // }
+    // if (alpha >= beta && !returnAllMoveResults) {
+    //   // cutoff
+    //   return [tableEntry.result]
+    // }
   }
   else {
     ttableMiss++
@@ -261,7 +262,6 @@ function principalVariationSearch(
     }
     // if we found another way to force a win that's shorter, prefer that one
     // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
-    // UPDATE - commented out because seems buggy?
     else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
       bestResult = myResult
     }
@@ -284,7 +284,7 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor - NOTE: this causes embarassingly wrong evaluations sometimes
-    if (moveIndex >= 20) break
+    // if (moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 
@@ -292,7 +292,7 @@ function principalVariationSearch(
   else if (bestResult.eval >= beta) bestResult.evalFlag = bestResult.eval === Infinity ? "exact" : "lower-bound"
   else bestResult.evalFlag = "exact"
 
-  // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion)
+  // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion is probably unreliable)
   if (!usingNullWindow) transpositionTableSet(game, bestResult, depth)
 
   // return

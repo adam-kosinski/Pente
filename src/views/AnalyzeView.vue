@@ -13,7 +13,7 @@ import { evaluatePosition, positionFeatureDict } from '@/engine_v18/evaluation_v
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(7)
+const testPositionIndex = ref(4)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -25,7 +25,7 @@ const testPositions = [
   "19~9.9|9.8|12.7|7.8|11.7|10.7|8.9|11.6|7.9|6.9|11.9|10.9|11.10|11.11|8.7|10.9|5.10|5.9|6.9|7.8|10.8|8.10|13.7|12.6|14.7|15.7|12.10|9.7|14.12|13.11|14.10|13.10|14.11",
   // variations originally out of order - second variation finds a better result
   "19~9.9|10.10|9.11|9.12|7.9|10.12|8.9|10.9|6.9|5.9|10.11|10.8|8.11|10.7|10.6|7.11|8.12",
-  // linear shape update is broken??
+  // linear shape update used to be broken
   "19~9.9|11.9|9.7|9.6|9.5|7.4|5.3|5.2|6.2|6.3"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
@@ -100,7 +100,7 @@ function printMoves() {
 const results: Ref<SearchResult[] | undefined> = ref(undefined)
 
 function analyzePosition() {
-  results.value = findBestMoves(game.value, 2, 6, 3000, true)
+  results.value = findBestMoves(game.value, 2, 15, 3000, true)
   analysisLineGameCopy.value = copyGame(game.value)
 }
 
@@ -174,7 +174,7 @@ onMounted(() => {
       <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
-      <button @click="playGame(0, 1, 6, 100)">Play Computer Game</button><br>
+      <button @click="console.log(playGame(2, 3, 6, 100))">Play Computer Game</button><br>
       <button @click="runCompetition(2, 3, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">

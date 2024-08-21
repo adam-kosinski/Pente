@@ -101,13 +101,20 @@ export function* makeOrderedMoveIterator(
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice()
-
-  console.log(sortedShapes.map(s => s.hash).join("\n"))
   
   // if there is a pente threat (either player), the only relevant moves are within it or making a capture
-  // if(sortedShapes.some(shape => shape.type.includes("pente-threat"))){
-  //   sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
-  // }
+  const penteThreatExists = sortedShapes.some(shape => shape.type.includes("pente-threat"))
+  if(penteThreatExists){
+    // sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
+  }
+
+  // if there is a tria that you own, you can do anything
+  // if there is a tria the opponent owns, you need to block it eventually
+  // don't want to let it become an open tessera that can't be blocked
+  // one way is to block the tria now
+  // if you don't, then when it forms a tessera, you better be able to capture across the tessera (this might be capturing the newest stone, not in the tria)
+  // this means that tria + your move + tessera stone, needs to contain a capture threat owned by you
+  // if this threat exists already, you're good
 
   for (const shape of sortedShapes) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
@@ -123,6 +130,8 @@ export function* makeOrderedMoveIterator(
   }
 
   // return all other spots near gems
+  if(penteThreatExists) return  // already looked at all possible relevant moves
+
   for (let r = 0; r < game.board.length; r++) {
     for (let c = 0; c < game.board.length; c++) {
       if (game.board[r][c] === undefined) continue
