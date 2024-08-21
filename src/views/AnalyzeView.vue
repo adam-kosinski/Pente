@@ -34,7 +34,9 @@ const testPositions = [
   // ohhh that's probably because from move to move the transposition table gets reset since the web worker's env gets reset
   "19~9.9|10.9|11.7|8.7|11.10|8.10|11.11|8.8|11.9|11.8|8.6",
   // this line is bizarre
-  "19~9.9|11.9|11.6|11.11|11.7|8.10|13.5|11.10|11.12|11.5|11.8|9.10|7.10|12.10|10.10|8.8|10.8|12.6|13.11|9.7|11.9|11.10|12.10|14.12|10.6|9.6|10.6|7.9|9.8|9.9|9.5|7.7|10.10"
+  "19~9.9|11.9|11.6|11.11|11.7|8.10|13.5|11.10|11.12|11.5|11.8|9.10|7.10|12.10|10.10|8.8|10.8|12.6|13.11|9.7|11.9|11.10|12.10|14.12|10.6|9.6|10.6|7.9|9.8|9.9|9.5|7.7|10.10",
+  // my program doesn't realize that 9.8 wins until it is played, after which it recognizes it instantly
+  "19~9.9|11.10|9.5|9.4|7.7|6.6|11.7|8.4|10.4|8.6|10.8|12.6|7.4|8.4|9.6|8.5"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
