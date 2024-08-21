@@ -191,19 +191,19 @@ function principalVariationSearch(
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
-    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
-      return [tableEntry.result]
-    }
-    else if (tableEntry.result.evalFlag === "lower-bound") {
-      alpha = Math.max(alpha, tableEntry.result.eval)
-    }
-    else if (tableEntry.result.evalFlag === "upper-bound") {
-      beta = Math.min(beta, tableEntry.result.eval)
-    }
-    if (alpha >= beta && !returnAllMoveResults) {
-      // cutoff
-      return [tableEntry.result]
-    }
+    // if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
+    //   return [tableEntry.result]
+    // }
+    // else if (tableEntry.result.evalFlag === "lower-bound") {
+    //   alpha = Math.max(alpha, tableEntry.result.eval)
+    // }
+    // else if (tableEntry.result.evalFlag === "upper-bound") {
+    //   beta = Math.min(beta, tableEntry.result.eval)
+    // }
+    // if (alpha >= beta && !returnAllMoveResults) {
+    //   // cutoff
+    //   return [tableEntry.result]
+    // }
   }
   else {
     ttableMiss++

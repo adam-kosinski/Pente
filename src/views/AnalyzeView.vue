@@ -15,7 +15,7 @@ import AnalysisWorker from "../analysisWorker?worker"
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(8)
+const testPositionIndex = ref(0)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -32,12 +32,15 @@ const testPositions = [
   // (!!!) analyze (-Infinity), then go back one move and analyze -> line switches to +Infinity, but if you follow it to the end, the final position of the +Infinity line is actually -Infinity
   // seems to be fixed after adding the web worker, huh
   // ohhh that's probably because from move to move the transposition table gets reset since the web worker's env gets reset
-  "19~9.9|10.9|11.7|8.7|11.10|8.10|11.11|8.8|11.9|11.8|8.6"
+  "19~9.9|10.9|11.7|8.7|11.10|8.10|11.11|8.8|11.9|11.8|8.6",
+  // this line is bizarre
+  "19~9.9|11.9|11.6|11.11|11.7|8.10|13.5|11.10|11.12|11.5|11.8|9.10|7.10|12.10|10.10|8.8|10.8|12.6|13.11|9.7|11.9|11.10|12.10|14.12|10.6|9.6|10.6|7.9|9.8|9.9|9.5|7.7|10.10"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
   game.value = loadFromString(testPositions[i])
   updateMoveList()
+  analyzePosition()
 })
 
 function doMakeMove(r: number, c: number) {
@@ -76,6 +79,11 @@ function decrementMoveIndex() {
 const analysisLineGameCopy = ref(copyGame(game.value))  // so if the game changes, the analysis lines don't behave weirdly before we give them the next analysis result
 const futurePosition: Ref<GameState | undefined> = ref()
 
+function goToPosition(position: GameState) {
+  game.value = position
+  updateMoveList()
+  analyzePosition()
+}
 
 // declare global {
 //   interface Console {
@@ -158,7 +166,7 @@ onMounted(() => {
         <AnalysisLine v-for="result in results" :game="analysisLineGameCopy" :result="result"
           @show-future-position="(position) => futurePosition = position"
           @clear-future-position="futurePosition = undefined"
-          @go-to-position="(position) => { game = position; updateMoveList(); }" />
+          @go-to-position="(position) => goToPosition(position)" />
       </div>
       <div class="future-position-space">
         <div class="future-position-container">
