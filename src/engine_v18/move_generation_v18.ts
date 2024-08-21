@@ -105,7 +105,7 @@ export function* makeOrderedMoveIterator(
   // if there is a pente threat (either player), the only relevant moves are within it or making a capture
   const penteThreatExists = sortedShapes.some(shape => shape.type.includes("pente-threat"))
   if(penteThreatExists){
-    // sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
+    sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
   }
 
   // if there is a tria that you own, you can do anything

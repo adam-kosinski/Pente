@@ -1,4 +1,4 @@
-import { makeMove, undoMove, type GameState, type SearchResult } from "./model_v18";
+import { gameToString, makeMove, undoMove, type GameState, type SearchResult } from "./model_v18";
 import { makeOrderedMoveIterator } from "./move_generation_v18";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v18";
 import { evaluatePosition } from "./evaluation_v18";
@@ -62,6 +62,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
     }
     catch {
       console.log(resultsToReturn)
+      console.log(gameToString(game))
     }
     const movesToExclude = resultsToReturn.map(x => x.bestVariation[0])
     if (verbose) console.log("excluding " + JSON.stringify(movesToExclude) + "\n")
@@ -178,7 +179,7 @@ function principalVariationSearch(
 
   // leaf node base cases
   const evaluation = evaluatePosition(game)
-  if (game.isOver || depth === 0 || (ply > 1 && Math.abs(evaluation) === Infinity)) {  // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
+  if (game.isOver || depth === 0 || (Math.abs(evaluation) === Infinity && ply > 1)) {  // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
     return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
   }
 
@@ -190,19 +191,19 @@ function principalVariationSearch(
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
-    // if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
-    //   return [tableEntry.result]
-    // }
-    // else if (tableEntry.result.evalFlag === "lower-bound") {
-    //   alpha = Math.max(alpha, tableEntry.result.eval)
-    // }
-    // else if (tableEntry.result.evalFlag === "upper-bound") {
-    //   beta = Math.min(beta, tableEntry.result.eval)
-    // }
-    // if (alpha >= beta && !returnAllMoveResults) {
-    //   // cutoff
-    //   return [tableEntry.result]
-    // }
+    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
+      return [tableEntry.result]
+    }
+    else if (tableEntry.result.evalFlag === "lower-bound") {
+      alpha = Math.max(alpha, tableEntry.result.eval)
+    }
+    else if (tableEntry.result.evalFlag === "upper-bound") {
+      beta = Math.min(beta, tableEntry.result.eval)
+    }
+    if (alpha >= beta && !returnAllMoveResults) {
+      // cutoff
+      return [tableEntry.result]
+    }
   }
   else {
     ttableMiss++
@@ -219,12 +220,18 @@ function principalVariationSearch(
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
 
+    let extension = 0
+    if(game.linearShapes.some(shape => shape.owner !== game.currentPlayer && shape.type.includes("pente-threat"))){
+      extension = 1
+    }
+
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
-    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1, ply + 1, -beta, -alpha, deadlineMs, [...movesSoFar, [r, c]], usingNullWindow, restOfPrincipalVariation)[0]
+    if (moveIndex == 0) childResult = principalVariationSearch(game, depth - 1 + extension, ply + 1, -beta, -alpha, deadlineMs, [...movesSoFar, [r, c]], usingNullWindow, restOfPrincipalVariation)[0]
     else {
       // not first-ordered move, so probably worse, do a fast null window search
       let searchDepth = (depth >= 3 && moveIndex >= 5) ? depth - 2 : depth - 1  // apply late move reduction
+      searchDepth += extension
       childResult = principalVariationSearch(game, searchDepth, ply + 1, -alpha - 1, -alpha, deadlineMs, [...movesSoFar, [r, c]], true, restOfPrincipalVariation)[0]  // technically no longer the principal variation, but PV moves are probably still good in other positions
       // if failed high (we found a way to do better), do a full search
       // need to check equal to as well as the inequalities, because if the null window was -Infinity, -Infinity, any move will cause a cutoff by being equal to -Infinity
@@ -262,13 +269,13 @@ function principalVariationSearch(
     }
     // if we found another way to force a win that's shorter, prefer that one
     // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
-    else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
-      bestResult = myResult
-    }
-    // if dead lost, prefer the longer line
-    else if (myResult.eval === -Infinity && myResult.evalFlag !== "lower-bound" && myResult.bestVariation.length > bestResult.bestVariation.length) {
-      bestResult = myResult
-    }
+    // else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
+    //   bestResult = myResult
+    // }
+    // // if dead lost, prefer the longer line
+    // else if (myResult.eval === -Infinity && myResult.evalFlag !== "lower-bound" && myResult.bestVariation.length > bestResult.bestVariation.length) {
+    //   bestResult = myResult
+    // }
 
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (best eval),
@@ -284,7 +291,7 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor - NOTE: this causes embarassingly wrong evaluations sometimes
-    // if (moveIndex >= 20) break
+    if (moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 

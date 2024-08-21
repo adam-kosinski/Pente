@@ -11,7 +11,7 @@ const engines = [
   engine14,  // manual eval values
   engine15,  // fitted eval values
   engine17,  // more eval features
-  engine18  // better move generation
+  engine18  // better move generation and search extension
 ]
 
 const gameStringSet = new Set<string>(gameStrings)

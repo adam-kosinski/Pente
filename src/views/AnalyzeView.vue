@@ -11,9 +11,11 @@ import { findBestMoves, copyGame } from '@/engine_v18/engine_v18';
 import { makeOrderedMoveIterator } from '@/engine_v18/move_generation_v18'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v18/evaluation_v18';
 
+import AnalysisWorker from "../analysisWorker?worker"
+
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(4)
+const testPositionIndex = ref(8)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -26,7 +28,9 @@ const testPositions = [
   // variations originally out of order - second variation finds a better result
   "19~9.9|10.10|9.11|9.12|7.9|10.12|8.9|10.9|6.9|5.9|10.11|10.8|8.11|10.7|10.6|7.11|8.12",
   // linear shape update used to be broken
-  "19~9.9|11.9|9.7|9.6|9.5|7.4|5.3|5.2|6.2|6.3"
+  "19~9.9|11.9|9.7|9.6|9.5|7.4|5.3|5.2|6.2|6.3",
+  // (!!!) analyze (-Infinity), then go back one move and analyze -> line switches to +Infinity, but if you follow it to the end, the final position of the +Infinity line is actually -Infinity
+  "19~9.9|10.9|11.7|8.7|11.10|8.10|11.11|8.8|11.9|11.8|8.6"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -99,9 +103,12 @@ function printMoves() {
 
 const results: Ref<SearchResult[] | undefined> = ref(undefined)
 
+const analysisWorker = new AnalysisWorker()
+analysisWorker.onmessage = (e) => {
+  results.value = e.data
+}
 function analyzePosition() {
-  results.value = findBestMoves(game.value, 2, 15, 3000, true)
-  analysisLineGameCopy.value = copyGame(game.value)
+  analysisWorker.postMessage(JSON.stringify(game.value))
 }
 
 
