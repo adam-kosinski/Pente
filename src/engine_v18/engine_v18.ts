@@ -221,7 +221,7 @@ function principalVariationSearch(
     const restOfPrincipalVariation = principalVariation.slice(1)
 
     let extension = 0
-    if(game.linearShapes.some(shape => shape.owner !== game.currentPlayer && shape.type.includes("pente-threat"))){
+    if(game.linearShapes.some(shape => shape.type.includes("pente-threat"))){
       extension = 1
     }
 

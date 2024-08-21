@@ -2,8 +2,8 @@ import { chooseMove as engine14 } from "./engine_v14/engine_v14";
 import { chooseMove as engine15 } from "./engine_v15/engine_v15";
 import { chooseMove as engine17 } from "./engine_v17/engine_v17";
 import { chooseMove as engine18 } from "./engine_v18/engine_v18";
-import { evaluatePosition, positionFeatureDict } from "./engine_v17/evaluation_v17";
-import { createNewGame, gameToString, makeMove } from "./engine_v17/model_v17";
+import { evaluatePosition, positionFeatureDict } from "./engine_v18/evaluation_v18";
+import { createNewGame, gameToString, makeMove } from "./engine_v18/model_v18";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
 

@@ -115,6 +115,7 @@ export function* makeOrderedMoveIterator(
   // if you don't, then when it forms a tessera, you better be able to capture across the tessera (this might be capturing the newest stone, not in the tria)
   // this means that tria + your move + tessera stone, needs to contain a capture threat owned by you
   // if this threat exists already, you're good
+  // if not, how does that constrain you?
 
   for (const shape of sortedShapes) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])

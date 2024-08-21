@@ -8,3 +8,6 @@ When reaching depth 8-10 from the starting position, depending on if doing searc
 How is that possible?
 
 See try...catch in findBestMoves v18
+
+Sometimes when playing the mmai, my program will find a "forced win" but after another move decides it wasn't actually forced
+or was forced but in more moves
