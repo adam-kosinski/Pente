@@ -106,9 +106,13 @@ const results: Ref<SearchResult[] | undefined> = ref(undefined)
 const analysisWorker = new AnalysisWorker()
 analysisWorker.onmessage = (e) => {
   results.value = e.data
+  analysisLineGameCopy.value = copyGame(game.value)
 }
+
 function analyzePosition() {
   analysisWorker.postMessage(JSON.stringify(game.value))
+  // results.value = findBestMoves(game.value, 2, 15, 3000, true)
+  // analysisLineGameCopy.value = copyGame(game.value)
 }
 
 
