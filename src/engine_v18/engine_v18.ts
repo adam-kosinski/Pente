@@ -24,7 +24,7 @@ function addKillerMove(r: number, c: number, ply: number) {
 
 
 
-export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] | undefined {
+export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
   // in the opening, look into several variations and choose one randomly (to create game variation)
   // in middlegame etc. just choose the best move
   if (game.nMoves <= 4) {
@@ -35,7 +35,7 @@ export function chooseMove(game: GameState, maxDepth: number, maxMs: number = In
     const chosen = results[Math.floor(Math.random() * results.length)]
     return chosen.bestVariation[0]
   }
-  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0]?.bestVariation[0]
+  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0].bestVariation[0]
 }
 
 

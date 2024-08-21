@@ -30,6 +30,8 @@ const testPositions = [
   // linear shape update used to be broken
   "19~9.9|11.9|9.7|9.6|9.5|7.4|5.3|5.2|6.2|6.3",
   // (!!!) analyze (-Infinity), then go back one move and analyze -> line switches to +Infinity, but if you follow it to the end, the final position of the +Infinity line is actually -Infinity
+  // seems to be fixed after adding the web worker, huh
+  // ohhh that's probably because from move to move the transposition table gets reset since the web worker's env gets reset
   "19~9.9|10.9|11.7|8.7|11.10|8.10|11.11|8.8|11.9|11.8|8.6"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
@@ -37,6 +39,12 @@ watch(testPositionIndex, i => {
   game.value = loadFromString(testPositions[i])
   updateMoveList()
 })
+
+function doMakeMove(r: number, c: number) {
+  makeMove(game.value, r, c)
+  updateMoveList()
+  analyzePosition()
+}
 
 
 // move navigation -----------------------
@@ -53,11 +61,13 @@ function incrementMoveIndex() {
   moveIndex.value++
   const move = moveList.value[moveIndex.value]
   makeMove(game.value, move[0], move[1])
+  analyzePosition()
 }
 function decrementMoveIndex() {
   if (moveIndex.value <= -1) return
   moveIndex.value--
   undoMove(game.value)
+  analyzePosition()
 }
 
 // ------------------------------
@@ -101,22 +111,23 @@ function printMoves() {
   console.log("")
 }
 
+const analysisStarted = ref(false) // don't auto run until the user says to
 const results: Ref<SearchResult[] | undefined> = ref(undefined)
-
-const analysisWorker = new AnalysisWorker()
-analysisWorker.onmessage = (e) => {
-  results.value = e.data
-  analysisLineGameCopy.value = copyGame(game.value)
-}
+let analysisWorker : Worker
 
 function analyzePosition() {
+  if(!analysisStarted.value) return
+  if(analysisWorker) analysisWorker.terminate()
+  analysisWorker = new AnalysisWorker()
+
   analysisWorker.postMessage(JSON.stringify(game.value))
-  // results.value = findBestMoves(game.value, 2, 15, 3000, true)
-  // analysisLineGameCopy.value = copyGame(game.value)
+  analysisWorker.onmessage = (e) => {
+    results.value = e.data
+    analysisLineGameCopy.value = copyGame(game.value)
+  }
 }
 
 
-const analysisStarted = ref(false)
 
 
 onMounted(() => {
@@ -136,7 +147,7 @@ onMounted(() => {
   <div class="analyze-view">
 
     <div class="board-container">
-      <Board :game="game" show-coord-labels @make-move="(r, c) => { makeMove(game, r, c); updateMoveList(); }" />
+      <Board :game="game" show-coord-labels @make-move="(r, c) => doMakeMove(r, c)" />
     </div>
     <div class="analysis-panel">
       <div class="analysis-panel-top">
