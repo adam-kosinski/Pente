@@ -117,9 +117,12 @@ def fit(data, opening_idx, show_coef=True):
 
 
 
-if __name__ == "__main__":
+def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
+
+    fit(data, 12, True)
+    return
 
     indices = []
     results = []
@@ -134,3 +137,8 @@ if __name__ == "__main__":
 
     best = results.index(max(results))
     fit(data, indices[best], True)
+
+
+
+if __name__ == "__main__":
+    main()

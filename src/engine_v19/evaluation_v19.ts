@@ -49,54 +49,54 @@ export function evaluatePosition(game: GameState) {
 }
 
 
-const openingIdx = 24
-const blendRange = 10
+const openingIdx = 12
+const blendRange = 6
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.7580009888604504,
-  "pente-threat-4": 1.4869830852081756,
-  "pente-threat-31": 1.3910929770359863,
-  "pente-threat-22": 1.0929248099351796,
-  "open-tria": 2.258283560902676,
-  "stretch-tria": 1.8149125046065424,
-  "open-pair": 0.13590788551171473,
-  "capture-threat": 0.6533774362014504,
-  "stretch-two": 0.5431925032246718,
-  "double-stretch-two": 0.058980842193997976,
-  "three-gap": 0.16658073407080193,
-  "pente-potential-1": 0.2301741272583604,
-  "pente-potential-2": 0.5088922342000937,
-  "captures": 0.9669603911314966,
+  "open-tessera": 0.7595811097272477,
+  "pente-threat-4": 1.3231075344026637,
+  "pente-threat-31": 1.7646047120654462,
+  "pente-threat-22": 0.9089001059232512,
+  "open-tria": 2.465676018548323,
+  "stretch-tria": 1.8432375645875896,
+  "open-pair": 0.16305626872200638,
+  "capture-threat": 0.6964732917144548,
+  "stretch-two": 0.7383841930268968,
+  "double-stretch-two": 0.1965124452309918,
+  "three-gap": 0.5269064083291872,
+  "pente-potential-1": 0.11075938946378927,
+  "pente-potential-2": 0.5742304349820271,
+  "captures": 1.2617330666881366,
   "4-captures": 0.0,
-  "can-block-trias": 0.46586321759223676,
-  "my-open-trias": -0.26029327523916496,
-  "my-stretch-trias": -0.2998837178350584,
-  "non-quiet-moves": 0.3855153009721095
+  "can-block-trias": 0.543794833016246,
+  "my-open-trias": -0.7961513960148968,
+  "my-stretch-trias": -0.9189807492396814,
+  "non-quiet-moves": 0.5338492653859213
 }
-const openingCurrentPlayerBias = -0.0912351764225815
+const openingCurrentPlayerBias = -0.2262820774459405
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.8846709924609812,
-  "pente-threat-4": 1.1223697108794686,
-  "pente-threat-31": 1.0457327544723933,
-  "pente-threat-22": 0.7658732281610618,
-  "open-tria": 1.54743027851201,
-  "stretch-tria": 1.0986262590239866,
-  "open-pair": 0.09664318353121736,
-  "capture-threat": 0.48924633313079663,
-  "stretch-two": 0.21965974190771248,
-  "double-stretch-two": -0.1524676110889417,
-  "three-gap": 0.3997523193729385,
-  "pente-potential-1": 0.6068710212832804,
-  "pente-potential-2": 0.43074679624707074,
-  "captures": 0.9417856423324562,
-  "4-captures": 1.131170561030674,
-  "can-block-trias": 1.0093049617206038,
-  "my-open-trias": -0.2207680310003275,
-  "my-stretch-trias": -0.07823609620934253,
-  "non-quiet-moves": 0.3318179750070218
+  "open-tessera": 2.93328616675197,
+  "pente-threat-4": 1.3993012638773616,
+  "pente-threat-31": 1.303475196160189,
+  "pente-threat-22": 1.0635310147475436,
+  "open-tria": 1.8714674697180989,
+  "stretch-tria": 1.2999317885603885,
+  "open-pair": 0.12552140232264886,
+  "capture-threat": 0.5823866258000487,
+  "stretch-two": 0.33881391853090226,
+  "double-stretch-two": -0.06743116860693756,
+  "three-gap": 0.22897175839022574,
+  "pente-potential-1": 0.5089667319982304,
+  "pente-potential-2": 0.44340786449125824,
+  "captures": 0.9522555317132675,
+  "4-captures": 1.074937880495999,
+  "can-block-trias": 0.8535743420721008,
+  "my-open-trias": -0.13767350530498348,
+  "my-stretch-trias": 0.014311261100018777,
+  "non-quiet-moves": 0.28126751327527044
 }
-const laterCurrentPlayerBias = -0.4064728504400961
+const laterCurrentPlayerBias = -0.04997259788175746
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering

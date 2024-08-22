@@ -36,7 +36,9 @@ const testPositions = [
   // this line is bizarre
   "19~9.9|11.9|11.6|11.11|11.7|8.10|13.5|11.10|11.12|11.5|11.8|9.10|7.10|12.10|10.10|8.8|10.8|12.6|13.11|9.7|11.9|11.10|12.10|14.12|10.6|9.6|10.6|7.9|9.8|9.9|9.5|7.7|10.10",
   // my program doesn't realize that 9.8 wins until it is played, after which it recognizes it instantly
-  "19~9.9|11.10|9.5|9.4|7.7|6.6|11.7|8.4|10.4|8.6|10.8|12.6|7.4|8.4|9.6|8.5"
+  "19~9.9|11.10|9.5|9.4|7.7|6.6|11.7|8.4|10.4|8.6|10.8|12.6|7.4|8.4|9.6|8.5",
+  // me beating the v19 engine decisively - oops
+  "19~9.9|10.9|9.11|9.8|11.10|8.7|11.11|8.11|11.12|7.6|6.5|11.13|11.8|11.9|12.9|11.9|12.12|13.13|10.11|9.12|12.11|10.10|11.11|13.11|12.8|11.9|12.10|12.12|12.7"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -218,7 +220,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="runComputerGame()">Play Computer Game</button><br>
-      <button @click="runCompetition(4, 5, 40, 30)">Run Competition</button><br>
+      <button @click="runCompetition(5, 5, 40, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 0, 10)">Opening CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 10, Infinity)">Post-opening CSV</button><br>

@@ -24,16 +24,36 @@ function addKillerMove(r: number, c: number, ply: number) {
 
 
 
+export function softmax(z: number[]){
+  const out = []
+  let expSum = 0
+  for(const zj of z){
+    expSum += Math.exp(zj)
+  }
+  return z.map(zi => Math.exp(zi) / expSum)
+}
+function chooseFromWeights(weights: number[]): number {
+  if(Math.abs(weights.reduce((sum, x) => sum + x) - 1) > 0.001){
+    console.error("weights don't add to 1")
+  }
+  let cumSum = 0
+  const cumWeights = weights.map(w => cumSum += w)
+  const rand = Math.random()
+  for(let i=0; i<cumWeights.length; i++){
+    if(rand <= cumWeights[i]) return i
+  }
+  return 0  // just in case
+}
+
+
 export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
-  // in the opening, look into several variations and choose one randomly (to create game variation)
-  // in middlegame etc. just choose the best move
+  // in the opening, look into several variations and choose one randomly, weighted by how good it is
   if (game.nMoves <= 4) {
     const nVariations = 5
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
-    // because only several moves were made, unlikely that any of the proposed moves will be losing
-    // so just choose one at random
-    const chosen = results[Math.floor(Math.random() * results.length)]
-    return chosen.bestVariation[0]
+    const choiceProbs = softmax(results.map(r => r.eval))  // bigger eval is better for me, will be chosen more likely
+    const chosenIdx = chooseFromWeights(choiceProbs)
+    return results[chosenIdx].bestVariation[0]
   }
   return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0].bestVariation[0]
 }
