@@ -38,6 +38,7 @@ export function evaluatePosition(game: GameState) {
   // use position feature dict along with weights and bias to compute evaluation
   const featureDict = positionFeatureDict(game)
   const openingWeight = Math.max(0, Math.min(1, 0.5 + ((openingIdx - game.nMoves) / blendRange)))
+  // init eval as the intercept, and then add in features * weights
   let evaluation = openingCurrentPlayerBias * openingWeight + laterCurrentPlayerBias * (1 - openingWeight)
   for (const [k, v] of Object.entries(featureDict)) {
     if (k in laterFeatureWeights) {
@@ -96,56 +97,6 @@ const laterFeatureWeights: Record<string, number> = {
   "non-quiet-moves": 0.3318179750070218
 }
 const laterCurrentPlayerBias = -0.4064728504400961
-
-// const openingIdx = 10
-// const blendRange = 4
-
-// const openingFeatureWeights: Record<string, number> = {
-//   "open-tessera": 0.16382045598699985,
-//   "pente-threat-4": 1.933716988434214,
-//   "pente-threat-31": 2.0971965396271077,
-//   "pente-threat-22": 0.7370080072628162,
-//   "open-tria": 2.424302972226337,
-//   "stretch-tria": 0.764170473401372,
-//   "open-pair": 0.19762723631647697,
-//   "capture-threat": 0.828476815977951,
-//   "stretch-two": 0.853840225607935,
-//   "double-stretch-two": -0.03724614114367376,
-//   "three-gap": 0.25846748129983693,
-//   "pente-potential-1": 0.38810607910740064,
-//   "pente-potential-2": 0.6442108365643338,
-//   "captures": 1.8969433568078122,
-//   "4-captures": 0.0,
-//   "can-block-trias": 0.7498924763524428,
-//   "my-open-trias": 0.227150984962449,
-//   "my-stretch-trias": 0.15963966381216343,
-//   "non-quiet-moves": 0.5038152105492621
-// }
-// const openingCurrentPlayerBias = -0.4309151058620979
-
-
-// const laterFeatureWeights: Record<string, number> = {
-//   "open-tessera": 2.3262898143345128,
-//   "pente-threat-4": 1.931325800410917,
-//   "pente-threat-31": 1.8784987650724434,
-//   "pente-threat-22": 1.8523783616966716,
-//   "open-tria": 2.011500382249705,
-//   "stretch-tria": 1.2755344862869074,
-//   "open-pair": 0.22345192530294544,
-//   "capture-threat": 0.6398978506156765,
-//   "stretch-two": 0.5059533141586162,
-//   "double-stretch-two": -0.031543175991969256,
-//   "three-gap": 0.24993006362008163,
-//   "pente-potential-1": 0.9194719017712562,
-//   "pente-potential-2": 0.6465971171700069,
-//   "captures": 1.1052105254360394,
-//   "4-captures": 0.05235393349796206,
-//   "can-block-trias": 0.7974538869236613,
-//   "my-open-trias": -0.15068927838962512,
-//   "my-stretch-trias": -0.19457137702117436,
-//   "non-quiet-moves": 0.4299902733567633
-// }
-// const laterCurrentPlayerBias = -0.4840183351512664
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering

@@ -6,7 +6,7 @@ onmessage = (e) => {
   // update the main thread at each depth level
   console.profile()
   for (let d = 1; d < 10; d++) {
-    const results = findBestMoves(game, 2, d, 3000, true)
+    const results = findBestMoves(game, 3, d, 3000, true)
     postMessage(results)
   }
   console.profileEnd()

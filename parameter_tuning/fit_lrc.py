@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     indices = []
     results = []
-    for opening_idx in range(5, 45):
+    for opening_idx in range(0, 11):
         result = fit(data, opening_idx, False)
         if result != "skip":
             indices.append(opening_idx)
