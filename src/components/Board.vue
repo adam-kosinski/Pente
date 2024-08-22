@@ -105,6 +105,8 @@ function tryToMakeMove(r: number, c: number) {
   justify-content: center;
   position: relative;
   cursor: pointer;
+  /* define container for making the row/col labels fit */
+  container-type: inline-size;
 }
 
 .intersection:not(.legal-move) {
@@ -154,7 +156,7 @@ function tryToMakeMove(r: number, c: number) {
 .col-label {
   position: absolute;
   font-family: sans-serif;
-  font-size: 12px;
+  font-size: min(12px, 80cqi);
   width: 100%;
   height: 100%;
   display: flex;

@@ -131,7 +131,9 @@ function printForcingMoves() {
 }
 
 const analysisStarted = ref(false) // don't auto run until the user says to
-const results: Ref<SearchResult[] | undefined> = ref(undefined)
+const nAnalysisVariations = ref(1)
+const maxVariations = 4
+const results: Ref<SearchResult[]> = ref([])
 let analysisWorker: Worker
 
 function analyzePosition() {
@@ -139,7 +141,7 @@ function analyzePosition() {
   if (analysisWorker) analysisWorker.terminate()
   analysisWorker = new AnalysisWorker()
 
-  analysisWorker.postMessage(JSON.stringify(game.value))
+  analysisWorker.postMessage([JSON.stringify(game.value), nAnalysisVariations.value])
   analysisWorker.onmessage = (e) => {
     results.value = e.data
     analysisLineGameCopy.value = copyGame(game.value)
@@ -178,9 +180,10 @@ onMounted(() => {
         <button v-if="!analysisStarted" class="start-analysis" @click="analysisStarted = true; analyzePosition();">
           Start Analysis
         </button>
-        <AnalysisLine v-for="result in results" :game="analysisLineGameCopy" :result="result"
-          @show-future-position="(position) => futurePosition = position"
-          @clear-future-position="futurePosition = undefined" @go-to-position="(position) => goToPosition(position)" />
+          <AnalysisLine v-if="analysisStarted" v-for="i in nAnalysisVariations" :game="analysisLineGameCopy" :result="results[i-1]"
+            @show-future-position="(position) => futurePosition = position"
+            @clear-future-position="futurePosition = undefined" @go-to-position="(position) => goToPosition(position)" />
+        <button v-if="analysisStarted && nAnalysisVariations < maxVariations" class="add-variation" @click="nAnalysisVariations++; analyzePosition()">Add variation</button>
       </div>
       <div class="future-position-space">
         <div class="future-position-container">
@@ -274,6 +277,9 @@ onMounted(() => {
   color: white;
   cursor: pointer;
   padding: 10px;
+  width: min-content;
+  text-wrap: nowrap;
+  font-size: 18px;
 }
 
 .analysis-panel button:hover {
@@ -294,10 +300,14 @@ onMounted(() => {
 }
 
 .start-analysis {
-  font-size: 18px;
   margin: auto;
   margin-top: 10px;
   text-wrap: nowrap;
+}
+
+.analysis-panel .add-variation {
+  background-color: transparent;
+  border: 1px solid var(--medium-brown);
 }
 
 .future-position-space {
@@ -318,6 +328,7 @@ onMounted(() => {
   width: 100%;
   height: 40px;
   text-wrap: nowrap;
+  font-size: 18px;
 }
 
 .move-navigation button {
@@ -327,7 +338,6 @@ onMounted(() => {
 
 .move-navigation p {
   margin: 0 10px;
-  font-size: 18px;
 }
 
 .move-navigation button img {
