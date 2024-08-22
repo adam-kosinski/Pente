@@ -23,23 +23,25 @@ function addKillerMove(r: number, c: number, ply: number) {
 }
 
 
-export function softmax(z: number[]){
+export function softmax(z: number[], b = 1) {
+  // 0 < b < 1 results in smoother distribution
+  // b > 1 results in sharper distribution
   const out = []
   let expSum = 0
-  for(const zj of z){
-    expSum += Math.exp(zj)
+  for (const zj of z) {
+    expSum += Math.exp(b * zj)
   }
-  return z.map(zi => Math.exp(zi) / expSum)
+  return z.map(zi => Math.exp(b * zi) / expSum)
 }
 function chooseFromWeights(weights: number[]): number {
-  if(Math.abs(weights.reduce((sum, x) => sum + x) - 1) > 0.001){
+  if (Math.abs(weights.reduce((sum, x) => sum + x) - 1) > 0.001) {
     console.error("weights don't add to 1")
   }
   let cumSum = 0
   const cumWeights = weights.map(w => cumSum += w)
   const rand = Math.random()
-  for(let i=0; i<cumWeights.length; i++){
-    if(rand <= cumWeights[i]) return i
+  for (let i = 0; i < cumWeights.length; i++) {
+    if (rand <= cumWeights[i]) return i
   }
   return 0  // just in case
 }
@@ -50,7 +52,7 @@ export function chooseMove(game: GameState, maxDepth: number, maxMs: number = In
   if (game.nMoves <= 4) {
     const nVariations = 5
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
-    const choiceProbs = softmax(results.map(r => r.eval))  // bigger eval is better for me, will be chosen more likely
+    const choiceProbs = softmax(results.map(r => r.eval), 0.3)  // bigger eval is better for me, will be chosen more likely
     const chosenIdx = chooseFromWeights(choiceProbs)
     return results[chosenIdx].bestVariation[0]
   }
@@ -65,7 +67,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
 
   game = copyGame(game)  // don't mess with the game object we got
-
+  transpositionTable.clear()  // weirdness tends to happen occasionally if we don't do this
   let resultsToReturn: SearchResult[] = []
 
   searchLoop:
