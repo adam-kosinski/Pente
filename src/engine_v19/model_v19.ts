@@ -235,8 +235,7 @@ function getPatternMatches(str: string) {
 
 
 
-export function updateLinearShapes(game: GameState, r0: number, c0: number,
-  update: LinearShapeUpdate = { added: [], removed: [] }) {
+export function updateLinearShapes(game: GameState, r0: number, c0: number, update: LinearShapeUpdate = { added: [], removed: [] }) {
   // Given a game state, update the game state's list of linear shapes.
   // Will only take into account shapes that include the r0,c0 location.
   // This takes advantage of the fact that a move can only create/affect
@@ -267,22 +266,35 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
 
   // add new shapes
 
-  const existingShapeHashes = new Set(game.linearShapes.map(s => s.hash))
+  const value0 = game.board[r0][c0]
+  const s0 = value0 === undefined ? "_" : String(value0)
 
   // iterate over each of four directions
   for (const [dy, dx] of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
-    // construct string to search for patterns in - takes about 50% of time
-    let s = ""
-    let rInit = r0 - (maxLinearShapeLength - 1) * dy
-    let cInit = c0 - (maxLinearShapeLength - 1) * dx
-    for (let i = 0, r = rInit, c = cInit; i < 2 * maxLinearShapeLength - 1; i++, r += dy, c += dx) {
-      // if off the side of the board, add a blocker character that won't match anything, to keep the indexing correct
+    // construct string to search for patterns in
+    let s = s0
+    // prepend to s and find rInit and cInit, treating rInit and cInit as indices - when we find 
+    let rInit = r0 - dy
+    let cInit = c0 - dx
+    for (let i = 1; i < maxLinearShapeLength; i++, rInit -= dy, cInit -= dx) {
+      if (rInit < 0 || cInit < 0 || rInit >= game.board.length || cInit >= game.board.length) {
+        break
+      }
+      const value = game.board[rInit][cInit]
+      s = (value === undefined ? "_" : value) + s
+    }
+    // in both the case where we went off the edge of the board, and the case where the loop exited naturally,
+    // rInit and cInit will be currently one spot further than they should be, so rewind them
+    rInit += dy
+    cInit += dx
+
+    // append to s
+    for (let i = 1, r = r0 + dy, c = c0 + dx; i < maxLinearShapeLength; i++, r += dy, c += dx) {
       if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
-        s += "x"
-        continue
+        break
       }
       const value = game.board[r][c]
-      s += value === undefined ? "_" : value
+      s += (value === undefined ? "_" : value)
     }
 
     // search for each pattern
@@ -295,10 +307,6 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
         rInit + dy * match.index,
         cInit + dx * match.index
       ]
-      const end = [  // inclusive index
-        rInit + dy * (match.index + patternInfo.length - 1),
-        cInit + dx * (match.index + patternInfo.length - 1)
-      ]
       const shape: LinearShape = {
         type: patternInfo.type,
         pattern: pattern,
@@ -307,11 +315,10 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number,
         dy: dy,
         dx: dx,
         length: patternInfo.length,
-        hash: [patternInfo.type, patternInfo.owner, begin, end].join()
+        hash: [patternInfo.type, patternInfo.owner, begin, dy, dx].join()
       }
-      if (!existingShapeHashes.has(shape.hash)) {
+      if (!game.linearShapes.some(s => s.hash === shape.hash)) {
         game.linearShapes.push(shape)
-        existingShapeHashes.add(shape.hash)
         update.added.push(shape)
       }
     }

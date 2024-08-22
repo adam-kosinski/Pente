@@ -101,18 +101,21 @@ function profile() {
 
 function timeTest() {
   const iterations = 100000000
+  const x = {a: 2}
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    const a = [1,2,3,4,5,6]
-    a.filter(x => x !== 3)
+    let f = 0
+    for (let k=0; k<10; k++){
+      f += x.a
+    }
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    const a = [1,2,3,4,5,6]
-    const b = []
-    for(const k of a){
-      if(k !== 3) b.push(k)
+    let f = 0
+    const a = x.a
+    for (let k=0; k<10; k++){
+      f += a
     }
   }
   console.log("B:", performance.now() - start + " ms")
