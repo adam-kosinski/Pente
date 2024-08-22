@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import Board from '@/components/Board.vue';
 
 import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v19/model_v19';
@@ -16,11 +16,19 @@ async function playerMove(r: number, c: number) {
   await new Promise(resolve => setTimeout(resolve, 10))
   const [compR, compC] = chooseMove(game.value, 10, 1000)
   makeMove(game.value, compR, compC)
+
+  window.history.replaceState(null, "", "?s=" + gameToString(game.value))
 }
 
 function goToAnalysis() {
   window.location.href = "/analyze?s=" + gameToString(game.value)
 }
+
+onMounted(() => {
+  const searchParams = new URL(window.location.href).searchParams
+  const gameString = searchParams.get("s")
+  if (gameString) game.value = loadFromString(gameString)
+})
 
 </script>
 
