@@ -100,23 +100,16 @@ function profile() {
 }
 
 function timeTest() {
-  const iterations = 100000000
-  const x = {a: 2}
+  const iterations = 1000000000
+  const f = (n: number) => n < 0
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    let f = 0
-    for (let k=0; k<10; k++){
-      f += x.a
-    }
+    -1 < 0
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    let f = 0
-    const a = x.a
-    for (let k=0; k<10; k++){
-      f += a
-    }
+    f(-1)
   }
   console.log("B:", performance.now() - start + " ms")
 

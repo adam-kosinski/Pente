@@ -235,6 +235,7 @@ function getPatternMatches(str: string) {
 
 
 
+
 export function updateLinearShapes(game: GameState, r0: number, c0: number, update: LinearShapeUpdate = { added: [], removed: [] }) {
   // Given a game state, update the game state's list of linear shapes.
   // Will only take into account shapes that include the r0,c0 location.
@@ -266,11 +267,13 @@ export function updateLinearShapes(game: GameState, r0: number, c0: number, upda
 
   // add new shapes
 
+  // find the center character outside the loop, so only have to do it once
   const value0 = game.board[r0][c0]
-  const s0 = value0 === undefined ? "_" : String(value0)
+  const s0 = value0 === undefined ? "_" : value0.toString()
 
   // iterate over each of four directions
-  for (const [dy, dx] of [[0, 1], [1, 0], [1, 1], [-1, 1]]) { // row, col, (\) diagonal, (/) diagonal
+  for (const [dy, dx] of [[0, 1], [1, 0], [1, 1], [-1, 1]]) {  // row, col, (\) diagonal, (/) diagonal
+    
     // construct string to search for patterns in
     let s = s0
     // prepend to s and find rInit and cInit, treating rInit and cInit as indices - when we find 
