@@ -210,7 +210,7 @@ function principalVariationSearch(
   }
 
   let moveIndex = 0
-  const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
+  const moveIterator = makeOrderedMoveIterator(game, false, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
     if (movesToExclude.some(move => move[0] === r && move[1] === c)) {
       continue

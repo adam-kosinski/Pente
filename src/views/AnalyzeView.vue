@@ -115,7 +115,13 @@ function timeTest() {
 }
 
 function printMoves() {
-  for (const move of makeOrderedMoveIterator(game.value, 1)) {
+  for (const move of makeOrderedMoveIterator(game.value)) {
+    console.log(move)
+  }
+  console.log("")
+}
+function printForcingMoves(){
+  for (const move of makeOrderedMoveIterator(game.value, true)) {
     console.log(move)
   }
   console.log("")
@@ -203,6 +209,7 @@ onMounted(() => {
       <button @click="analyzePosition()">Analyze</button><br>
       <button @click="profile()">Profile</button><br>
       <button @click="printMoves()">Generate Moves</button><br>
+      <button @click="printForcingMoves()">Forcing Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
       <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
         Shapes</button><br>

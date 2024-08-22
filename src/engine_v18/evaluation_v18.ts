@@ -1,5 +1,5 @@
 import { type GameState, type LinearShape, linearShapeDef } from "./model_v18";
-import { getNonQuietMoves } from "./move_generation_v18";
+import { getNonQuietMoves, makeOrderedMoveIterator } from "./move_generation_v18";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -25,7 +25,7 @@ export function evaluatePosition(game: GameState) {
   for (const shape of game.linearShapes) {
     // if the opponent has an open tessera that can't be blocked by a capture, they've won
     if (shape.owner !== game.currentPlayer && shape.type === "open-tessera") {
-      const blockingCaptures = getBlockingCaptures(game.linearShapes, shape)
+      const blockingCaptures = getBlockingCaptures(game, shape)
       if (blockingCaptures.length === 0) return -Infinity
     }
     else if (shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")) {
@@ -39,7 +39,7 @@ export function evaluatePosition(game: GameState) {
   const featureDict = positionFeatureDict(game)
   let evaluation = currentPlayerBias
   for (const [k, v] of Object.entries(featureDict)) {
-    if(k in featureWeights){
+    if (k in featureWeights) {
       evaluation += featureWeights[k] * v
     }
   }
@@ -91,23 +91,34 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   }
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
-  featureDict["threats"] = getNonQuietMoves(game).length
   featureDict["can-block-trias"] = 0
   featureDict["my-open-trias"] = 0
-  featureDict['my-stretch-trias'] = 0
+  featureDict["my-stretch-trias"] = 0
+  // featureDict["my-pente-potentials"] = 0
+  featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
   // count linear shapes, for me (current player) and for the opponent
   const opponentTrias: LinearShape[] = []
   for (const shape of game.linearShapes) {
     if (shape.type === "pente") continue  // not helpful, we already know who won if we find this
-    if (shapesToExclude.includes(shape.type)) continue
-    featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
 
-    if(shape.type.includes("tria") && shape.owner !== game.currentPlayer){
+    // count me minus opponent
+    if (!shapesToExclude.includes(shape.type)) {
+      featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
+    }
+
+    // count trias
+    if (shape.type.includes("tria") && shape.owner !== game.currentPlayer) {
       opponentTrias.push(shape)
     }
-    if(shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++
-    if(shape.type === "stretch-tria" && shape.owner === game.currentPlayer) featureDict["my-stretch-trias"]++
+    if (shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++
+    if (shape.type === "stretch-tria" && shape.owner === game.currentPlayer) featureDict["my-stretch-trias"]++
+
+    // count places I can make a pente threat
+    if (shape.owner === game.currentPlayer &&
+      ["extendable-tria", "extendable-stretch-tria-1", "extendable-stretch-tria-2", "pente-potential-1", "pente-potential-2"].includes(shape.type)) {
+      // featureDict["my-pente-potentials"]++
+    }
   }
 
   // count captures
@@ -125,7 +136,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
 
 
 
-export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape): LinearShape[] {
+export function getBlockingCaptures(game: GameState, threat: LinearShape): LinearShape[] {
   const blockingCaptures: LinearShape[] = []
 
   const threatGems: number[][] = []
@@ -137,7 +148,7 @@ export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape):
     if (threat.pattern[i] !== "_") threatGems.push([r, c])
   }
 
-  for (const shape of shapes) {
+  for (const shape of game.linearShapes) {
     if (shape.type !== "capture-threat" || shape.owner === threat.owner) continue
 
     const dy = Math.sign(shape.end[0] - shape.begin[0])
@@ -152,6 +163,16 @@ export function getBlockingCaptures(shapes: LinearShape[], threat: LinearShape):
     }
   }
   return blockingCaptures
+}
+
+
+export function getCapturesBlockingAll(game: GameState, threats: LinearShape[]) {
+  let capturesBlockingAll = getBlockingCaptures(game, threats[0])
+  for (let i = 1; i < threats.length; i++) {
+    const captureHashSet = new Set(getBlockingCaptures(game, threats[i]).map(s => s.hash))
+    capturesBlockingAll = capturesBlockingAll.filter(s => captureHashSet.has(s.hash))
+  }
+  return capturesBlockingAll
 }
 
 
@@ -183,13 +204,9 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
   }
 
   if (normalBlockWorks) return true
-  // otherwise, try blocking by capturing from all the threats
 
-  let capturesBlockingAll = getBlockingCaptures(game.linearShapes, threats[0])
-  for (let i = 1; i < threats.length; i++) {
-    const captureHashSet = new Set(getBlockingCaptures(game.linearShapes, threats[i]).map(s => s.hash))
-    capturesBlockingAll = capturesBlockingAll.filter(s => captureHashSet.has(s.hash))
-  }
+  // otherwise, try blocking by capturing from all the threats
+  let capturesBlockingAll = getCapturesBlockingAll(game, threats)
   if (capturesBlockingAll.length === 0) return false
   return true
 }

@@ -1,3 +1,4 @@
+import { getBlockingCaptures, getCapturesBlockingAll } from "./evaluation_v18";
 import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v18";
 import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v18";
 
@@ -23,9 +24,13 @@ const shapePriorityDef = [
   // favor keeping gems in line with existing ones
   "stretch-two",
   "open-pair",
-  "three-gap",
-  // misc
-  "open-tessera"  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
+  "three-gap"
+]
+// if shape isn't owned by me or is in this list, is considered non-forcing
+const nonForcingShapes = [
+  "stretch-two",
+  "open-pair",
+  "three-gap"
 ]
 // convert to an object instead of an array for faster lookup
 const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDef.map((name, idx) => [name, idx]))
@@ -33,11 +38,12 @@ const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDe
 
 export function* makeOrderedMoveIterator(
   game: GameState,
-  ply: number,
+  forcingOnly = false,  // useful for static evaluation
+  ply: number = 1,  // only used if have killer moves
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
   killerMoves: number[][][] = [],
-  prevDepthResults: SearchResult[] = []
+  prevDepthResults: SearchResult[] = [],
 ) {
   // because good moves often cause a cutoff, don't generate more less-good moves unless needed
   // so, create an iterator that generates moves as needed (using generator syntax for readability)
@@ -109,13 +115,34 @@ export function* makeOrderedMoveIterator(
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice()
-  
-  // if there is a pente threat (either player), the only relevant moves are within it or making a capture
-  const penteThreatExists = sortedShapes.some(shape => shape.type.includes("pente-threat"))
-  if(penteThreatExists){
-    sortedShapes = sortedShapes.filter(shape => shape.type.includes("pente-threat") || shape.type === "capture-threat")
+
+  let includeNonShapeMoves = true  // flag
+
+  // if I have a pente threat, the only relevant move is winning
+  const myPenteThreat = sortedShapes.find(shape => shape.owner === game.currentPlayer && shape.type.includes("pente-threat"))
+  if (myPenteThreat) {
+    sortedShapes = [myPenteThreat]
+    includeNonShapeMoves = false
   }
 
+  // else if I have 4 captures and a capture threat, only relevant move is winning
+  if (game.captures[game.currentPlayer] === 4) {
+    const captureThreat = sortedShapes.find(shape => shape.owner === game.currentPlayer && shape.type === "capture-threat")
+    if (captureThreat) {
+      sortedShapes = [captureThreat]
+      includeNonShapeMoves = false
+    }
+  }
+
+  // else if there is an opponent pente threat, the only relevant moves are within it or making a capture that blocks all opponent pente threats
+  const opponentPenteThreats = sortedShapes.filter(shape => shape.owner !== game.currentPlayer && shape.type.includes("pente-threat"))
+  if (opponentPenteThreats.length > 0) {
+    const blockingCaptures = getCapturesBlockingAll(game, opponentPenteThreats)
+    sortedShapes = opponentPenteThreats.concat(blockingCaptures)
+    includeNonShapeMoves = false
+  }
+
+  // thoughts:
   // if there is a tria that you own, you can do anything
   // if there is a tria the opponent owns, you need to block it eventually
   // don't want to let it become an open tessera that can't be blocked
@@ -125,10 +152,12 @@ export function* makeOrderedMoveIterator(
   // if this threat exists already, you're good
   // if not, how does that constrain you?
 
+  // find moves in shapes
   for (const shape of sortedShapes) {
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
+      if (forcingOnly && (shape.owner !== game.currentPlayer || nonForcingShapes.includes(shape.type))) continue
       if (!isValidMove([r, c])) continue
       const hash = r + "," + c
       if (!moveHashes.has(hash)) {
@@ -139,7 +168,7 @@ export function* makeOrderedMoveIterator(
   }
 
   // return all other spots near gems
-  if(penteThreatExists) return  // already looked at all possible relevant moves
+  if (!includeNonShapeMoves || forcingOnly) return  // already looked at all possible relevant moves
 
   for (let r = 0; r < game.board.length; r++) {
     for (let c = 0; c < game.board.length; c++) {
@@ -217,7 +246,10 @@ export function getNonQuietMoves(game: GameState): number[][] {
 
   let nonQuietShapes: LinearShape[] = []
   if (myPenteThreats.length > 0) nonQuietShapes = myPenteThreats
-  else if (opponentPenteThreats.length > 0) nonQuietShapes = [...opponentPenteThreats, ...myCaptureThreats]
+  else if (opponentPenteThreats.length > 0) {
+    const myBlockingCaptures = getCapturesBlockingAll(game, opponentPenteThreats)
+    nonQuietShapes = [...opponentPenteThreats, ...myBlockingCaptures]
+  }
   else nonQuietShapes = [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
 
   // get moves from shapes - similar logic to the main move generator
