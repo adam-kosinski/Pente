@@ -83,7 +83,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
       const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
       const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
-      
+
       if (results.length === 0) {
         // ran out of moves
         if (verbose) console.log("No moves left, returning what we have")
@@ -105,8 +105,8 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
         console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
         console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
         let maxMovesGenerated = 0
-        for(const n of nMovesGenerated){
-          if(n > maxMovesGenerated) maxMovesGenerated = n
+        for (const n of nMovesGenerated) {
+          if (n > maxMovesGenerated) maxMovesGenerated = n
         }
         console.log("max " + maxMovesGenerated + " moves generated")
         results.slice(0, 1).forEach(r => {
@@ -132,7 +132,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
     resultsToReturn.push(answer)
 
     // because of late move reductions, variations aren't guaranteed to be in order of best to worst, so sort them
-    resultsToReturn.sort((a,b) => {
+    resultsToReturn.sort((a, b) => {
       if (absoluteEval && game.currentPlayer === 1) return a.eval - b.eval
       return b.eval - a.eval
     })
@@ -226,7 +226,7 @@ function principalVariationSearch(
     const restOfPrincipalVariation = principalVariation.slice(1)
 
     let extension = 0
-    if(game.linearShapes.some(shape => shape.type.includes("pente-threat"))){
+    if (game.linearShapes.some(shape => shape.type.includes("pente-threat"))) {
       extension = 1
     }
 
