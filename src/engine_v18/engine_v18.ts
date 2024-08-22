@@ -24,13 +24,15 @@ function addKillerMove(r: number, c: number, ply: number) {
 
 
 
-export function softmax(z: number[]){
+export function softmax(z: number[], b = 1) {
+  // 0 < b < 1 results in smoother distribution
+  // b > 1 results in sharper distribution
   const out = []
   let expSum = 0
-  for(const zj of z){
-    expSum += Math.exp(zj)
+  for (const zj of z) {
+    expSum += Math.exp(b * zj)
   }
-  return z.map(zi => Math.exp(zi) / expSum)
+  return z.map(zi => Math.exp(b * zi) / expSum)
 }
 function chooseFromWeights(weights: number[]): number {
   if(Math.abs(weights.reduce((sum, x) => sum + x) - 1) > 0.001){
@@ -51,7 +53,7 @@ export function chooseMove(game: GameState, maxDepth: number, maxMs: number = In
   if (game.nMoves <= 4) {
     const nVariations = 5
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
-    const choiceProbs = softmax(results.map(r => r.eval))  // bigger eval is better for me, will be chosen more likely
+    const choiceProbs = softmax(results.map(r => r.eval), 0.3)  // bigger eval is better for me, will be chosen more likely
     const chosenIdx = chooseFromWeights(choiceProbs)
     return results[chosenIdx].bestVariation[0]
   }

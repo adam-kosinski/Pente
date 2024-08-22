@@ -1,17 +1,23 @@
 <script setup lang="ts">
 
-import { onMounted, ref, watch, type Ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue';
 import Board from '@/components/Board.vue';
 import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
 import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
-import { findBestMoves, copyGame } from '@/engine_v19/engine_v19';
+import { copyGame } from '@/engine_v19/engine_v19';
 import { makeOrderedMoveIterator } from '@/engine_v19/move_generation_v19'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
+
+const showDebug = ref(false)
+function toggleDebug(e: KeyboardEvent){
+  if(e.key !== "d") return
+  showDebug.value = !showDebug.value
+}
 
 const game = ref(createNewGame(19))
 
@@ -89,12 +95,6 @@ function goToPosition(position: GameState) {
   analyzePosition()
 }
 
-// declare global {
-//   interface Console {
-//     profile: () => any
-//     profileEnd: () => any
-//   }
-// }
 function profile() {
   console.profile()
   analyzePosition()
@@ -148,18 +148,19 @@ function analyzePosition() {
   }
 }
 
-
 function runComputerGame() {
   window.location.href = '/analyze?s=' + playGame(3, 3, 15, 100).gameString
 }
-
-
 
 onMounted(() => {
   const searchParams = new URL(window.location.href).searchParams
   const gameString = searchParams.get("s")
   if (gameString) game.value = loadFromString(gameString)
   updateMoveList()
+  document.addEventListener("keypress", toggleDebug)
+})
+onUnmounted(() => {
+  document.removeEventListener("keypress", toggleDebug)
 })
 
 
@@ -210,7 +211,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="button-panel">
+    <div v-if="showDebug" class="button-panel">
       <button @click="analyzePosition()">Analyze</button><br>
       <button @click="profile()">Profile</button><br>
       <button @click="printMoves()">Generate Moves</button><br>
