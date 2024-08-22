@@ -35,15 +35,10 @@ const v = [
 const gameStringSet = new Set<string>(gameStrings)
 
 export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: number, msPerMove: number) {
-  // returns game string describing the game played
   // first/second player refers to the index in the engines list
 
   const game0 = v[firstPlayer].create(19)
   const game1 = v[secondPlayer].create(19)
-
-  // keep track of position features for when it's player 0's turn, or player 1's turn
-  const player0FeatureDicts: Record<string, number>[] = []
-  const player1FeatureDicts: Record<string, number>[] = []
 
   // don't waste time analyzing first move, only one option
   const center = Math.floor(game0.board.length / 2)
@@ -80,7 +75,6 @@ export function runCompetition(engineA: number, engineB: number, msPerMove: numb
     "A": 0,
     "B": 0
   }
-  const featureDictArray: Record<string, number>[] = []
 
   for (let i = 0; i < nGames; i++) {
     console.log("Game", i + 1)
