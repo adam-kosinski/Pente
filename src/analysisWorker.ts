@@ -4,8 +4,10 @@ import { type GameState } from "./engine_v18/model_v18";
 onmessage = (e) => {
   const game = JSON.parse(e.data) as GameState
   // update the main thread at each depth level
-  for (let d = 1; d < 10; d++) {
+  console.profile()
+  for (let d = 1; d < 8; d++) {
     const results = findBestMoves(game, 2, d, 3000, true)
     postMessage(results)
   }
+  console.profileEnd()
 }

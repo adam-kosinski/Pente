@@ -40,12 +40,13 @@ export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: nu
     // make move
     const engine = game.currentPlayer === 0 ? engines[firstPlayer] : engines[secondPlayer]
     const move = engine(game, maxDepth, msPerMove, false)
-    if(move !== undefined){
+    if (move !== undefined) {
       makeMove(game, move[0], move[1])
     }
     else {
       console.log("ERROR, game string:", gameToString(game))
       console.error("Couldn't find a move")
+      console.log(game.currentPlayer === 0 ? "first player" : "second player")
     }
   }
 
@@ -66,7 +67,7 @@ export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: nu
 }
 
 
-export function runCompetition(engineA: number, engineB: number, nGames: number) {
+export function runCompetition(engineA: number, engineB: number, msPerMove: number, nGames: number) {
   // engine A and B are indices in the engines array
 
   const winCounts = {
@@ -79,7 +80,7 @@ export function runCompetition(engineA: number, engineB: number, nGames: number)
     console.log("Game", i + 1)
 
     const engineAFirst = i % 2 === 0
-    const result = engineAFirst ? playGame(engineA, engineB, 15, 100) : playGame(engineB, engineA, 15, 100)
+    const result = engineAFirst ? playGame(engineA, engineB, 15, msPerMove) : playGame(engineB, engineA, 15, msPerMove)
     console.log(result.gameString)
 
     // don't count duplicate games
@@ -101,6 +102,12 @@ export function runCompetition(engineA: number, engineB: number, nGames: number)
 
     // add to feature dict data
     featureDictArray.push.apply(featureDictArray, result.featureDicts)
+
+    // print out strings every so often in case of an error
+    if ((i + 1) % 20 === 0) {
+      console.log(JSON.stringify(Array.from(gameStringSet.values()), null, 2))
+      console.log(gameStringSet.size + " total games now")
+    }
   }
   console.log(JSON.stringify(Array.from(gameStringSet.values()), null, 2))
   console.log(gameStringSet.size + " total games now")

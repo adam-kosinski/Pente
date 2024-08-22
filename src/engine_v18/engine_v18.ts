@@ -92,7 +92,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
       // if ran out of time, disregard this result and stop looking
       if (isNaN(results[0].eval)) {
-        if (verbose) console.log("ran out of time")
+        if (verbose) console.log("ran out of time searching depth " + depth)
         break
       }
 

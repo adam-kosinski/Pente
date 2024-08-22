@@ -39,7 +39,9 @@ export function evaluatePosition(game: GameState) {
   const featureDict = positionFeatureDict(game)
   let evaluation = currentPlayerBias
   for (const [k, v] of Object.entries(featureDict)) {
-    evaluation += featureWeights[k] * v
+    if (k in featureWeights) {
+      evaluation += featureWeights[k] * v
+    }
   }
   return 10 * evaluation  // arbitrary scaling
 }
