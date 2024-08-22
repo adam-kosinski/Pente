@@ -104,7 +104,11 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
         console.log("confirm alpha", confirmAlpha, "fail high", failHigh)
         console.log("ttable hit", ttableHit, "ttable miss", ttableMiss)
         console.log((nMovesGenerated.reduce((sum, x) => sum + x, 0) / nMovesGenerated.length).toFixed(2), "moves generated on average")
-        console.log("max", Math.max.apply(nMovesGenerated, nMovesGenerated), "moves generated")
+        let maxMovesGenerated = 0
+        for(const n of nMovesGenerated){
+          if(n > maxMovesGenerated) maxMovesGenerated = n
+        }
+        console.log("max " + maxMovesGenerated + " moves generated")
         results.slice(0, 1).forEach(r => {
           const flagChar = r.evalFlag === "exact" ? "=" : r.evalFlag === "upper-bound" ? "≤" : "≥"
           console.log("eval", flagChar, r.eval, JSON.stringify(r.bestVariation))
@@ -126,6 +130,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
     }
 
     resultsToReturn.push(answer)
+
     // because of late move reductions, variations aren't guaranteed to be in order of best to worst, so sort them
     resultsToReturn.sort((a,b) => {
       if (absoluteEval && game.currentPlayer === 1) return a.eval - b.eval
