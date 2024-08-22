@@ -48,24 +48,27 @@ export function evaluatePosition(game: GameState) {
 
 
 const featureWeights: Record<string, number> = {
-  "open-tessera": 1.6124551856135394,
-  "pente-threat-4": 1.3535397653364756,
-  "pente-threat-31": 0.9919335509741123,
-  "pente-threat-22": 0.5829116943061066,
-  "open-tria": 1.2326536262147,
-  "stretch-tria": 0.9169577326446969,
-  "open-pair": 0.12864099818125527,
-  "capture-threat": 0.43156928255508936,
-  "stretch-two": 0.23161176293862337,
-  "double-stretch-two": -0.039494687290676775,
-  "captures": 0.7598797574681919,
-  "4-captures": 0.7946603203917423,
-  "threats": 0.2603836656205746,
-  "can-block-trias": 0.4123686219674319,
-  "my-open-trias": 0.18196127796049888,
-  "my-stretch-trias": 0.026109932938940376
+  "open-tessera": 1.622284811573047,
+  "pente-threat-4": 1.359774031860977,
+  "pente-threat-31": 0.9853547694401772,
+  "pente-threat-22": 0.6006512423567907,
+  "open-tria": 1.228996570991165,
+  "stretch-tria": 0.9213164412559935,
+  "open-pair": 0.12042199942908324,
+  "capture-threat": 0.4345518332197771,
+  "stretch-two": 0.21370062221207514,
+  "double-stretch-two": -0.03333131698422353,
+  "three-gap": -0.04207483861482154,
+  "pente-potential-1": 0.2402231458327172,
+  "pente-potential-2": 0.20513615350998102,
+  "captures": 0.7553066871446377,
+  "4-captures": 0.7606287109080632,
+  "threats": 0.2614466207615551,
+  "can-block-trias": 0.41531905208661873,
+  "my-open-trias": 0.18194910891879937,
+  "my-stretch-trias": 0.03350437253638961
 }
-const currentPlayerBias = -0.2364173662644104
+const currentPlayerBias = -0.23996271157600849
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering

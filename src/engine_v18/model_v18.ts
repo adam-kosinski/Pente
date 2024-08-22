@@ -182,6 +182,7 @@ export const linearShapeDef = {
   "capture-threat": "100_",
   "stretch-two": "_1_1_",
   "double-stretch-two": "_1__1_",
+  "three-gap": "1___1",
   "pente-potential-1": "1_1_1",
   "pente-potential-2": "1__11"
 }

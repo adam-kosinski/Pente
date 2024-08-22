@@ -6,19 +6,25 @@ import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } fr
 // store which shapes should be looked at first, to use when ordering moves
 // earlier is more important
 const shapePriorityDef = [
-  "pente-threat-22",
   "pente-threat-4",
   "pente-threat-31",
+  "pente-threat-22",
+  // stuff that can create a double pente threat
   "open-tria",
   "stretch-tria",
-  "extendable-stretch-tria-2",
+  // stuff that can create a pente threat
+  "extendable-stretch-tria-2",  // contains vulnerable pair
+  "pente-potential-2",  // contains vulnerable pair
   "extendable-stretch-tria-1",
   "pente-potential-1",
-  "pente-potential-2",
   "extendable-tria",
+  // captures matter but aren't forcing
   "capture-threat",
+  // favor keeping gems in line with existing ones
   "stretch-two",
   "open-pair",
+  "three-gap",
+  // misc
   "open-tessera"  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
 ]
 // convert to an object instead of an array for faster lookup
