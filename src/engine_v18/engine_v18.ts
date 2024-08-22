@@ -40,7 +40,7 @@ export function chooseMove(game: GameState, maxDepth: number, maxMs: number = In
 
 
 
-export function findBestMoves(game: GameState, variations: number = 1, maxDepth: number, maxMsPerVariation: number = Infinity, absoluteEval: boolean = false, verbose: boolean = true): SearchResult[] {
+export function findBestMoves(game: GameState, variations: number, maxDepth: number, maxMsPerVariation = Infinity, absoluteEval = false, verbose = true): SearchResult[] {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
@@ -83,7 +83,7 @@ export function findBestMoves(game: GameState, variations: number = 1, maxDepth:
 
       const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
       const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
-
+      
       if (results.length === 0) {
         // ran out of moves
         if (verbose) console.log("No moves left, returning what we have")
@@ -191,19 +191,19 @@ function principalVariationSearch(
   const tableEntry = transpositionTable.get(TTableKey(game))
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++
-    // if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
-    //   return [tableEntry.result]
-    // }
-    // else if (tableEntry.result.evalFlag === "lower-bound") {
-    //   alpha = Math.max(alpha, tableEntry.result.eval)
-    // }
-    // else if (tableEntry.result.evalFlag === "upper-bound") {
-    //   beta = Math.min(beta, tableEntry.result.eval)
-    // }
-    // if (alpha >= beta && !returnAllMoveResults) {
-    //   // cutoff
-    //   return [tableEntry.result]
-    // }
+    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
+      return [tableEntry.result]
+    }
+    else if (tableEntry.result.evalFlag === "lower-bound") {
+      alpha = Math.max(alpha, tableEntry.result.eval)
+    }
+    else if (tableEntry.result.evalFlag === "upper-bound") {
+      beta = Math.min(beta, tableEntry.result.eval)
+    }
+    if (alpha >= beta && !returnAllMoveResults) {
+      // cutoff
+      return [tableEntry.result]
+    }
   }
   else {
     ttableMiss++
@@ -267,6 +267,7 @@ function principalVariationSearch(
     else if (myResult.eval > bestResult.eval && myResult.evalFlag !== "upper-bound") {
       bestResult = myResult
     }
+    // NOTE - COMMENTED BECAUSE SEEMS TO SOMETIMES CAUSE NONSENSICAL VARIATION PROBLEMS SOMETIMES
     // if we found another way to force a win that's shorter, prefer that one
     // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
     // else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {

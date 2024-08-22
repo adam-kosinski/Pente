@@ -138,6 +138,10 @@ function analyzePosition() {
 }
 
 
+function runComputerGame(){
+  window.location.href = '/analyze?s=' + playGame(3, 3, 15, 100).gameString
+}
+
 
 
 onMounted(() => {
@@ -206,7 +210,7 @@ onMounted(() => {
       <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
-      <button @click="console.log(playGame(2, 3, 6, 100))">Play Computer Game</button><br>
+      <button @click="runComputerGame()">Play Computer Game</button><br>
       <button @click="runCompetition(2, 3, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <select v-model="testPositionIndex">

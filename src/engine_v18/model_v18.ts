@@ -181,7 +181,9 @@ export const linearShapeDef = {
   "open-pair": "_11_",
   "capture-threat": "100_",
   "stretch-two": "_1_1_",
-  "double-stretch-two": "_1__1_"
+  "double-stretch-two": "_1__1_",
+  "pente-potential-1": "1_1_1",
+  "pente-potential-2": "1__11"
 }
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup

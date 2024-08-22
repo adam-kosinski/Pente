@@ -4,23 +4,25 @@ import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } fr
 
 
 // store which shapes should be looked at first, to use when ordering moves
-// lower number is more important
-// using an object instead of an array for faster lookup
-const shapePriority: Record<string, number> = {
-  "pente-threat-22": 2,
-  "pente-threat-4": 3,
-  "pente-threat-31": 4,
-  "open-tria": 5,
-  "stretch-tria": 6,
-  "extendable-stretch-tria-2": 7,
-  "extendable-stretch-tria-1": 8,
-  "extendable-tria": 9,
-  "extendable-stretch-tria": 10,
-  "capture-threat": 11,
-  "stretch-two": 12,
-  "open-pair": 13,
-  "open-tessera": 20  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
-}
+// earlier is more important
+const shapePriorityDef = [
+  "pente-threat-22",
+  "pente-threat-4",
+  "pente-threat-31",
+  "open-tria",
+  "stretch-tria",
+  "extendable-stretch-tria-2",
+  "extendable-stretch-tria-1",
+  "pente-potential-1",
+  "pente-potential-2",
+  "extendable-tria",
+  "capture-threat",
+  "stretch-two",
+  "open-pair",
+  "open-tessera"  // nothing you can do except maybe a capture, which would mean looking at capture-threat shapes first
+]
+// convert to an object instead of an array for faster lookup
+const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDef.map((name, idx) => [name, idx]))
 
 
 export function* makeOrderedMoveIterator(
