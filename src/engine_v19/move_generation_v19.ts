@@ -159,8 +159,8 @@ export function* makeOrderedMoveIterator(
 
   // find moves in shapes
   for (const shape of sortedShapes) {
-    const dy = Math.sign(shape.end[0] - shape.begin[0])
-    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    const dy = shape.dy
+    const dx = shape.dx
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       if (forcingOnly && shape.owner !== game.currentPlayer) continue
       if (!isValidMove([r, c])) continue
@@ -266,8 +266,8 @@ export function getNonQuietMoves(game: GameState): number[][] {
     return game.board[move[0]][move[1]] === undefined
   }
   for (const shape of nonQuietShapes) {
-    const dy = Math.sign(shape.end[0] - shape.begin[0])
-    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    const dy = shape.dy
+    const dx = shape.dx
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       if (!isValidMove([r, c])) continue
       const hash = r + "," + c

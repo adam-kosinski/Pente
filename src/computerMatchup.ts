@@ -13,7 +13,7 @@ const engines = [
   engine15,  // fitted eval values
   engine17,  // more eval features
   engine18,  // better move generation and search extension, most importantly uses different opening evaluation
-  engine19
+  engine19   // linear shapes store dx and dy
 ]
 
 const gameStringSet = new Set<string>(gameStrings)

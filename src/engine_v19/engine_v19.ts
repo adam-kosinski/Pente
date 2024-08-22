@@ -82,7 +82,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
       nMovesGenerated = []
 
       const principalVariation = prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : []
-      const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, [], false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
+      const results = principalVariationSearch(game, depth, 1, -Infinity, Infinity, deadlineMs, false, principalVariation, prevDepthResults, movesToExclude, true)  // start alpha and beta at worst possible scores, and return results for all moves
 
       if (results.length === 0) {
         // ran out of moves
@@ -186,11 +186,6 @@ function principalVariationSearch(
   if (game.isOver || depth === 0 || (Math.abs(evaluation) === Infinity && ply > 1)) {  // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
     return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
   }
-
-  // if (depth >= 3 && ply > 1 && Math.abs(evaluation) > 30){
-  //   depth = depth - 1
-  //   // return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
-  // }
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
   const allMoveResults: SearchResult[] = []

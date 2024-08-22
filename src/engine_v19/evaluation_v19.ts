@@ -159,19 +159,17 @@ export function getBlockingCaptures(game: GameState, threat: LinearShape): Linea
   const blockingCaptures: LinearShape[] = []
 
   const threatGems: number[][] = []
-  const threat_dy = Math.sign(threat.end[0] - threat.begin[0])
-  const threat_dx = Math.sign(threat.end[1] - threat.begin[1])
   for (let i = 0; i < threat.length; i++) {
-    const r = threat.begin[0] + i * threat_dy
-    const c = threat.begin[1] + i * threat_dx
+    const r = threat.begin[0] + i * threat.dy
+    const c = threat.begin[1] + i * threat.dx
     if (threat.pattern[i] !== "_") threatGems.push([r, c])
   }
 
   for (const shape of game.linearShapes) {
     if (shape.type !== "capture-threat" || shape.owner === threat.owner) continue
 
-    const dy = Math.sign(shape.end[0] - shape.begin[0])
-    const dx = Math.sign(shape.end[1] - shape.begin[1])
+    const dy = shape.dy
+    const dx = shape.dx
     for (const i of [1, 2]) {
       const r = shape.begin[0] + i * dy
       const c = shape.begin[1] + i * dx
@@ -205,8 +203,8 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
   let normalBlockWorks = true
 
   for (const threat of threats) {
-    const dy = Math.sign(threat.end[0] - threat.begin[0])
-    const dx = Math.sign(threat.end[1] - threat.begin[1])
+    const dy = threat.dy
+    const dx = threat.dx
     for (let i = 0; i < threat.length; i++) {
       const r = threat.begin[0] + i * dy
       const c = threat.begin[1] + i * dx

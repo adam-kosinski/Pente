@@ -1,5 +1,5 @@
-import { findBestMoves } from "./engine_v18/engine_v18";
-import { type GameState } from "./engine_v18/model_v18";
+import { findBestMoves } from "./engine_v19/engine_v19";
+import { type GameState } from "./engine_v19/model_v19";
 
 onmessage = (e) => {
   const game = JSON.parse(e.data) as GameState

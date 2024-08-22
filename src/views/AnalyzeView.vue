@@ -103,12 +103,17 @@ function timeTest() {
   const iterations = 100000000
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    "open-tria".includes("tria")
+    const a = [1,2,3,4,5,6]
+    a.filter(x => x !== 3)
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    ["open-tria", "stretch-tria"].includes("open-tria")
+    const a = [1,2,3,4,5,6]
+    const b = []
+    for(const k of a){
+      if(k !== 3) b.push(k)
+    }
   }
   console.log("B:", performance.now() - start + " ms")
 
