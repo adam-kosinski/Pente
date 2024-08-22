@@ -16,8 +16,8 @@ import { makeMove as move16 } from "./engine_v16_diag_orthog/model_v16";
 import { makeMove as move17 } from "./engine_v17/model_v17";
 import { makeMove as move18 } from "./engine_v18/model_v18";
 import { makeMove as move19 } from "./engine_v19/model_v19";
-import { evaluatePosition, positionFeatureDict } from "./engine_v18/evaluation_v18";
-import { createNewGame, gameToString, makeMove } from "./engine_v18/model_v18";
+import { evaluatePosition, positionFeatureDict } from "./engine_v19/evaluation_v19";
+import { createNewGame, gameToString, makeMove } from "./engine_v19/model_v19";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
 

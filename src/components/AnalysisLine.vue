@@ -35,7 +35,7 @@ function getFuturePosition(moveIndex: number) {
   <div class="analysis-line">
     <div class="eval" :class="{ 'player-1-winning': props.result && props.result.eval < 0 }">{{ evalString }}</div>
     <div v-if="result" class="move-container">
-      <div class="move" v-for="m, i in result.bestVariation" @mouseenter="result && emit('show-future-position', getFuturePosition(i))"
+      <div class="move" v-for="m, i in result.bestVariation" @mousemove="result && emit('show-future-position', getFuturePosition(i))"
         @mouseleave="emit('clear-future-position')" @click="emit('go-to-position', getFuturePosition(i))">
         {{ m[0] + "." + m[1] }}
       </div>

@@ -86,13 +86,18 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
       if (results.length === 0) {
         // ran out of moves
-        if (verbose) console.log("No moves left, returning what we have")
+        console.warn("No moves left, returning what we have")
         break searchLoop
+      }
+
+      if (results[0] === undefined) {
+        console.warn("undefined result", results)
       }
 
       // if ran out of time, disregard this result and stop looking
       if (isNaN(results[0].eval)) {
         if (verbose) console.log("ran out of time searching depth " + depth)
+        if (prevDepthResults.length === 0) console.warn("no answer returned because ran out of time on depth " + depth)
         break
       }
 
@@ -118,6 +123,13 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
       // if found a forced win for either player, no need to keep looking
       if (Math.abs(results[0].eval) === Infinity) break
+    }
+
+    if (prevDepthResults.length === 0) {
+      console.warn("no prev results", prevDepthResults)
+    }
+    if (prevDepthResults[0] === undefined) {
+      console.warn("undefined prev result", prevDepthResults)
     }
 
     const answer = prevDepthResults[0]
