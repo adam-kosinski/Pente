@@ -142,6 +142,11 @@ export function* makeOrderedMoveIterator(
     includeNonShapeMoves = false
   }
 
+  if (forcingOnly) {
+    sortedShapes = sortedShapes.filter(shape => nonForcingShapes.includes(shape.type))
+    includeNonShapeMoves = false
+  }
+
   // thoughts:
   // if there is a tria that you own, you can do anything
   // if there is a tria the opponent owns, you need to block it eventually
@@ -157,7 +162,7 @@ export function* makeOrderedMoveIterator(
     const dy = Math.sign(shape.end[0] - shape.begin[0])
     const dx = Math.sign(shape.end[1] - shape.begin[1])
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      if (forcingOnly && (shape.owner !== game.currentPlayer || nonForcingShapes.includes(shape.type))) continue
+      if (forcingOnly && shape.owner !== game.currentPlayer) continue
       if (!isValidMove([r, c])) continue
       const hash = r + "," + c
       if (!moveHashes.has(hash)) {
@@ -168,7 +173,7 @@ export function* makeOrderedMoveIterator(
   }
 
   // return all other spots near gems
-  if (!includeNonShapeMoves || forcingOnly) return  // already looked at all possible relevant moves
+  if (!includeNonShapeMoves) return  // already looked at all possible relevant moves
 
   for (let r = 0; r < game.board.length; r++) {
     for (let c = 0; c < game.board.length; c++) {

@@ -87,7 +87,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   }
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
-  featureDict["threats"] = getNonQuietMoves(game).length
+  featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["can-block-trias"] = 0
   featureDict["my-open-trias"] = 0
   featureDict['my-stretch-trias'] = 0
@@ -99,7 +99,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if (shapesToExclude.includes(shape.type)) continue
     featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
 
-    if(shape.type.includes("tria") && shape.owner !== game.currentPlayer){
+    if (["open-tria", "stretch-tria"].includes(shape.type) && shape.owner !== game.currentPlayer) {
       opponentTrias.push(shape)
     }
     if(shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++

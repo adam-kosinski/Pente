@@ -94,8 +94,8 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = 0
   featureDict["my-open-trias"] = 0
   featureDict["my-stretch-trias"] = 0
-  // featureDict["my-pente-potentials"] = 0
-  featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
+  featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
+  // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
   // count linear shapes, for me (current player) and for the opponent
   const opponentTrias: LinearShape[] = []
@@ -108,17 +108,11 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     }
 
     // count trias
-    if (shape.type.includes("tria") && shape.owner !== game.currentPlayer) {
+    if (["open-tria", "stretch-tria"].includes(shape.type) && shape.owner !== game.currentPlayer) {
       opponentTrias.push(shape)
     }
     if (shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++
     if (shape.type === "stretch-tria" && shape.owner === game.currentPlayer) featureDict["my-stretch-trias"]++
-
-    // count places I can make a pente threat
-    if (shape.owner === game.currentPlayer &&
-      ["extendable-tria", "extendable-stretch-tria-1", "extendable-stretch-tria-2", "pente-potential-1", "pente-potential-2"].includes(shape.type)) {
-      // featureDict["my-pente-potentials"]++
-    }
   }
 
   // count captures
