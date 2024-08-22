@@ -6,10 +6,10 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v18/model_v18';
-import { findBestMoves, copyGame } from '@/engine_v18/engine_v18';
-import { makeOrderedMoveIterator } from '@/engine_v18/move_generation_v18'
-import { evaluatePosition, positionFeatureDict } from '@/engine_v18/evaluation_v18';
+import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
+import { findBestMoves, copyGame } from '@/engine_v19/engine_v19';
+import { makeOrderedMoveIterator } from '@/engine_v19/move_generation_v19'
+import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
 
@@ -100,15 +100,15 @@ function profile() {
 }
 
 function timeTest() {
-  const iterations = 10000
+  const iterations = 100000000
   let start = performance.now()
   for (let i = 0; i < iterations; i++) {
-
+    "open-tria".includes("tria")
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-
+    ["open-tria", "stretch-tria"].includes("open-tria")
   }
   console.log("B:", performance.now() - start + " ms")
 
@@ -120,7 +120,7 @@ function printMoves() {
   }
   console.log("")
 }
-function printForcingMoves(){
+function printForcingMoves() {
   for (const move of makeOrderedMoveIterator(game.value, true)) {
     console.log(move)
   }
@@ -129,11 +129,11 @@ function printForcingMoves(){
 
 const analysisStarted = ref(false) // don't auto run until the user says to
 const results: Ref<SearchResult[] | undefined> = ref(undefined)
-let analysisWorker : Worker
+let analysisWorker: Worker
 
 function analyzePosition() {
-  if(!analysisStarted.value) return
-  if(analysisWorker) analysisWorker.terminate()
+  if (!analysisStarted.value) return
+  if (analysisWorker) analysisWorker.terminate()
   analysisWorker = new AnalysisWorker()
 
   analysisWorker.postMessage(JSON.stringify(game.value))
@@ -144,7 +144,7 @@ function analyzePosition() {
 }
 
 
-function runComputerGame(){
+function runComputerGame() {
   window.location.href = '/analyze?s=' + playGame(3, 3, 15, 100).gameString
 }
 
@@ -177,8 +177,7 @@ onMounted(() => {
         </button>
         <AnalysisLine v-for="result in results" :game="analysisLineGameCopy" :result="result"
           @show-future-position="(position) => futurePosition = position"
-          @clear-future-position="futurePosition = undefined"
-          @go-to-position="(position) => goToPosition(position)" />
+          @clear-future-position="futurePosition = undefined" @go-to-position="(position) => goToPosition(position)" />
       </div>
       <div class="future-position-space">
         <div class="future-position-container">
@@ -218,7 +217,7 @@ onMounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="runComputerGame()">Play Computer Game</button><br>
-      <button @click="runCompetition(2, 3, 50, 30)">Run Competition</button><br>
+      <button @click="runCompetition(3, 4, 50, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 0, 10)">Opening CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 10, Infinity)">Post-opening CSV</button><br>

@@ -2,6 +2,7 @@ import { chooseMove as engine14 } from "./engine_v14/engine_v14";
 import { chooseMove as engine15 } from "./engine_v15/engine_v15";
 import { chooseMove as engine17 } from "./engine_v17/engine_v17";
 import { chooseMove as engine18 } from "./engine_v18/engine_v18";
+import { chooseMove as engine19 } from "./engine_v19/engine_v19";
 import { evaluatePosition, positionFeatureDict } from "./engine_v18/evaluation_v18";
 import { createNewGame, gameToString, makeMove } from "./engine_v18/model_v18";
 import * as papa from "papaparse";
@@ -11,7 +12,8 @@ const engines = [
   engine14,  // manual eval values
   engine15,  // fitted eval values
   engine17,  // more eval features
-  engine18  // better move generation and search extension
+  engine18,  // better move generation and search extension, most importantly uses different opening evaluation
+  engine19
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
