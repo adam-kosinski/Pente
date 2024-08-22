@@ -1,19 +1,35 @@
 import { chooseMove as engine14 } from "./engine_v14/engine_v14";
 import { chooseMove as engine15 } from "./engine_v15/engine_v15";
+import { chooseMove as engine16 } from "./engine_v16_diag_orthog/engine_v16";
 import { chooseMove as engine17 } from "./engine_v17/engine_v17";
 import { chooseMove as engine18 } from "./engine_v18/engine_v18";
 import { chooseMove as engine19 } from "./engine_v19/engine_v19";
+import { createNewGame as create14 } from "./engine_v14/model_v14";
+import { createNewGame as create15 } from "./engine_v15/model_v15";
+import { createNewGame as create16 } from "./engine_v16_diag_orthog/model_v16";
+import { createNewGame as create17 } from "./engine_v17/model_v17";
+import { createNewGame as create18 } from "./engine_v18/model_v18"
+import { createNewGame as create19 } from "./engine_v19/model_v19"
+import { makeMove as move14 } from "./engine_v14/model_v14";
+import { makeMove as move15 } from "./engine_v15/model_v15";
+import { makeMove as move16 } from "./engine_v16_diag_orthog/model_v16";
+import { makeMove as move17 } from "./engine_v17/model_v17";
+import { makeMove as move18 } from "./engine_v18/model_v18";
+import { makeMove as move19 } from "./engine_v19/model_v19";
 import { evaluatePosition, positionFeatureDict } from "./engine_v18/evaluation_v18";
 import { createNewGame, gameToString, makeMove } from "./engine_v18/model_v18";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
 
-const engines = [
-  engine14,  // manual eval values
-  engine15,  // fitted eval values
-  engine17,  // more eval features
-  engine18,  // better move generation and search extension, most importantly uses different opening evaluation
-  engine19   // linear shapes store dx and dy
+
+// v is short for versions
+const v = [
+  { engine: engine14, create: create14, move: move14 },  // manual eval values
+  { engine: engine15, create: create15, move: move15 },  // fitted eval values
+  { engine: engine16, create: create16, move: move16 },  // diag / orthog linear shapes
+  { engine: engine17, create: create17, move: move17 },  // more eval features
+  { engine: engine18, create: create18, move: move18 },  // better move generation and search extension, most importantly uses different opening evaluation
+  { engine: engine19, create: create19, move: move19 }   // linear shapes store dx and dy
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
@@ -22,49 +38,37 @@ export function playGame(firstPlayer: number, secondPlayer: number, maxDepth: nu
   // returns game string describing the game played
   // first/second player refers to the index in the engines list
 
-  const game = createNewGame(19)
+  const game0 = v[firstPlayer].create(19)
+  const game1 = v[secondPlayer].create(19)
 
   // keep track of position features for when it's player 0's turn, or player 1's turn
   const player0FeatureDicts: Record<string, number>[] = []
   const player1FeatureDicts: Record<string, number>[] = []
 
   // don't waste time analyzing first move, only one option
-  const center = Math.floor(game.board.length / 2)
-  makeMove(game, center, center)
+  const center = Math.floor(game0.board.length / 2)
+  v[firstPlayer].move(game0, center, center)
+  v[secondPlayer].move(game1, center, center)
 
-  while (!game.isOver) {
-    // get position features if game not forced win/loss
-    const evaluation = evaluatePosition(game)
-    if (Math.abs(evaluation) !== Infinity) {
-      const featureDict = positionFeatureDict(game)
-      game.currentPlayer === 0 ? player0FeatureDicts.push(featureDict) : player1FeatureDicts.push(featureDict)
-    }
+  while (!game1.isOver) {
     // make move
-    const engine = game.currentPlayer === 0 ? engines[firstPlayer] : engines[secondPlayer]
-    const move = engine(game, maxDepth, msPerMove, false)
+    const engine = game1.currentPlayer === 0 ? v[firstPlayer].engine : v[secondPlayer].engine
+    const gameToAnalyze = game1.currentPlayer === 0 ? game0 : game1
+    const move = engine(gameToAnalyze, maxDepth, msPerMove, false)
     if (move !== undefined) {
-      makeMove(game, move[0], move[1])
+      v[firstPlayer].move(game0, move[0], move[1])
+      v[secondPlayer].move(game1, move[0], move[1])
     }
     else {
-      console.log("ERROR, game string:", gameToString(game))
+      console.log("ERROR, game string:", gameToString(game1))
       console.error("Couldn't find a move")
-      console.log(game.currentPlayer === 0 ? "first player" : "second player")
+      console.log(game1.currentPlayer === 0 ? "first player" : "second player")
     }
-  }
-
-  // update feature dicts to include who won
-  const winner = Number(!game.currentPlayer)
-  for (const featureDict of player0FeatureDicts) {
-    featureDict["won"] = (winner === 0 ? 1 : 0)
-  }
-  for (const featureDict of player1FeatureDicts) {
-    featureDict["won"] = (winner === 1 ? 1 : 0)
   }
 
   return {
-    winner: winner,
-    gameString: gameToString(game),
-    featureDicts: player0FeatureDicts.concat(player1FeatureDicts)
+    winner: Number(!game1.currentPlayer),
+    gameString: gameToString(game1),
   }
 }
 
@@ -101,9 +105,6 @@ export function runCompetition(engineA: number, engineB: number, msPerMove: numb
       console.log("B won")
       winCounts["B"]++
     }
-
-    // add to feature dict data
-    featureDictArray.push.apply(featureDictArray, result.featureDicts)
 
     // print out strings every so often in case of an error
     if ((i + 1) % 20 === 0) {
