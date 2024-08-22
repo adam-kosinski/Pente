@@ -116,7 +116,7 @@ export function runCompetition(engineA: number, engineB: number, msPerMove: numb
 
 
 
-export function generateFeatureCSV(nFeaturesPerGame: number) {
+export function generateFeatureCSV(nFeaturesPerGame: number, minMoveIndex: number = 0, maxMoveIndex: number = Infinity) {
 
   const featureDictArray: Record<string, number>[] = []
 
@@ -132,8 +132,11 @@ export function generateFeatureCSV(nFeaturesPerGame: number) {
 
     // replay game and extract position features
     const game = createNewGame(Number(size))
-    for (const [r, c] of moves) {
+    for (let m = 0; m < moves.length; m++) {
+      const [r, c] = moves[m]
       makeMove(game, r, c)
+
+      if(m < minMoveIndex || m > maxMoveIndex) continue
 
       // get position features if game not forced win/loss
       const evaluation = evaluatePosition(game)

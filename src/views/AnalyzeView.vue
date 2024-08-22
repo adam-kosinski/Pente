@@ -220,6 +220,8 @@ onMounted(() => {
       <button @click="runComputerGame()">Play Computer Game</button><br>
       <button @click="runCompetition(2, 3, 50, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
+      <button @click="generateFeatureCSV(Infinity, 0, 10)">Opening CSV</button><br>
+      <button @click="generateFeatureCSV(Infinity, 10, Infinity)">Post-opening CSV</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>
