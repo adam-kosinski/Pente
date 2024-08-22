@@ -30,18 +30,49 @@ function goToAnalysis(){
 <template>
   <button @click="console.log(gameToString(game))">Save Game</button><br>
   <button @click="undoMove(game)">Undo Move</button><br>
-  <button @click="goToAnalysis()">Analyze</button><br>
+  <button class="go-to-analysis" @click="goToAnalysis()">
+    <p>Analyze</p><span style="transform: rotateZ(-45deg) translateY(-5%); font-size: 2em;">&#9906;</span>
+  </button><br>
 
-
-  <Board class="board" :game="game" :show-coord-labels="false" @make-move="playerMove" />
+  <div class="board-container">
+    <Board class="board" :game="game" :show-coord-labels="false" @make-move="playerMove" />
+  </div>
 </template>
 
 
 <style scoped>
 
-.board {
+.board-container {
+  width: min(90vh, calc(100% - 80px));
+  height: auto;
+  aspect-ratio: 1;
   position: absolute;
   inset: 0;
   margin: auto;
+}
+.go-to-analysis {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+
+  opacity: 0.5;
+}
+.go-to-analysis p {
+  visibility: hidden;
+}
+.go-to-analysis:hover {
+  opacity: 1;
+}
+.go-to-analysis:hover p {
+  visibility: visible;
 }
 </style>
