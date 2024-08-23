@@ -13,35 +13,33 @@ async function playerMove(r: number, c: number) {
   if (game.value.currentPlayer === 1 || game.value.isOver) return
   makeMove(game.value, r, c)
   if (game.value.isOver) return
-  await new Promise(resolve => setTimeout(resolve, 10))
+  await new Promise(resolve => setTimeout(resolve, 20))
   const [compR, compC] = chooseMove(game.value, 10, 1000)
   makeMove(game.value, compR, compC)
-
-  window.history.replaceState(null, "", "?s=" + gameToString(game.value))
 }
 
 function goToAnalysis() {
-  window.location.href = "/analyze?s=" + gameToString(game.value)
+  // window.location.href = "/analyze?s=" + gameToString(game.value)
+  window.open("/analyze?s=" + gameToString(game.value), "_blank")
 }
 
-onMounted(() => {
-  const searchParams = new URL(window.location.href).searchParams
-  const gameString = searchParams.get("s")
-  if (gameString) game.value = loadFromString(gameString)
-})
+function reload(){
+  window.location.reload()
+}
 
 </script>
-
-
 
 
 <template>
   <div class="buttons">
     <button class="go-to-analysis" @click="goToAnalysis()">
-      <p>Analyze</p><span style="transform: rotateZ(-45deg) translateY(-5%); font-size: 2em;">&#9906;</span>
+      <p>Analyze</p><span style="font-size: 2em; transform: rotateZ(-45deg) translateY(-5%);">⚲</span>
     </button>
     <button @click="undoMove(game); undoMove(game)">
-      <p>Undo</p><span style="font-size: 2em;">⎌</span>
+      <p>Undo</p><span style="font-size: 2em; transform: translateY(-5%);">⎌</span>
+    </button>
+    <button @click="reload()">
+      <p>Restart</p><span style="font-size: 2em; transform: rotateZ(90deg)">↻</span>
     </button>
   </div>
 
@@ -64,7 +62,7 @@ onMounted(() => {
 
 .buttons {
   position: absolute;
-  top: 10px;
+  top: 15px;
   right: 10px;
   display: flex;
   gap: 5px;

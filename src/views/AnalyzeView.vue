@@ -14,8 +14,8 @@ import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v
 import AnalysisWorker from "../analysisWorker?worker"
 
 const showDebug = ref(false)
-function toggleDebug(e: KeyboardEvent){
-  if(e.key !== "d") return
+function toggleDebug(e: KeyboardEvent) {
+  if (e.key !== "D") return
   showDebug.value = !showDebug.value
 }
 
@@ -181,10 +181,16 @@ onUnmounted(() => {
         <button v-if="!analysisStarted" class="start-analysis" @click="analysisStarted = true; analyzePosition();">
           Start Analysis
         </button>
-          <AnalysisLine v-if="analysisStarted" v-for="i in nAnalysisVariations" :game="analysisLineGameCopy" :result="results[i-1]"
-            @show-future-position="(position) => futurePosition = position"
-            @clear-future-position="futurePosition = undefined" @go-to-position="(position) => goToPosition(position)" />
-        <button v-if="analysisStarted && nAnalysisVariations < maxVariations" class="add-variation" @click="nAnalysisVariations++; analyzePosition()">Add variation</button>
+        <AnalysisLine v-if="analysisStarted" v-for="i in nAnalysisVariations" :game="analysisLineGameCopy"
+          :result="results[i - 1]" @show-future-position="(position) => futurePosition = position"
+          @clear-future-position="futurePosition = undefined" @go-to-position="(position) => goToPosition(position)" />
+        <div>
+          <button v-if="analysisStarted && nAnalysisVariations < maxVariations" class="add-variation"
+            @click="nAnalysisVariations++; analyzePosition()">Add variation</button>
+          <button v-if="analysisStarted && nAnalysisVariations > 1" class="remove-variation"
+            @click="nAnalysisVariations--; analyzePosition()">Remove variation</button>
+        </div>
+
       </div>
       <div class="future-position-space">
         <div class="future-position-container">
@@ -306,9 +312,13 @@ onUnmounted(() => {
   text-wrap: nowrap;
 }
 
-.analysis-panel .add-variation {
+.analysis-panel .add-variation,
+.analysis-panel .remove-variation {
   background-color: transparent;
   border: 1px solid var(--medium-brown);
+}
+.remove-variation {
+  margin-left: 10px;
 }
 
 .future-position-space {
