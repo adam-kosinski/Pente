@@ -5,6 +5,7 @@ import Board from '@/components/Board.vue';
 
 import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v19/model_v19';
 import PlayerWorker from "../playerWorker?worker"
+import router from "../router/index"
 
 const game = ref(createNewGame(19))
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
@@ -27,7 +28,8 @@ worker.onmessage = (e) => {
 }
 
 function goToAnalysis() {
-  window.open("/analyze?s=" + gameToString(game.value), "_blank")
+  // need a router resolve so that it picks up on the base URL changing in production
+  window.open(router.resolve("/analyze?s=" + gameToString(game.value)).href, "_blank")
 }
 
 function reload() {
