@@ -4,7 +4,13 @@ import { computed } from 'vue'
 import { type GameState } from '@/engine_v19/model_v19';
 import CapturesArea from './CapturesArea.vue';
 
-const props = defineProps<{ game: GameState, showCoordLabels: boolean, disabled?: boolean }>()
+interface Props {
+  game: GameState
+  showCoordLabels: boolean
+  disabled?: boolean
+  flipPairLocations?: boolean
+}
+const props = defineProps<Props>()
 const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
@@ -54,8 +60,8 @@ function tryToMakeMove(r: number, c: number) {
         <div class="grid-line-box"></div>
       </div>
     </template>
-    <CapturesArea class="captures top" :n-captures="game.captures[1]" :gemPlayer="0" />
-    <CapturesArea class="captures bottom" :n-captures="game.captures[0]" :gemPlayer="1" />
+    <CapturesArea class="captures top" :n-captures="game.captures[flipPairLocations ? 0 : 1]" :gemPlayer="flipPairLocations ? 1 : 0" />
+    <CapturesArea class="captures bottom" :n-captures="game.captures[flipPairLocations ? 1 : 0]" :gemPlayer="flipPairLocations ? 0 : 1" />
   </div>
 </template>
 

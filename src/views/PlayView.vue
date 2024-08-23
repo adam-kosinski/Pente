@@ -64,7 +64,7 @@ function reload() {
       </button>
     </div>
     <div class="board-container">
-      <Board class="board" :game="game" :show-coord-labels="false" :disabled="boardDisabled" @make-move="playerMove" />
+      <Board class="board" :game="game" :show-coord-labels="false" :disabled="boardDisabled" :flip-pair-locations="playingAs === 1" @make-move="playerMove" />
     </div>
   </div>
 
