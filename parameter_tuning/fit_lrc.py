@@ -35,6 +35,7 @@ def check_collinearity(data):
     vif_data["feature"] = X.columns
     vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
     print(vif_data)
+    print("")
 
 
 def fit(data, opening_idx, show_coef=True):
@@ -94,7 +95,7 @@ def fit(data, opening_idx, show_coef=True):
         # plot model parameters
 
         fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-        fig.suptitle(f"Opening Index: {opening_idx}")
+        fig.suptitle(f"Opening Index: {opening_idx}\nTrain accuracy: {accuracy_train:.4f}\nTest accuracy: {accuracy_test:.4f}")
 
         ax1.barh(X_train.columns, opening_model.coef_[0])
         ax1.barh(["bias"], opening_model.intercept_[0])
@@ -121,12 +122,12 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    fit(data, 12, True)
+    fit(data, 12)
     return
 
     indices = []
     results = []
-    for opening_idx in range(0, 11):
+    for opening_idx in range(0, 20):
         result = fit(data, opening_idx, False)
         if result != "skip":
             indices.append(opening_idx)

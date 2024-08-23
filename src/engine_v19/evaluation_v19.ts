@@ -41,7 +41,7 @@ export function evaluatePosition(game: GameState) {
   // init eval as the intercept, and then add in features * weights
   let evaluation = openingCurrentPlayerBias * openingWeight + laterCurrentPlayerBias * (1 - openingWeight)
   for (const [k, v] of Object.entries(featureDict)) {
-    if (k in laterFeatureWeights) {
+    if (k in openingFeatureWeights && k in laterFeatureWeights) {
       evaluation += v * (openingFeatureWeights[k] * openingWeight + laterFeatureWeights[k] * (1 - openingWeight))
     }
   }
@@ -50,53 +50,47 @@ export function evaluatePosition(game: GameState) {
 
 
 const openingIdx = 12
-const blendRange = 6
+const blendRange = 4
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 0.7595811097272477,
-  "pente-threat-4": 1.3231075344026637,
-  "pente-threat-31": 1.7646047120654462,
-  "pente-threat-22": 0.9089001059232512,
-  "open-tria": 2.465676018548323,
-  "stretch-tria": 1.8432375645875896,
-  "open-pair": 0.16305626872200638,
-  "capture-threat": 0.6964732917144548,
-  "stretch-two": 0.7383841930268968,
-  "double-stretch-two": 0.1965124452309918,
-  "three-gap": 0.5269064083291872,
-  "pente-potential-1": 0.11075938946378927,
-  "pente-potential-2": 0.5742304349820271,
-  "captures": 1.2617330666881366,
+  "open-tessera": 0.7142846665149541,
+  "pente-threat-4": 1.460423474901643,
+  "pente-threat-31": 1.7926897505119432,
+  "pente-threat-22": 1.0820691431942682,
+  "open-tria": 2.348847906615784,
+  "stretch-tria": 1.6796377537114986,
+  "open-pair": 0.1583237946582207,
+  "capture-threat": 0.701008780943482,
+  "stretch-two": 0.7292003053126962,
+  "three-gap": 0.5074457767046938,
+  "pente-potential-1": 0.10513479297955895,
+  "pente-potential-2": 0.5448641632742927,
+  "captures": 1.4123467702449712,
   "4-captures": 0.0,
-  "can-block-trias": 0.543794833016246,
-  "my-open-trias": -0.7961513960148968,
-  "my-stretch-trias": -0.9189807492396814,
-  "non-quiet-moves": 0.5338492653859213
+  "can-block-trias": 0.5520212551906103,
+  "non-quiet-moves": 0.5070259353701644
 }
-const openingCurrentPlayerBias = -0.2262820774459405
+const openingCurrentPlayerBias = -0.23929567023925047
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.93328616675197,
-  "pente-threat-4": 1.3993012638773616,
-  "pente-threat-31": 1.303475196160189,
-  "pente-threat-22": 1.0635310147475436,
-  "open-tria": 1.8714674697180989,
-  "stretch-tria": 1.2999317885603885,
-  "open-pair": 0.12552140232264886,
-  "capture-threat": 0.5823866258000487,
-  "stretch-two": 0.33881391853090226,
-  "double-stretch-two": -0.06743116860693756,
-  "three-gap": 0.22897175839022574,
-  "pente-potential-1": 0.5089667319982304,
-  "pente-potential-2": 0.44340786449125824,
-  "captures": 0.9522555317132675,
-  "4-captures": 1.074937880495999,
-  "can-block-trias": 0.8535743420721008,
-  "my-open-trias": -0.13767350530498348,
-  "my-stretch-trias": 0.014311261100018777,
-  "non-quiet-moves": 0.28126751327527044
+  "open-tessera": 2.894385172811964,
+  "pente-threat-4": 1.4293730441139314,
+  "pente-threat-31": 1.339967366177731,
+  "pente-threat-22": 1.0946172159443657,
+  "open-tria": 1.8448769004339054,
+  "stretch-tria": 1.302738715912809,
+  "open-pair": 0.13047654933945022,
+  "capture-threat": 0.5792991598862727,
+  "stretch-two": 0.34384733550884033,
+  "three-gap": 0.2291155251490014,
+  "pente-potential-1": 0.512995812429531,
+  "pente-potential-2": 0.44447810236352725,
+  "captures": 0.9220501800426152,
+  "4-captures": 1.0367781104801042,
+  "can-block-trias": 0.8685945074453137,
+  "non-quiet-moves": 0.27784749558781685
 }
-const laterCurrentPlayerBias = -0.04997259788175746
+const laterCurrentPlayerBias = -0.04766462636742246
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -104,6 +98,7 @@ const shapesToExclude = [
   "extendable-tria",
   "extendable-stretch-tria-1",
   "extendable-stretch-tria-2",
+  "double-stretch-two"
 ]
 
 
@@ -120,8 +115,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
   featureDict["can-block-trias"] = 0
-  featureDict["my-open-trias"] = 0
-  featureDict["my-stretch-trias"] = 0
   featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
   // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
@@ -140,8 +133,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if (shape.type.includes("tria") && shape.owner !== game.currentPlayer) {
       opponentTrias.push(shape)
     }
-    if (shape.type === "open-tria" && shape.owner === game.currentPlayer) featureDict["my-open-trias"]++
-    if (shape.type === "stretch-tria" && shape.owner === game.currentPlayer) featureDict["my-stretch-trias"]++
   }
 
   // count captures
