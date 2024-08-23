@@ -10,12 +10,12 @@ import { createNewGame as create16 } from "./engine_v16_diag_orthog/model_v16";
 import { createNewGame as create17 } from "./engine_v17/model_v17";
 import { createNewGame as create18 } from "./engine_v18/model_v18"
 import { createNewGame as create19 } from "./engine_v19/model_v19"
-import { makeMove as move14 } from "./engine_v14/model_v14";
-import { makeMove as move15 } from "./engine_v15/model_v15";
-import { makeMove as move16 } from "./engine_v16_diag_orthog/model_v16";
-import { makeMove as move17 } from "./engine_v17/model_v17";
-import { makeMove as move18 } from "./engine_v18/model_v18";
-import { makeMove as move19 } from "./engine_v19/model_v19";
+import { makeMove as move14, type GameState as Game14 } from "./engine_v14/model_v14";
+import { makeMove as move15, type GameState as Game15 } from "./engine_v15/model_v15";
+import { makeMove as move16, type GameState as Game16 } from "./engine_v16_diag_orthog/model_v16";
+import { makeMove as move17, type GameState as Game17 } from "./engine_v17/model_v17";
+import { makeMove as move18, type GameState as Game18 } from "./engine_v18/model_v18";
+import { makeMove as move19, type GameState as Game19 } from "./engine_v19/model_v19";
 import { evaluatePosition, positionFeatureDict } from "./engine_v19/evaluation_v19";
 import { createNewGame, gameToString, makeMove } from "./engine_v19/model_v19";
 import * as papa from "papaparse";
@@ -28,8 +28,8 @@ const v = [
   { engine: engine15, create: create15, move: move15 },  // fitted eval values
   { engine: engine16, create: create16, move: move16 },  // diag / orthog linear shapes
   { engine: engine17, create: create17, move: move17 },  // more eval features
-  { engine: engine18, create: create18, move: move18 },  // better move generation and search extension, most importantly uses different opening evaluation
-  { engine: engine19, create: create19, move: move19 }   // linear shapes store dx and dy
+  { engine: engine18, create: create18, move: move18 },  // better move generation and search extension, most importantly uses different opening evaluation, softmax for move choice
+  { engine: engine19, create: create19, move: move19 }   // linear shapes store dx and dy and other updateLinearShapes optimizations, removed unnecessary eval features
 ]
 
 const gameStringSet = new Set<string>(gameStrings)
