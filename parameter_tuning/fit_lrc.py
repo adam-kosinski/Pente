@@ -83,7 +83,7 @@ def fit(data, opening_idx, show_coef=True):
         # print model parameters
         print("")
         print(f"const openingIdx = {opening_idx}")
-        print("const blendRange = 4\n")
+        print("const blendRange = 6\n")
         opening_coef_dict = dict(zip(X_train.columns, opening_model.coef_[0]))
         print("const openingFeatureWeights: Record<string, number> = " + json.dumps(opening_coef_dict, indent=2))
         print("const openingCurrentPlayerBias = " + str(opening_model.intercept_[0]))
@@ -122,8 +122,8 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    # fit(data, 12)
-    # return
+    fit(data, 13)
+    return
 
     indices = []
     results = []
