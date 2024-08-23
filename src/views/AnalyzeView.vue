@@ -44,7 +44,9 @@ const testPositions = [
   // my program doesn't realize that 9.8 wins until it is played, after which it recognizes it instantly
   "19~9.9|11.10|9.5|9.4|7.7|6.6|11.7|8.4|10.4|8.6|10.8|12.6|7.4|8.4|9.6|8.5",
   // me beating the v19 engine decisively - oops
-  "19~9.9|10.9|9.11|9.8|11.10|8.7|11.11|8.11|11.12|7.6|6.5|11.13|11.8|11.9|12.9|11.9|12.12|13.13|10.11|9.12|12.11|10.10|11.11|13.11|12.8|11.9|12.10|12.12|12.7"
+  "19~9.9|10.9|9.11|9.8|11.10|8.7|11.11|8.11|11.12|7.6|6.5|11.13|11.8|11.9|12.9|11.9|12.12|13.13|10.11|9.12|12.11|10.10|11.11|13.11|12.8|11.9|12.10|12.12|12.7",
+  // and again!
+  "19~9.9|11.10|9.6|8.6|7.9|9.8|7.8|7.10|7.7|6.9|5.8|7.5|8.11|7.10|8.9|6.9|6.7|5.6|8.10|8.8|10.8|6.8|6.10|6.8|8.12|9.11|8.10|8.13|8.8"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -149,7 +151,7 @@ function analyzePosition() {
 }
 
 function runComputerGame() {
-  window.location.href = '/analyze?s=' + playGame(3, 3, 15, 100).gameString
+  window.location.href = '/analyze?s=' + playGame(5, 5, 15, 100).gameString
 }
 
 onMounted(() => {
