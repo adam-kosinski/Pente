@@ -1,20 +1,19 @@
 <script setup lang="ts">
 
-import { onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import Board from '@/components/Board.vue';
 
 import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v19/model_v19';
-import { chooseMove } from '@/engine_v19/engine_v19';
 import PlayerWorker from "../playerWorker?worker"
-
-
-const started = ref(false)
-const playingAs = ref(0)
-
-const worker = new PlayerWorker()
 
 const game = ref(createNewGame(19))
 // game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
+
+const worker = new PlayerWorker()
+const started = ref(false)
+const playingAs = ref(0)
+const boardDisabled = computed(() => game.value.currentPlayer !== playingAs.value)
+
 
 function playerMove(r: number, c: number) {
   if (game.value.currentPlayer !== playingAs.value || game.value.isOver) return
@@ -63,7 +62,7 @@ function reload() {
       </button>
     </div>
     <div class="board-container">
-      <Board class="board" :game="game" :show-coord-labels="false" @make-move="playerMove" />
+      <Board class="board" :game="game" :show-coord-labels="false" :disabled="boardDisabled" @make-move="playerMove" />
     </div>
   </div>
 

@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { type GameState } from '@/engine_v19/model_v19';
 import CapturesArea from './CapturesArea.vue';
 
-const props = defineProps<{ game: GameState, showCoordLabels: boolean }>()
+const props = defineProps<{ game: GameState, showCoordLabels: boolean, disabled?: boolean }>()
 const emit = defineEmits(["make-move"])
 
 const boardSize = computed(() => props.game.board.length)
@@ -25,6 +25,7 @@ function isLegalMove(r: number, c: number) {
 }
 
 function tryToMakeMove(r: number, c: number) {
+  if (props.disabled) return
   if (!isLegalMove(r, c)) return
   emit('make-move', r, c)
 }
@@ -46,9 +47,9 @@ function tryToMakeMove(r: number, c: number) {
         <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
 
         <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"
-          :class="{'last-move': r - 1 === lastMove[0] && c - 1 === lastMove[1]}">
+          :class="{ 'last-move': r - 1 === lastMove[0] && c - 1 === lastMove[1] }">
         </div>
-        <div v-else class="ghost gem" :data-player="game.currentPlayer"></div>
+        <div v-else-if="!disabled" class="ghost gem" :data-player="game.currentPlayer"></div>
 
         <div class="grid-line-box"></div>
       </div>
@@ -104,7 +105,7 @@ function tryToMakeMove(r: number, c: number) {
   align-items: center;
   justify-content: center;
   position: relative;
-  cursor: pointer;
+  cursor: v-bind("disabled ? 'default' : 'pointer'");
   /* define container for making the row/col labels fit */
   container-type: inline-size;
 }
