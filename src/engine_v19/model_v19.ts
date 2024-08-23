@@ -36,6 +36,7 @@ export interface SearchResult {
   eval: number  // NaN indicates ran out of time
   evalFlag: EvalFlag
   bestVariation: number[][]
+  valid: boolean
 }
 export type EvalFlag = "exact" | "upper-bound" | "lower-bound"
 

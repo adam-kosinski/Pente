@@ -116,7 +116,7 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
       }
 
       // if ran out of time, disregard this result and stop looking
-      if (isNaN(results[0].eval)) {
+      if (!results[0].valid) {
         if (verbose) console.log("ran out of time searching depth " + depth)
         if (prevDepthResults.length === 0) console.warn("no answer returned because ran out of time on depth " + depth)
         break
@@ -210,19 +210,19 @@ function principalVariationSearch(
 
   // ran out of time base case - don't allow for original depth 1 search because need to return something
   if (performance.now() > deadlineMs && !(ply === 1 && depth === 1)) {
-    // return eval = NaN to indicate ran out of time and to disregard
-    return [{ eval: NaN, evalFlag: "exact", bestVariation: [] }]
+    // return valid = false to indicate ran out of time and to disregard, eval 0 is arbitrary
+    return [{ eval: 0, evalFlag: "exact", bestVariation: [], valid: false }]
   }
 
   // leaf node base cases
   const evaluation = evaluatePosition(game)
   if (game.isOver || depth === 0 || (Math.abs(evaluation) === Infinity && ply > 1)) {  // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
-    return [{ eval: evaluation, evalFlag: "exact", bestVariation: [] }]
+    return [{ eval: evaluation, evalFlag: "exact", bestVariation: [], valid: true }]
   }
 
   const alphaOrig = alpha  // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
   const allMoveResults: SearchResult[] = []
-  let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [] }  // start with worst possible eval
+  let bestResult: SearchResult = { eval: -Infinity, evalFlag: "exact", bestVariation: [], valid: true }  // start with worst possible eval
 
   // transposition table cutoff / info
   const tableEntry = transpositionTable.get(TTableKey(game))
@@ -284,7 +284,7 @@ function principalVariationSearch(
     undoMove(game)
 
     // check for run out of time result
-    if (isNaN(childResult.eval)) {
+    if (!childResult.valid) {
       return [childResult]  // return another dummy result indicating ran out of time
     }
 
@@ -292,7 +292,8 @@ function principalVariationSearch(
     const myResult: SearchResult = {
       eval: -childResult.eval,
       evalFlag: (childResult.evalFlag === "lower-bound") ? "upper-bound" : (childResult.evalFlag === "upper-bound") ? "lower-bound" : "exact",
-      bestVariation: [[r, c], ...childResult.bestVariation]
+      bestVariation: [[r, c], ...childResult.bestVariation],
+      valid: childResult.valid
     }
     allMoveResults.push(myResult)
 
