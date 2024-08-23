@@ -6,9 +6,8 @@ import { RouterLink, RouterView } from 'vue-router'
   <div class="wrapper">
     <!-- <div class="wood-background"></div> -->
     <nav>
-      <RouterLink to="/" active-class="active-link">Home</RouterLink>
-      <RouterLink to="analyze" active-class="active-link">Analyze</RouterLink>
       <RouterLink to="play" active-class="active-link">Play</RouterLink>
+      <RouterLink to="analyze" active-class="active-link">Analyze</RouterLink>
     </nav>
 
     <main>
