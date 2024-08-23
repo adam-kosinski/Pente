@@ -179,7 +179,7 @@ export function* makeOrderedMoveIterator(
     for (let c = 0; c < game.board.length; c++) {
       if (game.board[r][c] === undefined) continue
       // there is a gem here, suggest nearby locations
-      const dists = [0, -1, 1, -2, 2]
+      const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
           // filter symmetric moves in the opening
