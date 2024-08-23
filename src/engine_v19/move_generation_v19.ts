@@ -1,7 +1,7 @@
+import { gameStrings } from "@/gameStrings";
 import { getCapturesBlockingAll } from "./evaluation_v19";
-import { type GameState, type SearchResult, type LinearShape } from "./model_v19";
+import { type GameState, type SearchResult, type LinearShape, createNewGame, makeMove } from "./model_v19";
 import { type TTEntry } from "./ttable_v19";
-
 
 
 // store which shapes should be looked at first, to use when ordering moves
@@ -278,4 +278,40 @@ export function getNonQuietMoves(game: GameState): number[][] {
     }
   }
   return moves
+}
+
+
+
+export function createOpeningBook() {
+  const book = new Map<string, number[]>()  // game string: [num player 0 wins, num player 1 wins]
+  for (const s of gameStrings) {
+    const [size, moveString] = s.split("~")
+    const moves = moveString.split("|").map(m => m.split(".").map(x => Number(x)))
+    const game = createNewGame(Number(size))
+    for (const m of moves) {
+      makeMove(game, m[0], m[1])
+    }
+    const winner = Number(!game.currentPlayer)  // the previous player just won
+    // go through first couple of positions and record who won
+    const split = s.split("|")
+    let openingString = split[0]
+    for (let i = 1; i < split.length; i++) {
+      const counts = book.get(openingString) || [0, 0]
+      counts[winner]++
+      book.set(openingString, counts)
+      openingString += "|" + split[i]
+    }
+  }
+  // filter out openings that are really just one game
+  const minGames = 5
+  for(const k of book.keys()){
+    const counts = book.get(k)
+    if(counts && counts[0] + counts[1] < minGames){
+      book.delete(k)
+    }
+  }
+
+  const entries = Array.from(book.entries())
+  const prettyJSON = "[\n" + entries.map(x => JSON.stringify(x)).join(",\n") + "\n]"
+  console.log(prettyJSON)
 }

@@ -122,8 +122,8 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    fit(data, 12)
-    return
+    # fit(data, 12)
+    # return
 
     indices = []
     results = []

@@ -8,7 +8,7 @@ import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup'
 
 import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
 import { copyGame } from '@/engine_v19/engine_v19';
-import { makeOrderedMoveIterator } from '@/engine_v19/move_generation_v19'
+import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v19/move_generation_v19'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
@@ -234,6 +234,7 @@ onUnmounted(() => {
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 0, 10)">Opening CSV</button><br>
       <button @click="generateFeatureCSV(Infinity, 10, Infinity)">Post-opening CSV</button><br>
+      <button @click="createOpeningBook()">Opening Book</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>

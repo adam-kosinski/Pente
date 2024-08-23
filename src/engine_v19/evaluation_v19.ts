@@ -1,5 +1,6 @@
-import { type GameState, type LinearShape, linearShapeDef } from "./model_v19";
+import { type GameState, gameToString, type LinearShape, linearShapeDef } from "./model_v19";
 import { getNonQuietMoves, makeOrderedMoveIterator } from "./move_generation_v19";
+import { openingBook } from "@/openingBook";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -49,48 +50,50 @@ export function evaluatePosition(game: GameState) {
 }
 
 
-const openingIdx = 12
-const blendRange = 4
+const openingIdx = 14
+const blendRange = 10
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 0.7054256860796352,
-  "pente-threat-4": 1.1817703617875197,
-  "pente-threat-31": 1.7421854675467938,
-  "pente-threat-22": 0.875138540644574,
-  "open-tria": 2.202776159547307,
-  "stretch-tria": 1.5768971609704574,
-  "open-pair": 0.12603709407788413,
-  "capture-threat": 0.6803086159765149,
-  "stretch-two": 0.6758821906011587,
-  "three-gap": 0.3961008952441541,
-  "pente-potential-1": 0.07572581845511037,
-  "pente-potential-2": 0.5772857906947709,
-  "captures": 1.4881240112585623,
+  "open-tessera": 1.1808494415204283,
+  "pente-threat-4": 1.3297767608149045,
+  "pente-threat-31": 1.4917041792899213,
+  "pente-threat-22": 0.6831670856327777,
+  "open-tria": 2.099338696771324,
+  "stretch-tria": 1.3934703552691194,
+  "open-pair": 0.15484698547574538,
+  "capture-threat": 0.7271941392413903,
+  "stretch-two": 0.5879056925905864,
+  "three-gap": 0.3234304584117526,
+  "pente-potential-1": 0.18731702542786988,
+  "pente-potential-2": 0.5245891509842737,
+  "captures": 1.4723598264513735,
   "4-captures": 0.0,
-  "can-block-trias": 0.5049282244232708,
-  "non-quiet-moves": 0.4569909601223369
+  "can-block-trias": 0.5505754450309274,
+  "non-quiet-moves": 0.3852595353871939,
+  "opening-book": 2.643392161779519
 }
-const openingCurrentPlayerBias = -0.2040235124872943
+const openingCurrentPlayerBias = -0.13206683725075752
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.839114853604894,
-  "pente-threat-4": 1.4192646141687402,
-  "pente-threat-31": 1.3952607276862967,
-  "pente-threat-22": 1.0953587566503178,
-  "open-tria": 1.8465202983085667,
-  "stretch-tria": 1.3611765230488788,
-  "open-pair": 0.13712607888642475,
-  "capture-threat": 0.5929149645250404,
-  "stretch-two": 0.35156688785524115,
-  "three-gap": 0.16017105703694612,
-  "pente-potential-1": 0.5824994119359308,
-  "pente-potential-2": 0.3497451813564464,
-  "captures": 0.8967602994509206,
-  "4-captures": 0.8875143398759777,
-  "can-block-trias": 0.7788552900286067,
-  "non-quiet-moves": 0.27635056958537946
+  "open-tessera": 2.7955753161780628,
+  "pente-threat-4": 1.4067247209641307,
+  "pente-threat-31": 1.390169139894796,
+  "pente-threat-22": 1.1760309159247957,
+  "open-tria": 1.8150623058641862,
+  "stretch-tria": 1.3626666670022085,
+  "open-pair": 0.1298936239031791,
+  "capture-threat": 0.5776726268320487,
+  "stretch-two": 0.332791930272288,
+  "three-gap": 0.1592430166208563,
+  "pente-potential-1": 0.609093431723703,
+  "pente-potential-2": 0.34659370147823854,
+  "captures": 0.8777228733224447,
+  "4-captures": 0.9088918949607229,
+  "can-block-trias": 0.7930308015123899,
+  "non-quiet-moves": 0.2737385434288985,
+  "opening-book": 0.0
 }
-const laterCurrentPlayerBias = 0.003995441438307233
+const laterCurrentPlayerBias = 0.00019716816701800355
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -118,6 +121,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
   // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
+
 
   // count linear shapes, for me (current player) and for the opponent
   const opponentTrias: LinearShape[] = []
@@ -222,3 +226,4 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
   if (capturesBlockingAll.length === 0) return false
   return true
 }
+
