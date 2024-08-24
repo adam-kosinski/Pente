@@ -247,6 +247,7 @@ function principalVariationSearch(
   }
 
   let extension = 0
+  // extend on forcing positions (pente threat or 5th capture threat), since branching
   if (game.linearShapes.some(shape => shape.type.includes("pente-threat"))) {
     extension = 1
   }
