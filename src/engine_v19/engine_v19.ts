@@ -246,9 +246,14 @@ function principalVariationSearch(
     ttableMiss++
   }
 
-  let extension = 0
   // extend on forcing positions (pente threat or 5th capture threat), since branching
-  if (game.linearShapes.some(shape => shape.type.includes("pente-threat"))) {
+  // note that I won't have a pente or 5th capture threat (only the opponent will),
+  // because if I did the eval function would have seen this and marked this position
+  // as won for me (since I have a winning move)
+  let extension = 0
+  const fourOpponentCaptures = game.captures[Number(!game.currentPlayer) as 0|1] === 4
+  const penteThreatExists = game.linearShapes.some(shape => shape.type.includes("pente-threat"))
+  if (penteThreatExists || (fourOpponentCaptures && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer))) {
     extension = 1
   }
 
