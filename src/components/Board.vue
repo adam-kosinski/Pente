@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import { computed } from 'vue'
-import { type GameState } from '@/engine_v19/model_v19';
+import { computed, inject } from 'vue'
+import { type GameState, toStandardCoords } from '@/engine_v19/model_v19';
 import CapturesArea from './CapturesArea.vue';
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
 }
 const props = defineProps<Props>()
 const emit = defineEmits(["make-move"])
+
+const useStandardCoords = inject("useStandardCoords")
 
 const boardSize = computed(() => props.game.board.length)
 const center = computed(() => Math.floor(boardSize.value / 2))
@@ -49,8 +51,10 @@ function tryToMakeMove(r: number, c: number) {
         :class="{ 'significant': areCoordsSignificant(r - 1, c - 1), 'last-col': c === boardSize, 'last-row': r === boardSize, 'legal-move': isLegalMove(r - 1, c - 1) }"
         @click="tryToMakeMove(r - 1, c - 1)">
 
-        <p v-if="c === 1 && showCoordLabels" class="row-label">{{ r - 1 }}</p>
-        <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ c - 1 }}</p>
+        <p v-if="c === 1 && showCoordLabels" class="row-label">{{ useStandardCoords ?
+          toStandardCoords(r - 1, c - 1, game.board.length)[1] : r - 1 }}</p>
+        <p v-if="r === boardSize && showCoordLabels" class="col-label">{{ useStandardCoords ?
+          toStandardCoords(r - 1, c - 1, game.board.length)[0] : c - 1 }}</p>
 
         <div v-if="game.board[r - 1][c - 1] !== undefined" class="real gem" :data-player="game.board[r - 1][c - 1]"
           :class="{ 'last-move': r - 1 === lastMove[0] && c - 1 === lastMove[1] }">
@@ -60,8 +64,10 @@ function tryToMakeMove(r: number, c: number) {
         <div class="grid-line-box"></div>
       </div>
     </template>
-    <CapturesArea class="captures top" :n-captures="game.captures[flipPairLocations ? 0 : 1]" :gemPlayer="flipPairLocations ? 1 : 0" />
-    <CapturesArea class="captures bottom" :n-captures="game.captures[flipPairLocations ? 1 : 0]" :gemPlayer="flipPairLocations ? 0 : 1" />
+    <CapturesArea class="captures top" :n-captures="game.captures[flipPairLocations ? 0 : 1]"
+      :gemPlayer="flipPairLocations ? 1 : 0" />
+    <CapturesArea class="captures bottom" :n-captures="game.captures[flipPairLocations ? 1 : 0]"
+      :gemPlayer="flipPairLocations ? 0 : 1" />
   </div>
 </template>
 

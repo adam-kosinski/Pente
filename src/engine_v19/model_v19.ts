@@ -86,6 +86,12 @@ export function loadFromString(s: string) {
 }
 
 
+export function toStandardCoords(r: number, c: number, boardSize: number){
+  // convert to coords used by Pente.org, useful when reading the website
+  const letterCoords = "ABCDEFGHJKLMNOPQRST"  // omit I for clarity I suppose
+  return [letterCoords[c] || "_", boardSize - r]
+}
+
 
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return

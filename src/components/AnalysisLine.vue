@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { type SearchResult, type GameState, createNewGame, copyGame, makeMove } from '@/engine_v19/model_v19';
-import { computed, ref } from 'vue';
+import { type SearchResult, type GameState, createNewGame, copyGame, makeMove, toStandardCoords } from '@/engine_v19/model_v19';
+import { computed, inject } from 'vue';
 
 const props = defineProps<{ result: SearchResult | undefined, game: GameState }>()
 interface Emits {
@@ -9,6 +9,8 @@ interface Emits {
   (event: "go-to-position", position: GameState): void
 }
 const emit = defineEmits<Emits>()
+
+const useStandardCoords = inject("useStandardCoords")
 
 const evalString = computed(() => {
   if (props.result === undefined) return "..."
@@ -34,9 +36,10 @@ function getFuturePosition(moveIndex: number) {
   <div class="analysis-line">
     <div class="eval" :class="{ 'player-1-winning': props.result && props.result.eval < 0 }">{{ evalString }}</div>
     <div v-if="result" class="move-container">
-      <div class="move" v-for="m, i in result.bestVariation" @mousemove="result && emit('show-future-position', getFuturePosition(i))"
+      <div class="move" v-for="m, i in result.bestVariation"
+        @mousemove="result && emit('show-future-position', getFuturePosition(i))"
         @mouseleave="emit('clear-future-position')" @click="emit('go-to-position', getFuturePosition(i))">
-        {{ m[0] + "." + m[1] }}
+        {{ useStandardCoords ? toStandardCoords(m[0], m[1], game.board.length).join("") : m[0] + "." + m[1] }}
       </div>
     </div>
   </div>
@@ -62,6 +65,7 @@ function getFuturePosition(moveIndex: number) {
   padding: 5px;
   text-wrap: nowrap;
 }
+
 .eval.player-1-winning {
   background-color: var(--gem-color-1);
   color: var(--gem-1-contrast);

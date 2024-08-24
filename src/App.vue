@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { provide } from 'vue';
 import { RouterLink, RouterView } from 'vue-router'
+
+provide("useStandardCoords", true)
 </script>
 
 <template>
