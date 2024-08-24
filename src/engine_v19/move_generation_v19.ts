@@ -19,14 +19,18 @@ const shapePriorityDef = [
   "extendable-stretch-tria-1",
   "pente-potential-1",
   "extendable-tria",
-  // captures matter but aren't forcing
-  "capture-threat",
-  // favor keeping gems in line with existing ones
+  // favor things that can create a tria
   "stretch-two",
   "open-pair",
+  "double-stretch-two",
+  // captures matter but aren't forcing
+  "capture-threat",
+  // favor keeping gems in line with each other
   "three-gap"
 ]
-// if shape isn't owned by me or is in this list, is considered non-forcing
+
+
+// if shape isn't owned by me or is in this below list, is considered non-forcing
 const nonForcingShapes = [
   "stretch-two",
   "open-pair",
@@ -304,9 +308,9 @@ export function createOpeningBook() {
   }
   // filter out openings that are really just one game
   const minGames = 5
-  for(const k of book.keys()){
+  for (const k of book.keys()) {
     const counts = book.get(k)
-    if(counts && counts[0] + counts[1] < minGames){
+    if (counts && counts[0] + counts[1] < minGames) {
       book.delete(k)
     }
   }

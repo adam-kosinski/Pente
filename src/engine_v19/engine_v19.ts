@@ -246,6 +246,11 @@ function principalVariationSearch(
     ttableMiss++
   }
 
+  let extension = 0
+  if (game.linearShapes.some(shape => shape.type.includes("pente-threat"))) {
+    extension = 1
+  }
+
   let moveIndex = 0
   const moveIterator = makeOrderedMoveIterator(game, false, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
@@ -256,11 +261,6 @@ function principalVariationSearch(
     // search child
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
-
-    let extension = 0
-    if (game.linearShapes.some(shape => shape.type.includes("pente-threat"))) {
-      extension = 1
-    }
 
     let childResult: SearchResult
     // do full search on the principal variation move, which is probably good
