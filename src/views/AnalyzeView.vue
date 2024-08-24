@@ -6,8 +6,7 @@ import AnalysisLine from '@/components/AnalysisLine.vue';
 
 import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup';
 
-import { createNewGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
-import { copyGame } from '@/engine_v19/engine_v19';
+import { createNewGame, copyGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
 import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v19/move_generation_v19'
 import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 

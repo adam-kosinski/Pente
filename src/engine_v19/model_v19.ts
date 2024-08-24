@@ -59,6 +59,19 @@ export function createNewGame(boardSize: number): GameState {
 }
 
 
+export function copyGame(game: GameState): GameState {
+  return {
+    board: game.board.map(row => Object.assign({}, row)),
+    currentPlayer: game.currentPlayer,
+    captures: { ...game.captures },
+    nMoves: game.nMoves,
+    prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
+    isOver: game.isOver,
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+  }
+}
+
+
 export function gameToString(game: GameState) {
   return game.board.length + "~" + game.prevMoves.map(m => m.addedGems[0].join(".")).join("|")
 }

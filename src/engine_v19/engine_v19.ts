@@ -1,4 +1,4 @@
-import { gameToString, makeMove, undoMove, type GameState, type SearchResult } from "./model_v19";
+import { gameToString, makeMove, undoMove, copyGame, type GameState, type SearchResult } from "./model_v19";
 import { makeOrderedMoveIterator } from "./move_generation_v19";
 import { transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v19";
 import { evaluatePosition } from "./evaluation_v19";
@@ -357,18 +357,4 @@ function principalVariationSearch(
     return allMoveResults
   }
   return [bestResult]
-}
-
-
-
-export function copyGame(game: GameState): GameState {
-  return {
-    board: game.board.map(row => Object.assign({}, row)),
-    currentPlayer: game.currentPlayer,
-    captures: { ...game.captures },
-    nMoves: game.nMoves,
-    prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
-    isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
-  }
 }
