@@ -54,9 +54,21 @@ export function* makeOrderedMoveIterator(
 
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const isValidMove = function (move: number[]) {
+  const isValidNewMove = function (move: number[]) {
     if (isRestricted(game, move[0], move[1])) return false
+    if (moveHashes.has(move.toString())) return false
     return game.board[move[0]][move[1]] === undefined
+  }
+  const symmetries = game.nMoves <= 5 ? detectSymmetry(game) : []
+  const center = Math.floor(game.board.length / 2)
+
+  const registerMove = function (m: number[]) {
+    moveHashes.add(m.toString())
+    // mark any symmetric moves so they don't get tried
+    for(const sym of symmetries) {
+      const duplicate = applySymmetry(m[0], m[1], sym, center)
+      moveHashes.add(duplicate.toString())
+    }
   }
 
   // first move must be in center
@@ -69,7 +81,10 @@ export function* makeOrderedMoveIterator(
   // https://pente.org/gameServer/forums/thread.jspa?forumID=27&threadID=2925&messageID=8961#8961
   if (game.nMoves === 1) {
     for (const m of [[9, 10], [9, 11], [10, 10], [10, 11], [10, 12], [10, 13], [11, 12], [11, 13], [12, 13]]) {
-      if (isValidMove(m)) yield m
+      if (isValidNewMove(m)) {
+        yield m
+        registerMove(m)
+      }
     }
     return
   }
@@ -77,7 +92,10 @@ export function* makeOrderedMoveIterator(
   // pretty good consensus here: https://pente.org/gameServer/forums/thread.jspa?forumID=27&threadID=4043&start=0&tstart=125#15843
   if (game.nMoves === 2) {
     for (const m of [[6, 9], [9, 6], [9, 12], [12, 9]]) {
-      if (isValidMove(m)) yield m
+      if (isValidNewMove(m)) {
+        yield m
+        registerMove(m)
+      }
     }
     return
   }
@@ -86,12 +104,10 @@ export function* makeOrderedMoveIterator(
   // the principal variation move will come first by default
   if (prevDepthResults.length > 0) {
     for (const result of prevDepthResults) {
-      const move = result.bestVariation[0]
-      if (!isValidMove(move)) continue
-      const hash = move[0] + "," + move[1]
-      if (!moveHashes.has(hash)) {
-        yield move
-        moveHashes.add(hash)
+      const m = result.bestVariation[0]
+      if (isValidNewMove(m)) {
+        yield m
+        registerMove(m)
       }
     }
     return
@@ -99,32 +115,32 @@ export function* makeOrderedMoveIterator(
   // if we don't have such a nice list, use heuristics
 
   // first priority is principal variation move
-  if (principalVariationMove !== undefined && isValidMove(principalVariationMove)) {
-    yield principalVariationMove
-    moveHashes.add(principalVariationMove.join(","))
+  if (principalVariationMove !== undefined) {
+    if (isValidNewMove(principalVariationMove)) {
+      yield principalVariationMove
+      registerMove(principalVariationMove)
+    }
   }
   // second priority is transposition table entry (aka hash move)
   if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0]
-    if (goodMove !== undefined && isValidMove(goodMove)) {
-      const hash = goodMove[0] + "," + goodMove[1]
-      if (!moveHashes.has(hash)) {
+    if (goodMove !== undefined) {
+      if (isValidNewMove(goodMove)) {
         yield goodMove
-        moveHashes.add(hash)
+        registerMove(goodMove)
       }
     }
   }
   // third priority are killer moves
   if (killerMoves[ply]) {
-    for (const move of killerMoves[ply]) {
-      if (!isValidMove(move)) continue
-      const hash = move[0] + "," + move[1]
-      if (!moveHashes.has(hash)) {
-        yield move
-        moveHashes.add(hash)
+    for (const m of killerMoves[ply]) {
+      if (isValidNewMove(m)) {
+        yield m
+        registerMove(m)
       }
     }
   }
+
 
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
@@ -194,11 +210,10 @@ export function* makeOrderedMoveIterator(
     const dx = shape.dx
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
       if (forcingOnly && shape.owner !== game.currentPlayer) continue
-      if (!isValidMove([r, c])) continue
-      const hash = r + "," + c
-      if (!moveHashes.has(hash)) {
-        yield [r, c]
-        moveHashes.add(hash)
+      const m = [r,c]
+      if (isValidNewMove(m)) {
+        yield m
+        registerMove(m)
       }
     }
   }
@@ -213,14 +228,11 @@ export function* makeOrderedMoveIterator(
       const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
-          // TODO filter symmetric moves in the opening
           if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
-            const move = [r + dy, c + dx]
-            if (!isValidMove(move)) continue
-            const hash = move[0] + "," + move[1]
-            if (!moveHashes.has(hash)) {
-              yield move
-              moveHashes.add(hash)
+            const m = [r + dy, c + dx]
+            if (isValidNewMove(m)) {
+              yield m
+              registerMove(m)
             }
           }
         }
@@ -341,4 +353,64 @@ export function createOpeningBook() {
   const entries = Array.from(book.entries())
   const prettyJSON = "[\n" + entries.map(x => JSON.stringify(x)).join(",\n") + "\n]"
   console.log(prettyJSON)
+}
+
+
+
+
+
+
+interface Symmetry {
+  rotateClockwise: boolean
+  flipHoriz: boolean
+  flipVert: boolean
+} // where rotating is done before flipping
+
+export function applySymmetry(r: number, c: number, sym: Symmetry, center: number) {
+  // convert to center-relative coords
+  r -= center
+  c -= center
+  // rotate
+  if (sym.rotateClockwise) {
+    [r, c] = [c, -r]
+  }
+  // flip
+  if (sym.flipHoriz) {
+    c = -c
+  }
+  if (sym.flipVert) {
+    r = -r
+  }
+  // convert back to absolute coords
+  r += center
+  c += center
+  return [r, c]
+}
+
+export function detectSymmetry(game: GameState): Symmetry[] {
+  // finds the symmetries in a position
+  const symmetries = []
+  const center = Math.floor(game.board.length / 2)
+  // iterate through possible symmetries
+  for (const rotate of [false, true]) {
+    for (const flipHoriz of [false, true]) {
+      symmetryLoop:
+      for (const flipVert of [false, true]) {
+        if (!rotate && !flipHoriz && !flipVert) continue  // this would be doing nothing
+
+        const sym: Symmetry = { rotateClockwise: rotate, flipHoriz: flipHoriz, flipVert: flipVert }
+
+        // iterate through stones on board
+        for (let r = 0; r < game.board.length; r++) {
+          for (const c in game.board[r]) {
+            const applied = applySymmetry(r, Number(c), sym, center)
+            // check for symmetry failure
+            if (game.board[applied[0]][applied[1]] !== game.board[r][c]) break symmetryLoop
+          }
+        }
+        symmetries.push(sym)
+      }
+    }
+  }
+  return symmetries
 }

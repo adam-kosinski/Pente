@@ -11,6 +11,7 @@ import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v19/move_ge
 import { evaluatePosition, getNonlinearShapes, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
+import { detectSymmetry } from '@/engine_v19/move_generation_v19';
 
 const showDebug = ref(false)
 function toggleDebug(e: KeyboardEvent) {
@@ -58,7 +59,6 @@ function doMakeMove(r: number, c: number) {
   makeMove(game.value, r, c)
   updateMoveList()
   analyzePosition()
-  console.log(getNonlinearShapes(game.value).map(s => s.type + ", " + s.owner).join("\n"))
 }
 
 
@@ -234,7 +234,7 @@ onUnmounted(() => {
       <button @click="runComputerGame()">Play Computer Game</button><br>
       <button @click="runCompetition(4, 5, 30, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
-      <button @click="createOpeningBook()">Opening Book</button><br>
+      <button @click="console.log(detectSymmetry(game))">Symmetry</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>
