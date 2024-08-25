@@ -1,4 +1,4 @@
-import { type GameState, gameToString, type LinearShape, linearShapeDef } from "./model_v19";
+import { type GameState, gameToString, type LinearShape, linearShapeDef, nonlinearShapeTypes, type Shape } from "./model_v19";
 import { getNonQuietMoves, makeOrderedMoveIterator } from "./move_generation_v19";
 import { openingBook } from "@/openingBook";
 
@@ -99,7 +99,8 @@ const shapesToExclude = [
   "extendable-tria",
   "extendable-stretch-tria-1",
   "extendable-stretch-tria-2",
-  "double-stretch-two"
+  "double-stretch-two",
+  "three"
 ]
 
 
@@ -113,6 +114,9 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if (shapesToExclude.includes(shapeType)) continue
     featureDict[shapeType] = 0  // counts number I have minus number opponent has
   }
+  // for(const shapeType of nonlinearShapeTypes) {
+  //   featureDict[shapeType] = 0
+  // }
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
   featureDict["can-block-trias"] = 0
@@ -136,6 +140,11 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
       opponentTrias.push(shape)
     }
   }
+
+  // count nonlinear shapes
+  // for(const shape of getNonlinearShapes(game)){
+  //   featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
+  // }
 
   // count captures
   const myCaptures = game.captures[game.currentPlayer]
@@ -226,6 +235,80 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
 }
 
 
-export function getNonlinearShapes(game: GameState){
-  // shapes: small L, big L, hat, V, wing
+
+export function getNonlinearShapes(game: GameState): Shape[] {
+  // shapes: small L, big L, hat, V, wing, big T, little t, h, X, H
+  // the h, X, and H contain a three (not using tria b/c can still be useful even if partially blocked)
+  // all the rest contain a stretch two (unblocked)
+  // so look for these two shapes first and then check if the larger shapes are present
+
+  const nonlinearShapes: Shape[] = []
+
+  // keep track of shapes by type, more efficient to find them when needed
+  const categorizedShapes: Record<string, LinearShape[]> = {}
+  for (const type in linearShapeDef) {
+    categorizedShapes[type] = []
+  }
+  game.linearShapes.forEach(shape => categorizedShapes[shape.type].push(shape))
+
+  // look for nonlinear shapes containing threes
+  categorizedShapes["three"].forEach((three, i) => {
+    // X
+    if (!isOrthogonal(three)) {
+      for (const otherThree of categorizedShapes["three"].slice(i + 1)) {  // slice above this index to avoid finding duplicate pairs
+        if (three.owner === otherThree.owner && !isOrthogonal(otherThree) && loc(three, 1) === loc(otherThree, 1)) {  // can't be same direction b/c then would be same shape
+          nonlinearShapes.push({ type: "X", owner: three.owner })
+        }
+      }
+    }
+  })
+
+  // look for nonlinear shapes containing stretch twos
+  categorizedShapes["stretch-two"].forEach((two, i) => {
+    if (isOrthogonal(two)) {
+      // big L, look for double stretch twos
+      for (const double of categorizedShapes["double-stretch-two"]) {
+        if (two.owner === double.owner && dirsOrthogonal(two, double) && intersectAt(two, [1, 3], double, [1, 4])
+        ) {
+          nonlinearShapes.push({ type: "big-L", owner: two.owner })
+        }
+      }
+      // small L, look for other stretch twos
+      for (const otherTwo of categorizedShapes["stretch-two"].slice(i + 1)) { // slice above to avoid duplicate pairs
+        if (two.owner === otherTwo.owner && dirsOrthogonal(two, otherTwo) && intersectAt(two, [1, 3], otherTwo, [1, 3])){
+          nonlinearShapes.push({ type: "small-L", owner: two.owner })
+        }
+      }
+    }
+  })
+
+
+  return nonlinearShapes
+}
+
+
+function isOrthogonal(shape: LinearShape) {
+  return shape.dx === 0 || shape.dy === 0
+}
+
+function loc(shape: LinearShape, index: number): string {
+  // returns the location within the shape that is index spots away from the shape's beginning
+  // returning a string version of the location because usually we want to check if two locations are the same
+  return [shape.begin[0] + index * shape.dy, shape.begin[1] + index * shape.dx].toString()
+}
+
+function intersectAt(shape1: LinearShape, indices1: number[], shape2: LinearShape, indices2: number[]) {
+  // tests if shape1 intersects with shape2 at certain spots
+  // returns true if a location from shape one indexed by indices1 matches that of one in shape 2 indexed by indices2
+  for (const i1 of indices1) {
+    for (const i2 of indices2) {
+      if (loc(shape1, i1) === loc(shape2, i2)) return true
+    }
+  }
+  return false
+}
+
+function dirsOrthogonal(shape1: LinearShape, shape2: LinearShape){
+  // dot product should be 0
+  return 0 === (shape1.dx * shape2.dx) + (shape1.dy * shape2.dy)
 }

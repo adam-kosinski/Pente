@@ -29,12 +29,12 @@ const shapePriorityDef = [
   "three-gap"
 ]
 
-
 // if shape isn't owned by me or is in this below list, is considered non-forcing
 const nonForcingShapes = [
   "stretch-two",
   "open-pair",
-  "three-gap"
+  "three-gap",
+  "three"
 ]
 // convert to an object instead of an array for faster lookup
 const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDef.map((name, idx) => [name, idx]))

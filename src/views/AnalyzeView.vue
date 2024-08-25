@@ -8,7 +8,7 @@ import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup'
 
 import { createNewGame, copyGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
 import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v19/move_generation_v19'
-import { evaluatePosition, positionFeatureDict } from '@/engine_v19/evaluation_v19';
+import { evaluatePosition, getNonlinearShapes, positionFeatureDict } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
 
@@ -58,6 +58,7 @@ function doMakeMove(r: number, c: number) {
   makeMove(game.value, r, c)
   updateMoveList()
   analyzePosition()
+  console.log(getNonlinearShapes(game.value).map(s => s.type + ", " + s.owner).join("\n"))
 }
 
 
@@ -224,8 +225,8 @@ onUnmounted(() => {
       <button @click="printMoves()">Generate Moves</button><br>
       <button @click="printForcingMoves()">Forcing Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
-      <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Get Linear
-        Shapes</button><br>
+      <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Linear Shapes</button><br>
+      <button @click="console.log(getNonlinearShapes(game))">Nonlinear Shapes</button><br>
       <button @click="console.log(gameToString(game))">Save Game</button><br>
       <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
       <button @click="timeTest()">Time Test</button><br>
@@ -233,8 +234,6 @@ onUnmounted(() => {
       <button @click="runComputerGame()">Play Computer Game</button><br>
       <button @click="runCompetition(4, 5, 30, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
-      <button @click="generateFeatureCSV(Infinity, 0, 10)">Opening CSV</button><br>
-      <button @click="generateFeatureCSV(Infinity, 10, Infinity)">Post-opening CSV</button><br>
       <button @click="createOpeningBook()">Opening Book</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
@@ -319,6 +318,7 @@ onUnmounted(() => {
   background-color: transparent;
   border: 1px solid var(--medium-brown);
 }
+
 .remove-variation {
   margin-left: 10px;
 }
