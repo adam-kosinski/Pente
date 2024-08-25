@@ -54,44 +54,46 @@ const openingIdx = 13
 const blendRange = 6
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.050960642506009,
-  "pente-threat-4": 1.1239930220630003,
-  "pente-threat-31": 1.459570544653132,
-  "pente-threat-22": 0.8803537606181084,
-  "open-tria": 2.1957085115051367,
-  "stretch-tria": 1.5292764748306984,
-  "open-pair": 0.1296360638293225,
-  "capture-threat": 0.7015798757410536,
-  "stretch-two": 0.6623917713049597,
-  "three-gap": 0.34475027885338133,
-  "pente-potential-1": 0.05591541774878589,
-  "pente-potential-2": 0.5832625532375891,
-  "captures": 1.4962031025744689,
+  "open-tessera": 1.4097206762265937,
+  "pente-threat-4": 0.2318706591653759,
+  "pente-threat-31": 0.5916264734551061,
+  "pente-threat-22": -0.06284077784185634,
+  "open-tria": 1.3793936874034614,
+  "stretch-tria": 0.7507174633292845,
+  "open-pair": 0.16270681026058323,
+  "capture-threat": 0.659569918396091,
+  "stretch-two": 0.6707872043747601,
+  "three-gap": 0.3744495004176257,
+  "pente-potential-1": 0.09259919125175926,
+  "pente-potential-2": 0.5839161431794867,
+  "captures": 1.4540183342811654,
   "4-captures": 0.0,
-  "can-block-trias": 0.5095431527521627,
-  "non-quiet-moves": 0.44386462707988555
+  "can-block-trias": 0.4456731880247273,
+  "non-quiet-moves": 0.3272842072600924,
+  "momentum": 0.5529093944014102
 }
-const openingCurrentPlayerBias = -0.18069252419069623
+const openingCurrentPlayerBias = -0.14067522142999536
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.798378070242108,
-  "pente-threat-4": 1.4081197280256328,
-  "pente-threat-31": 1.382613796503783,
-  "pente-threat-22": 1.0517448225916932,
-  "open-tria": 1.8339735638863575,
-  "stretch-tria": 1.3700348289146587,
-  "open-pair": 0.13440603850711588,
-  "capture-threat": 0.581256018274279,
-  "stretch-two": 0.34366993111281396,
-  "three-gap": 0.16056904168248023,
-  "pente-potential-1": 0.5950843190100578,
-  "pente-potential-2": 0.33831765939093433,
-  "captures": 0.8829388019624436,
-  "4-captures": 0.8969046274572554,
-  "can-block-trias": 0.7680491707341534,
-  "non-quiet-moves": 0.2839681169532355
+  "open-tessera": 2.729720177827448,
+  "pente-threat-4": 0.9207411991236506,
+  "pente-threat-31": 0.881280893521175,
+  "pente-threat-22": 0.5411288387312414,
+  "open-tria": 1.5187029024553471,
+  "stretch-tria": 1.103628678733248,
+  "open-pair": 0.14682029588049236,
+  "capture-threat": 0.5471907418297565,
+  "stretch-two": 0.3480237347569042,
+  "three-gap": 0.17115653712292853,
+  "pente-potential-1": 0.550280576277617,
+  "pente-potential-2": 0.3313712431911014,
+  "captures": 0.8287825075898223,
+  "4-captures": 0.8009248743260988,
+  "can-block-trias": 0.7149941115120458,
+  "non-quiet-moves": 0.2625969665540226,
+  "momentum": 0.30066221288418427
 }
-const laterCurrentPlayerBias = -0.04794091302244945
+const laterCurrentPlayerBias = -0.15521665065729115
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -122,6 +124,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = 0
   featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
+  featureDict["momentum"] = 0
   // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
 
@@ -155,6 +158,14 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
 
   // see if we can block all opponent trias
   featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
+
+  // look at recent threat history to evaluate momentum
+  for(let i = 1; i<=4; i++){
+    if (game.threatHistory.length - i < 0) break
+    const parity = i%2 === 0 ? 1 : -1
+    const threatsAdded = game.threatHistory[game.threatHistory.length - i]
+    featureDict["momentum"] += (parity * threatsAdded)
+  }
 
   return featureDict
 }
