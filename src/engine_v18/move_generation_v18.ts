@@ -1,5 +1,5 @@
 import { getBlockingCaptures, getCapturesBlockingAll } from "./evaluation_v18";
-import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v18";
+import { makeMove, undoMove, type GameState, type SearchResult, type EvalFlag, type LinearShape, isRestricted } from "./model_v18";
 import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v18";
 
 
@@ -57,6 +57,7 @@ export function* makeOrderedMoveIterator(
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
   const isValidMove = function (move: number[]) {
+    if(isRestricted(game, move[0], move[1])) return false
     return game.board[move[0]][move[1]] === undefined
   }
 
@@ -263,6 +264,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
   const isValidMove = function (move: number[]) {
+    if(isRestricted(game, move[0], move[1])) return false
     return game.board[move[0]][move[1]] === undefined
   }
   for (const shape of nonQuietShapes) {

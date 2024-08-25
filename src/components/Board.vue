@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { computed, inject } from 'vue'
-import { type GameState, toStandardCoords } from '@/engine_v19/model_v19';
+import { type GameState, isRestricted, toStandardCoords } from '@/engine_v19/model_v19';
 import CapturesArea from './CapturesArea.vue';
 
 interface Props {
@@ -29,6 +29,7 @@ function isLegalMove(r: number, c: number) {
   if (props.game.isOver) return false
   if (props.game.board[r][c] !== undefined) return false
   if (props.game.nMoves === 0 && (r !== center.value || c !== center.value)) return false
+  if (isRestricted(props.game, r, c)) return false
   return true
 }
 

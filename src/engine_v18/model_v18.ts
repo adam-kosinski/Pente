@@ -71,15 +71,25 @@ export function loadFromString(s: string) {
 }
 
 
+// function to prevent the first player from placing their second piece within the center box
+export function isRestricted(game: GameState, r: number, c: number) {
+  // only relevant on the 3rd move of the game
+  if (game.nMoves !== 2) return false
+  const center = Math.floor(game.board.length / 2)
+  if (Math.abs(r-center) < 3 && Math.abs(c-center) < 3) return true
+  return false
+}
+
 
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
   // can't go in a place with a piece
   if (game.board[r][c] !== undefined) return
   // enforce first move in the center
-  const center_r = Math.floor(game.board.length / 2)
-  const center_c = Math.floor(game.board.length / 2)
-  if (game.nMoves === 0 && (r !== center_r || c !== center_c)) return
+  const center = Math.floor(game.board.length / 2)
+  if (game.nMoves === 0 && (r !== center || c !== center)) return
+  // enforce first player's second move not inside box
+  if (isRestricted(game, r, c)) return
 
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
   const moveInfo: MoveInfo = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }

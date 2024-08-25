@@ -1,6 +1,6 @@
 import { gameStrings } from "@/gameStrings";
 import { getCapturesBlockingAll } from "./evaluation_v19";
-import { type GameState, type SearchResult, type LinearShape, createNewGame, makeMove } from "./model_v19";
+import { type GameState, type SearchResult, type LinearShape, createNewGame, makeMove, isRestricted } from "./model_v19";
 import { type TTEntry } from "./ttable_v19";
 
 
@@ -51,16 +51,25 @@ export function* makeOrderedMoveIterator(
 ) {
   // because good moves often cause a cutoff, don't generate more less-good moves unless needed
   // so, create an iterator that generates moves as needed (using generator syntax for readability)
+
   // first move must be in center
   if (game.nMoves === 0) {
     const center = Math.floor(game.board.length / 2)
     yield [center, center]
     return
   }
+  // second move should be one of the only moves that Pente forums think are tenable
+  // if (game.nMoves === 1) {
+  //   for(const m of [[9,10], [9,11], []]){
+  //     // if(isValidMove(m)) yield m
+  //   }
+  //   return
+  // }
 
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
   const isValidMove = function (move: number[]) {
+    if(isRestricted(game, move[0], move[1])) return false
     return game.board[move[0]][move[1]] === undefined
   }
 
@@ -195,12 +204,7 @@ export function* makeOrderedMoveIterator(
       const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
-          // filter symmetric moves in the opening
-          // TODO extend this past move 1 using symmetry checking
-          if (game.nMoves === 1) {
-            if (dy <= 0 || dx < 0 || dx > dy) continue
-          }
-
+          // TODO filter symmetric moves in the opening
           if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
             const move = [r + dy, c + dx]
             if (!isValidMove(move)) continue
@@ -276,6 +280,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
   const isValidMove = function (move: number[]) {
+    if(isRestricted(game, move[0], move[1])) return false
     return game.board[move[0]][move[1]] === undefined
   }
   for (const shape of nonQuietShapes) {
