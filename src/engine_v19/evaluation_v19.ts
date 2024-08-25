@@ -50,50 +50,48 @@ export function evaluatePosition(game: GameState) {
 }
 
 
-const openingIdx = 13
-const blendRange = 6
+const openingIdx = 18
+const blendRange = 8
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.4097206762265937,
-  "pente-threat-4": 0.2318706591653759,
-  "pente-threat-31": 0.5916264734551061,
-  "pente-threat-22": -0.06284077784185634,
-  "open-tria": 1.3793936874034614,
-  "stretch-tria": 0.7507174633292845,
-  "open-pair": 0.16270681026058323,
-  "capture-threat": 0.659569918396091,
-  "stretch-two": 0.6707872043747601,
-  "three-gap": 0.3744495004176257,
-  "pente-potential-1": 0.09259919125175926,
-  "pente-potential-2": 0.5839161431794867,
-  "captures": 1.4540183342811654,
+  "open-tessera": 1.9815398871407215,
+  "pente-threat-4": 1.4687687010311956,
+  "pente-threat-31": 1.4814013095051242,
+  "pente-threat-22": 0.46790846409212267,
+  "open-tria": 2.1031350633674286,
+  "stretch-tria": 1.5975814744508607,
+  "open-pair": 0.16107566602680443,
+  "capture-threat": 0.7119099235323203,
+  "stretch-two": 0.583301281990976,
+  "three-gap": 0.19873877086990244,
+  "pente-potential-1": 0.11097079904640464,
+  "pente-potential-2": 0.4954600787243305,
+  "captures": 1.1885291467307226,
   "4-captures": 0.0,
-  "can-block-trias": 0.4456731880247273,
-  "non-quiet-moves": 0.3272842072600924,
-  "momentum": 0.5529093944014102
+  "can-block-trias": 0.4146782644712924,
+  "non-quiet-moves": 0.35913984601993604
 }
-const openingCurrentPlayerBias = -0.14067522142999536
+const openingCurrentPlayerBias = -0.05700282298501555
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.729720177827448,
-  "pente-threat-4": 0.9207411991236506,
-  "pente-threat-31": 0.881280893521175,
-  "pente-threat-22": 0.5411288387312414,
-  "open-tria": 1.5187029024553471,
-  "stretch-tria": 1.103628678733248,
-  "open-pair": 0.14682029588049236,
-  "capture-threat": 0.5471907418297565,
-  "stretch-two": 0.3480237347569042,
-  "three-gap": 0.17115653712292853,
-  "pente-potential-1": 0.550280576277617,
-  "pente-potential-2": 0.3313712431911014,
-  "captures": 0.8287825075898223,
-  "4-captures": 0.8009248743260988,
-  "can-block-trias": 0.7149941115120458,
-  "non-quiet-moves": 0.2625969665540226,
-  "momentum": 0.30066221288418427
+  "open-tessera": 2.999923629987601,
+  "pente-threat-4": 1.2992806909566563,
+  "pente-threat-31": 1.3013182827966079,
+  "pente-threat-22": 1.1556770756933503,
+  "open-tria": 1.755518722792977,
+  "stretch-tria": 1.3251024313935458,
+  "open-pair": 0.10826835457162565,
+  "capture-threat": 0.537419960611467,
+  "stretch-two": 0.2890406071735094,
+  "three-gap": 0.18266892640438817,
+  "pente-potential-1": 0.6951773228904361,
+  "pente-potential-2": 0.3357946787205056,
+  "captures": 0.8630703943650626,
+  "4-captures": 0.9531909036894282,
+  "can-block-trias": 0.8840063609463874,
+  "non-quiet-moves": 0.2936278201115255
 }
-const laterCurrentPlayerBias = -0.15521665065729115
+const laterCurrentPlayerBias = -0.12990280531930914
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -124,7 +122,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = 0
   featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
-  featureDict["momentum"] = 0
+  // featureDict["momentum"] = 0
   // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
 
@@ -160,12 +158,13 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
 
   // look at recent threat history to evaluate momentum
-  for(let i = 1; i<=4; i++){
-    if (game.threatHistory.length - i < 0) break
-    const parity = i%2 === 0 ? 1 : -1
-    const threatsAdded = game.threatHistory[game.threatHistory.length - i]
-    featureDict["momentum"] += (parity * threatsAdded)
-  }
+  // for(let i = 1; i<=3; i++){
+  //   if (game.threatHistory.length - i < 0) break
+  //   const parity = i%2 === 0 ? 1 : -1
+  //   const weight = 1//0.8**(i-1)
+  //   const threatsAdded = game.threatHistory[game.threatHistory.length - i]
+  //   featureDict["momentum"] += (parity * weight * threatsAdded)
+  // }
 
   return featureDict
 }

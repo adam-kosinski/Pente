@@ -77,7 +77,8 @@ function incrementMoveIndex() {
   const move = moveList.value[moveIndex.value]
   makeMove(game.value, move[0], move[1])
   analyzePosition()
-  console.log(positionFeatureDict(game.value)["momentum"])
+  const parity = game.value.nMoves % 2 === 0 ? 1 : -1
+  console.log(parity * positionFeatureDict(game.value)["momentum"])
 }
 function decrementMoveIndex() {
   if (moveIndex.value <= -1) return
