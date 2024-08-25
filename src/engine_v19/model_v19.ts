@@ -6,6 +6,7 @@ export interface GameState {
   prevMoves: MoveInfo[]
   isOver: boolean
   linearShapes: LinearShape[]
+  threatHistory: number[]  // number of forcing threats (pente threats or trias) made on each move of the game, used to track momentum
 }
 
 export interface MoveInfo {
@@ -57,7 +58,8 @@ export function createNewGame(boardSize: number): GameState {
     nMoves: 0,
     prevMoves: [],
     isOver: false,
-    linearShapes: []
+    linearShapes: [],
+    threatHistory: []
   } as GameState
   for (let r = 0; r < boardSize; r++) {
     game.board.push({})
@@ -74,7 +76,8 @@ export function copyGame(game: GameState): GameState {
     nMoves: game.nMoves,
     prevMoves: JSON.parse(JSON.stringify(game.prevMoves)),
     isOver: game.isOver,
-    linearShapes: JSON.parse(JSON.stringify(game.linearShapes))
+    linearShapes: JSON.parse(JSON.stringify(game.linearShapes)),
+    threatHistory: game.threatHistory.slice()
   }
 }
 
@@ -157,6 +160,9 @@ export function makeMove(game: GameState, r: number, c: number) {
   // console.log("removed", shapeUpdate.removed.map(s => s.hash))
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
 
+  // update threat history
+  const addedThreats = shapeUpdate.added.filter(s => ["open-tria", "stretch-tria"].includes(s.type) || s.type.includes("pente-threat"))
+  game.threatHistory.push(addedThreats.length)
 
   // check for game over
   if (game.captures[0] >= 5 || game.captures[1] >= 5 || game.linearShapes.some(shape => shape.type === "pente")) {
@@ -195,6 +201,7 @@ export function undoMove(game: GameState) {
   // console.log(game.linearShapes.map(s => s.hash).join("\n"))
 
   // update other variables
+  game.threatHistory.pop()
   game.currentPlayer = prevPlayer
   game.nMoves -= 1
   game.isOver = false
