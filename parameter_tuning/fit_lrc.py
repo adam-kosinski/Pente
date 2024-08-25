@@ -122,12 +122,12 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    # fit(data, 13)
-    # return
+    fit(data, 13)
+    return
 
     indices = []
     results = []
-    for opening_idx in range(0, 40):
+    for opening_idx in range(5, 30):
         result = fit(data, opening_idx, False)
         if result != "skip":
             indices.append(opening_idx)

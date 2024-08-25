@@ -50,48 +50,50 @@ export function evaluatePosition(game: GameState) {
 }
 
 
-const openingIdx = 18
-const blendRange = 8
+const openingIdx = 13
+const blendRange = 6
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.9815398871407215,
-  "pente-threat-4": 1.4687687010311956,
-  "pente-threat-31": 1.4814013095051242,
-  "pente-threat-22": 0.46790846409212267,
-  "open-tria": 2.1031350633674286,
-  "stretch-tria": 1.5975814744508607,
-  "open-pair": 0.16107566602680443,
-  "capture-threat": 0.7119099235323203,
-  "stretch-two": 0.583301281990976,
-  "three-gap": 0.19873877086990244,
-  "pente-potential-1": 0.11097079904640464,
-  "pente-potential-2": 0.4954600787243305,
-  "captures": 1.1885291467307226,
+  "open-tessera": 1.09196884114321,
+  "pente-threat-4": 1.1269100111739518,
+  "pente-threat-31": 1.4746191199474363,
+  "pente-threat-22": 0.8633205468991513,
+  "open-tria": 2.2411762622892017,
+  "stretch-tria": 1.5647589584161157,
+  "open-pair": 0.16697598180822756,
+  "capture-threat": 0.651118013382177,
+  "stretch-two": 0.6942526722599187,
+  "three-gap": 0.3897691876626624,
+  "pente-potential-1": 0.06622798173859057,
+  "pente-potential-2": 0.6029369708384013,
+  "captures": 1.4490197004354368,
   "4-captures": 0.0,
-  "can-block-trias": 0.4146782644712924,
-  "non-quiet-moves": 0.35913984601993604
+  "can-block-trias": 0.5842933741981076,
+  "non-quiet-moves": 0.47202937502645925,
+  "not-in-shape": 0.04762031070973125
 }
-const openingCurrentPlayerBias = -0.05700282298501555
+const openingCurrentPlayerBias = -0.2522576144672106
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.999923629987601,
-  "pente-threat-4": 1.2992806909566563,
-  "pente-threat-31": 1.3013182827966079,
-  "pente-threat-22": 1.1556770756933503,
-  "open-tria": 1.755518722792977,
-  "stretch-tria": 1.3251024313935458,
-  "open-pair": 0.10826835457162565,
-  "capture-threat": 0.537419960611467,
-  "stretch-two": 0.2890406071735094,
-  "three-gap": 0.18266892640438817,
-  "pente-potential-1": 0.6951773228904361,
-  "pente-potential-2": 0.3357946787205056,
-  "captures": 0.8630703943650626,
-  "4-captures": 0.9531909036894282,
-  "can-block-trias": 0.8840063609463874,
-  "non-quiet-moves": 0.2936278201115255
+  "open-tessera": 2.7534588021054844,
+  "pente-threat-4": 1.3918908934897476,
+  "pente-threat-31": 1.3631066196895458,
+  "pente-threat-22": 1.1154033401602412,
+  "open-tria": 1.7738350164880838,
+  "stretch-tria": 1.338874085652772,
+  "open-pair": 0.08825320631309726,
+  "capture-threat": 0.6284732703343117,
+  "stretch-two": 0.29941407342134035,
+  "three-gap": 0.08754044074489892,
+  "pente-potential-1": 0.6057057503270546,
+  "pente-potential-2": 0.2916796921220024,
+  "captures": 0.9432543685080037,
+  "4-captures": 0.915172751334423,
+  "can-block-trias": 0.6762239431184117,
+  "non-quiet-moves": 0.2604025324878405,
+  "not-in-shape": -0.08724525042188253
 }
-const laterCurrentPlayerBias = -0.12990280531930914
+const laterCurrentPlayerBias = 0.05690662516990377
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -122,6 +124,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = 0
   featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
+  featureDict["not-in-shape"] = 0
   // featureDict["momentum"] = 0
   // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
@@ -156,6 +159,25 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
 
   // see if we can block all opponent trias
   featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
+
+  // count fraction of gems in a linear shape
+  const gemLocations = new Set<string>()
+  // iterate through linear shapes
+  for(const shape of game.linearShapes){
+    for(let i=0; i<shape.length; i++){
+      if(shape.pattern.charAt(i) !== "_"){
+        gemLocations.add(loc(shape, i))
+      }
+    }
+  }
+  // iterate through gems on board
+  for (let r = 0; r < game.board.length; r++) {
+    for (const c in game.board[r]) {
+      if(!gemLocations.has([r,c].toString())){
+        featureDict["not-in-shape"] += game.board[r][c] === game.currentPlayer ? 1 : -1
+      }
+    }
+  }
 
   // look at recent threat history to evaluate momentum
   // for(let i = 1; i<=3; i++){
