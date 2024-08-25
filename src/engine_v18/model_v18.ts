@@ -76,7 +76,7 @@ export function isRestricted(game: GameState, r: number, c: number) {
   // only relevant on the 3rd move of the game
   if (game.nMoves !== 2) return false
   const center = Math.floor(game.board.length / 2)
-  if (Math.abs(r-center) < 3 && Math.abs(c-center) < 3) return true
+  if (Math.abs(r - center) < 3 && Math.abs(c - center) < 3) return true
   return false
 }
 

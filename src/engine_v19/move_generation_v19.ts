@@ -4,29 +4,44 @@ import { type GameState, type SearchResult, type LinearShape, createNewGame, mak
 import { type TTEntry } from "./ttable_v19";
 
 
-// store which shapes should be looked at first, to use when ordering moves
-// earlier is more important
+// store which shapes should be looked at first, to use when ordering moves, earlier is more important
 const shapePriorityDef = [
-  "pente-threat-4",
-  "pente-threat-31",
-  "pente-threat-22",
-  // stuff that can create a double pente threat
-  "open-tria",
-  "stretch-tria",
-  // stuff that can create a pente threat
-  "extendable-stretch-tria-2",  // contains vulnerable pair
-  "pente-potential-2",  // contains vulnerable pair
-  "extendable-stretch-tria-1",
-  "pente-potential-1",
-  "extendable-tria",
+  "my-pente-threat-4",
+  "my-pente-threat-31",
+  "my-pente-threat-22",
+  "opponent-pente-threat-4",
+  "opponent-pente-threat-31",
+  "opponent-pente-threat-22",
+  // stuff that can create an open tessera (double pente threat)
+  "my-stretch-tria", // stretch tria first b/c has a vulnerable pair
+  "my-open-tria",
+  "opponent-stretch-tria",
+  "opponent-open-tria",
+  // stuff that can create a pente threat (important for me, not so important to block opponent from doing this)
+  "my-extendable-stretch-tria-2",  // contains vulnerable pair
+  "my-pente-potential-2",  // contains vulnerable pair
+  "my-extendable-stretch-tria-1",
+  "my-pente-potential-1",
+  "my-extendable-tria",
   // favor things that can create a tria
-  "stretch-two",
-  "open-pair",
-  "double-stretch-two",
-  // captures matter but aren't forcing
-  "capture-threat",
+  "my-open-pair",
+  "my-stretch-two",
+  "my-double-stretch-two",
+  // captures can sometimes be forcing
+  "my-capture-threat",
+  // block opponent non-forcing shapes
+  "opponent-capture-threat",
+  "opponent-open-pair",
+  "opponent-stretch-two",
+  "opponent-double-stretch-two",
+  "opponent-extendable-stretch-tria-2",  // contains vulnerable pair
+  "opponent-pente-potential-2",  // contains vulnerable pair
+  "opponent-extendable-stretch-tria-1",
+  "opponent-pente-potential-1",
+  "opponent-extendable-tria",  
   // favor keeping gems in line with each other
-  "three-gap"
+  "my-three-gap",
+  "opponent-three-gap"
 ]
 
 // if shape isn't owned by me or is in this below list, is considered non-forcing
@@ -146,9 +161,12 @@ export function* makeOrderedMoveIterator(
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
   game.linearShapes.sort((a, b) => {
-    if (a.type in shapePriority && b.type in shapePriority) return shapePriority[a.type] - shapePriority[b.type]
-    else if (a.type in shapePriority) return -1
-    else if (b.type in shapePriority) return 1
+    const aKey = (a.owner === game.currentPlayer ? "my-" : "opponent-") + a.type
+    const bKey = (b.owner === game.currentPlayer ? "my-" : "opponent-") + b.type
+
+    if (aKey in shapePriority && bKey in shapePriority) return shapePriority[aKey] - shapePriority[bKey]
+    else if (aKey in shapePriority) return -1
+    else if (bKey in shapePriority) return 1
     return 0
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
