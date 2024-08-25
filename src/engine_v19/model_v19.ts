@@ -216,7 +216,10 @@ export const linearShapeDef = {
   "double-stretch-two": "_1__1_",
   "three-gap": "1___1",
   "pente-potential-1": "1_1_1",
-  "pente-potential-2": "1__11"
+  "pente-potential-2": "1__11",
+  // "blocked-pente-4": "11110",
+  // "blocked-pente-31": "11101",
+  // "blocked-pente-22": "11011"
 }
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup

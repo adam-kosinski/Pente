@@ -225,3 +225,7 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
   return true
 }
 
+
+export function getNonlinearShapes(game: GameState){
+  // shapes: small L, big L, hat, V, wing
+}
