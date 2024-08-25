@@ -110,8 +110,8 @@ export function makeMove(game: GameState, r: number, c: number) {
   // enforce first move in the center
   const center = Math.floor(game.board.length / 2)
   if (game.nMoves === 0 && (r !== center || c !== center)) return
-  // enforce first player's second move not inside box
-  if (isRestricted(game, r, c)) return
+  // enforce first player's second move not inside box - actually don't do this b/c the old database didn't follow this rule, so this prevented recreating games for creating the feature CSV
+  // if (isRestricted(game, r, c)) return
 
   const shapeUpdate: LinearShapeUpdate = { added: [], removed: [] }  // easier to reference as a separate variable from prevMove
   const moveInfo: MoveInfo = { addedGems: [], removedGems: [], linearShapeUpdate: shapeUpdate }
