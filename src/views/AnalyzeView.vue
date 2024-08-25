@@ -150,7 +150,7 @@ function analyzePosition() {
 }
 
 function runComputerGame() {
-  window.location.href = '/analyze?s=' + playGame(4, 5, 15, 100).gameString
+  window.location.href = '/analyze?s=' + playGame(5, 5, 15, 100).gameString
 }
 
 onMounted(() => {

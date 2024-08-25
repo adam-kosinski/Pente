@@ -3,7 +3,7 @@ import { provide } from 'vue';
 import { RouterLink, RouterView } from 'vue-router'
 
 // control whether UI uses coords representing the data, or coords that Pente.org uses (standard)
-provide("useStandardCoords", false)
+provide("useStandardCoords", true)
 </script>
 
 <template>

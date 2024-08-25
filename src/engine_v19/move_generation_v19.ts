@@ -52,6 +52,13 @@ export function* makeOrderedMoveIterator(
   // because good moves often cause a cutoff, don't generate more less-good moves unless needed
   // so, create an iterator that generates moves as needed (using generator syntax for readability)
 
+  // setup
+  const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
+  const isValidMove = function (move: number[]) {
+    if (isRestricted(game, move[0], move[1])) return false
+    return game.board[move[0]][move[1]] === undefined
+  }
+
   // first move must be in center
   if (game.nMoves === 0) {
     const center = Math.floor(game.board.length / 2)
@@ -59,18 +66,20 @@ export function* makeOrderedMoveIterator(
     return
   }
   // second move should be one of the only moves that Pente forums think are tenable
-  // if (game.nMoves === 1) {
-  //   for(const m of [[9,10], [9,11], []]){
-  //     // if(isValidMove(m)) yield m
-  //   }
-  //   return
-  // }
-
-  // setup
-  const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const isValidMove = function (move: number[]) {
-    if(isRestricted(game, move[0], move[1])) return false
-    return game.board[move[0]][move[1]] === undefined
+  // https://pente.org/gameServer/forums/thread.jspa?forumID=27&threadID=2925&messageID=8961#8961
+  if (game.nMoves === 1) {
+    for (const m of [[9, 10], [9, 11], [10, 10], [10, 11], [10, 12], [10, 13], [11, 12], [11, 13], [12, 13]]) {
+      if (isValidMove(m)) yield m
+    }
+    return
+  }
+  // third move should be orthogonal to center, two spaces away, no matter what the second player did
+  // pretty good consensus here: https://pente.org/gameServer/forums/thread.jspa?forumID=27&threadID=4043&start=0&tstart=125#15843
+  if (game.nMoves === 2) {
+    for (const m of [[6, 9], [9, 6], [9, 12], [12, 9]]) {
+      if (isValidMove(m)) yield m
+    }
+    return
   }
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
@@ -280,7 +289,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
   const isValidMove = function (move: number[]) {
-    if(isRestricted(game, move[0], move[1])) return false
+    if (isRestricted(game, move[0], move[1])) return false
     return game.board[move[0]][move[1]] === undefined
   }
   for (const shape of nonQuietShapes) {

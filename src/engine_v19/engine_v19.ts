@@ -49,8 +49,8 @@ function chooseFromWeights(weights: number[]): number {
 
 export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
   // in the opening, look into several variations and choose one randomly, weighted by how good it is
-  if (game.nMoves <= 4) {
-    const nVariations = 5
+  if (game.nMoves <= 5) {
+    const nVariations = 3
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
     const choiceProbs = softmax(results.map(r => r.eval), 0.3)  // bigger eval is better for me, will be chosen more likely
     const chosenIdx = chooseFromWeights(choiceProbs)
@@ -107,7 +107,8 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
       if (results.length === 0) {
         // ran out of moves
-        console.warn("No moves left, returning what we have")
+        console.warn("Searching depth " + depth + " resulted in no results, returning what we have:")
+        console.log(JSON.stringify(resultsToReturn))
         break searchLoop
       }
 
@@ -346,6 +347,10 @@ function principalVariationSearch(
 
   // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion is probably unreliable)
   if (!usingNullWindow) transpositionTableSet(game, bestResult, depth)
+
+  if(allMoveResults.length === 0){
+    console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`)
+  }
 
   // return
   if (returnAllMoveResults) {

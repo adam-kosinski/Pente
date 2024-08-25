@@ -183,12 +183,7 @@ export function* makeOrderedMoveIterator(
       const dists = [0, -1, 1, -2, 2]
       for (const dy of dists) {
         for (const dx of dists) {
-          // filter symmetric moves in the opening
-          // TODO extend this past move 1 using symmetry checking
-          if (game.nMoves === 1) {
-            if (dy <= 0 || dx < 0 || dx > dy) continue
-          }
-
+          // TODO filter symmetric moves in the opening
           if (r + dy >= 0 && r + dy < game.board.length && c + dx >= 0 && c + dx < game.board.length) {
             const move = [r + dy, c + dx]
             if (!isValidMove(move)) continue
