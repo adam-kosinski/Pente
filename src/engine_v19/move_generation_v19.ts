@@ -343,7 +343,7 @@ export function* makeOrderedMoveIterator(
   // }
 
   // return all other spots near gems, looking at spots near gems first
-  const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
+  const dists = game.nMoves < 4 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
   for (const dy of dists) {
     for (const dx of dists) {
       // do near my gems first
