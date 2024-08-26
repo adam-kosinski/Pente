@@ -97,12 +97,6 @@ function goToPosition(position: GameState) {
   analyzePosition()
 }
 
-function profile() {
-  console.profile()
-  analyzePosition()
-  console.profileEnd()
-}
-
 function timeTest() {
   const iterations = 1000000000
   const f = (n: number) => n < 0
@@ -221,7 +215,6 @@ onUnmounted(() => {
 
     <div v-if="showDebug" class="button-panel">
       <button @click="analyzePosition()">Analyze</button><br>
-      <button @click="profile()">Profile</button><br>
       <button @click="printMoves()">Generate Moves</button><br>
       <button @click="printForcingMoves()">Forcing Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>

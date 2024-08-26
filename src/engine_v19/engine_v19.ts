@@ -337,7 +337,8 @@ function principalVariationSearch(
     moveIndex++
 
     // limit branching factor - NOTE: this causes embarassingly wrong evaluations sometimes
-    if (moveIndex >= 20) break
+    // don't do this in the opening
+    if (game.nMoves > 6 && moveIndex >= 20) break
   }
   nMovesGenerated.push(moveIndex)
 

@@ -250,104 +250,104 @@ export function* makeOrderedMoveIterator(
   gemLocations["me"].sort(distanceCompare)
   gemLocations["opponent"].sort(distanceCompare)
 
-  // suggest spots that make stretch twos, because those are part of many momentum shapes in the opening
-  // function below checks if the stretch two would be blocked, to avoid suggesting that
-  const otherPlayer = Number(!game.currentPlayer)
-  const stretchTwoBlocked = (gem: number[], dy: number, dx: number) => {  // dy and dx should be -1,0, or 1
-    for (const i of [-1, 1, 3]) {
-      if (game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
-    }
-    return false
-  }
-  // prioritize orthogonal stretch twos because I think those are stronger
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
-      const move = [gem[0] + 2 * dy, gem[1] + 2 * dx]
-      if (stretchTwoBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
-  // diagonal stretch twos
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
-      const move = [gem[0] + 2 * dy, gem[1] + 2 * dx]
-      if (stretchTwoBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
-  // suggest spots with the potential to make open pairs (tria potential)
-  // as with stretch twos, if the open pair would be blocked, put it into a list for later
-  const openPairBlocked = (gem: number[], dy: number, dx: number) => { // dy and dx should be -1,0, or 1
-    for (const i of [-1, 2]) {
-      if (game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
-    }
-    return false
-  }
-  // prioritize orthogonal open pairs because I think those are stronger
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
-      const move = [gem[0] + dy, gem[1] + dx]
-      if (openPairBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
-  // diagonal open pairs
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
-      const move = [gem[0] + dy, gem[1] + dx]
-      if (openPairBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
-  // suggest spots with the potential to make double stretch twos (stretch tria potential)
-  // do these after open pairs because evaluation data fitting suggests they matter less
-  const doubleStretchTwoBlocked = (gem: number[], dy: number, dx: number) => { // dy and dx should be -1,0, or 1
-    for (const i of [-1, 1, 2, 4]) {
-      if (game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
-    }
-    return false
-  }
-  // prioritize orthogonal because I think those are stronger
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
-      const move = [gem[0] + 3 * dy, gem[1] + 3 * dx]
-      if (doubleStretchTwoBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
-  // diagonal
-  for (const gem of gemLocations["me"]) {
-    for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
-      const move = [gem[0] + 3 * dy, gem[1] + 3 * dx]
-      if (doubleStretchTwoBlocked(gem, dy, dx)) continue
-      if (isValidNewMove(move)) {
-        yield move
-        registerMove(move)
-      }
-    }
-  }
+  // // suggest spots that make stretch twos, because those are part of many momentum shapes in the opening
+  // // function below checks if the stretch two would be blocked, to avoid suggesting that
+  // const otherPlayer = Number(!game.currentPlayer)
+  // const stretchTwoBlocked = (gem: number[], dy: number, dx: number) => {  // dy and dx should be -1,0, or 1
+  //   for (const i of [-1, 1, 3]) {
+  //     if (game.board[gem[0] + i * dy] && game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
+  //   }
+  //   return false
+  // }
+  // // prioritize orthogonal stretch twos because I think those are stronger
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
+  //     const move = [gem[0] + 2 * dy, gem[1] + 2 * dx]
+  //     if (stretchTwoBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
+  // // diagonal stretch twos
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+  //     const move = [gem[0] + 2 * dy, gem[1] + 2 * dx]
+  //     if (stretchTwoBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
+  // // suggest spots with the potential to make open pairs (tria potential)
+  // // as with stretch twos, if the open pair would be blocked, put it into a list for later
+  // const openPairBlocked = (gem: number[], dy: number, dx: number) => { // dy and dx should be -1,0, or 1
+  //   for (const i of [-1, 2]) {
+  //     if (game.board[gem[0] + i * dy] && game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
+  //   }
+  //   return false
+  // }
+  // // prioritize orthogonal open pairs because I think those are stronger
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
+  //     const move = [gem[0] + dy, gem[1] + dx]
+  //     if (openPairBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
+  // // diagonal open pairs
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+  //     const move = [gem[0] + dy, gem[1] + dx]
+  //     if (openPairBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
+  // // suggest spots with the potential to make double stretch twos (stretch tria potential)
+  // // do these after open pairs because evaluation data fitting suggests they matter less
+  // const doubleStretchTwoBlocked = (gem: number[], dy: number, dx: number) => { // dy and dx should be -1,0, or 1
+  //   for (const i of [-1, 1, 2, 4]) {
+  //     if (game.board[gem[0] + i * dy] && game.board[gem[0] + i * dy][gem[1] + i * dx] === otherPlayer) return true
+  //   }
+  //   return false
+  // }
+  // // prioritize orthogonal because I think those are stronger
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, 0], [0, -1], [0, 1], [1, 0]]) {
+  //     const move = [gem[0] + 3 * dy, gem[1] + 3 * dx]
+  //     if (doubleStretchTwoBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
+  // // diagonal
+  // for (const gem of gemLocations["me"]) {
+  //   for (const [dy, dx] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+  //     const move = [gem[0] + 3 * dy, gem[1] + 3 * dx]
+  //     if (doubleStretchTwoBlocked(gem, dy, dx)) continue
+  //     if (isValidNewMove(move)) {
+  //       yield move
+  //       registerMove(move)
+  //     }
+  //   }
+  // }
 
-  // return all other spots near gems
-  // do near my gems first
-  for (const gem of gemLocations["me"].concat(gemLocations["opponent"])) {
-    const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
-    for (const dy of dists) {
-      for (const dx of dists) {
+  // return all other spots near gems, looking at spots near gems first
+  const dists = game.nMoves < 6 ? [0, -1, 1, -2, 2, -3, 3] : [0, -1, 1, -2, 2]
+  for (const dy of dists) {
+    for (const dx of dists) {
+      // do near my gems first
+      for (const gem of gemLocations["me"].concat(gemLocations["opponent"])) {
         if (dy === 0 && dx === 0) continue
         const m = [gem[0] + dy, gem[1] + dx]
         if (isValidNewMove(m)) {
