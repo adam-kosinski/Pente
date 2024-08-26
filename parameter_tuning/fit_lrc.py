@@ -95,7 +95,7 @@ def fit(data, opening_idx, show_coef=True):
         # plot model parameters
 
         fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-        fig.suptitle(f"Opening Index: {opening_idx}\nTrain accuracy: {accuracy_train:.4f}\nTest accuracy: {accuracy_test:.4f}")
+        fig.suptitle(f"Opening Index: {opening_idx}\nopening fraction train, test = {opening_frac_train:.3f}, {opening_frac_test:.3f}\nTrain accuracy: {accuracy_train:.4f}\nTest accuracy: {accuracy_test:.4f}")
 
         ax1.barh(X_train.columns, opening_model.coef_[0])
         ax1.barh(["bias"], opening_model.intercept_[0])
@@ -122,8 +122,8 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    # fit(data, 13)
-    # return
+    fit(data, 16)
+    return
 
     indices = []
     results = []
