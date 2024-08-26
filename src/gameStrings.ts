@@ -1,1 +1,1 @@
-export const gameStrings = []
+export const gameStrings: string[] = []

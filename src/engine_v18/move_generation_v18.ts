@@ -1,6 +1,6 @@
-import { getBlockingCaptures, getCapturesBlockingAll } from "./evaluation_v18";
-import { makeMove, undoMove, isRestricted, type GameState, type SearchResult, type EvalFlag, type LinearShape } from "./model_v18";
-import { type TTEntry, transpositionTable, transpositionTableSet, TTableKey } from "./ttable_v18";
+import { getCapturesBlockingAll } from "./evaluation_v18";
+import { isRestricted, type GameState, type SearchResult, type LinearShape } from "./model_v18";
+import { type TTEntry } from "./ttable_v18";
 
 
 
