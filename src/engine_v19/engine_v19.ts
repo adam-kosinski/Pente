@@ -49,8 +49,8 @@ function chooseFromWeights(weights: number[]): number {
 
 export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
   // in the opening, look into several variations and choose one randomly, weighted by how good it is
-  if (game.nMoves <= 5) {
-    const nVariations = 3
+  if (game.nMoves < 6) {
+    const nVariations = game.nMoves === 2 ? 4 : game.nMoves < 4 ? 3 : 2
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
     const choiceProbs = softmax(results.map(r => r.eval), 0.3)  // bigger eval is better for me, will be chosen more likely
     const chosenIdx = chooseFromWeights(choiceProbs)
@@ -252,14 +252,14 @@ function principalVariationSearch(
   // because if I did the eval function would have seen this and marked this position
   // as won for me (since I have a winning move)
   let extension = 0
-  const fourOpponentCaptures = game.captures[Number(!game.currentPlayer) as 0|1] === 4
+  const fourOpponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1] === 4
   const penteThreatExists = game.linearShapes.some(shape => shape.type.includes("pente-threat"))
   if (penteThreatExists || (fourOpponentCaptures && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer))) {
     extension = 1
   }
 
   let moveIndex = 0
-  const moveIterator = makeOrderedMoveIterator(game, false, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
+  const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
     if (movesToExclude.some(move => move[0] === r && move[1] === c)) {
       continue
@@ -349,7 +349,7 @@ function principalVariationSearch(
   // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion is probably unreliable)
   if (!usingNullWindow) transpositionTableSet(game, bestResult, depth)
 
-  if(allMoveResults.length === 0){
+  if (allMoveResults.length === 0) {
     console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`)
   }
 

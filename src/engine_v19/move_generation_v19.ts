@@ -57,8 +57,7 @@ const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDe
 
 export function* makeOrderedMoveIterator(
   game: GameState,
-  forcingOnly = false,  // useful for static evaluation
-  ply: number = 1,  // only used if have killer moves
+  ply: number,  // only used if have killer moves
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
   killerMoves: number[][][] = [],
@@ -112,7 +111,7 @@ export function* makeOrderedMoveIterator(
         registerMove(m)
       }
     }
-    return
+    if (ply === 1 || ply === 3) return  // limit it to this if we are making the move
   }
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
@@ -171,7 +170,7 @@ export function* makeOrderedMoveIterator(
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice()
-
+  
   let includeNonShapeMoves = true  // set to false if we've narrowed down sensible moves to be within shapes, see below
 
   // if I have a pente threat, the only relevant move is winning
@@ -206,17 +205,11 @@ export function* makeOrderedMoveIterator(
     }
   }
 
-  if (forcingOnly) {
-    sortedShapes = sortedShapes.filter(shape => nonForcingShapes.includes(shape.type))
-    includeNonShapeMoves = false
-  }
-
   // find moves in shapes
   for (const shape of sortedShapes) {
     const dy = shape.dy
     const dx = shape.dx
     for (let i = 0, r = shape.begin[0], c = shape.begin[1]; i < shape.length; i++, r += dy, c += dx) {
-      if (forcingOnly && shape.owner !== game.currentPlayer) continue
       const m = [r, c]
       if (isValidNewMove(m)) {
         yield m

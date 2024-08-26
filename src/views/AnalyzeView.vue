@@ -114,13 +114,13 @@ function timeTest() {
 }
 
 function printMoves() {
-  for (const move of makeOrderedMoveIterator(game.value)) {
+  for (const move of makeOrderedMoveIterator(game.value, 1)) {
     console.log(move)
   }
   console.log("")
 }
 function printForcingMoves() {
-  for (const move of makeOrderedMoveIterator(game.value, true)) {
+  for (const move of makeOrderedMoveIterator(game.value, 1)) {
     console.log(move)
   }
   console.log("")

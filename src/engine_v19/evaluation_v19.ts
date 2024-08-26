@@ -124,7 +124,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["move-index"] = game.nMoves
   // featureDict["not-in-shape"] = 0
   // featureDict["momentum"] = 0
-  // featureDict["forcing-moves"] = Array.from(makeOrderedMoveIterator(game, true)).length
 
 
   // count linear shapes, for me (current player) and for the opponent
