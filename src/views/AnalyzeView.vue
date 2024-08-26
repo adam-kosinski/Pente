@@ -12,6 +12,7 @@ import { evaluatePosition, getNonlinearShapes, positionFeatureDict } from '@/eng
 
 import AnalysisWorker from "../analysisWorker?worker"
 import { detectSymmetry } from '@/engine_v19/move_generation_v19';
+import router from "../router/index"
 
 const showDebug = ref(false)
 function toggleDebug(e: KeyboardEvent) {
@@ -145,7 +146,8 @@ function analyzePosition() {
 }
 
 function runComputerGame() {
-  window.location.href = '/analyze?s=' + playGame(5, 5, 15, 100).gameString
+  window.open(router.resolve("/analyze?s=" + playGame(5, 5, 15, 100).gameString).href, "_blank")
+
 }
 
 onMounted(() => {
