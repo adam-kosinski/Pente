@@ -50,8 +50,7 @@ function chooseFromWeights(weights: number[]): number {
 export function chooseMove(game: GameState, maxDepth: number, maxMs: number = Infinity, verbose: boolean = true): number[] {
   // in the opening, look into several variations and choose one randomly, weighted by how good it is
   if (game.nMoves < 6) {
-    // const nVariations = game.nMoves === 2 ? 4 : game.nMoves < 4 ? 3 : 2
-    const nVariations = 6
+    const nVariations = game.nMoves === 2 ? 4 : game.nMoves < 4 ? 3 : 2
     const results = findBestMoves(game, nVariations, maxDepth, maxMs / nVariations, false, verbose)
     const choiceProbs = softmax(results.map(r => r.eval), 0.3)  // bigger eval is better for me, will be chosen more likely
     const chosenIdx = chooseFromWeights(choiceProbs)
