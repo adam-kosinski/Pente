@@ -58,6 +58,7 @@ const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDe
 export function* makeOrderedMoveIterator(
   game: GameState,
   ply: number,  // only used if have killer moves
+  movesToExclude: number[][] = [],
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
   killerMoves: number[][][] = [],
@@ -68,14 +69,24 @@ export function* makeOrderedMoveIterator(
 
   // setup
   const moveHashes = new Set()  // remember moves we've returned already, so we don't repeat - values are just "r,c"
+  const movesToExcludeHashes = new Set(movesToExclude.map(m => m.toString()))
+  const symmetries = game.nMoves <= 5 ? detectSymmetry(game) : []
+  const center = Math.floor(game.board.length / 2)
+  // mark any symmetric moves to exclude so they don't get tried
+  for (const sym of symmetries) {
+    for(const m of movesToExclude){
+      const duplicate = applySymmetry(m[0], m[1], sym, center)
+      movesToExcludeHashes.add(duplicate.toString())
+    }
+  }
+
   const isValidNewMove = function (move: number[]) {
     if (isRestricted(game, move[0], move[1])) return false
     if (moveHashes.has(move.toString())) return false
+    if (movesToExcludeHashes.has(move.toString())) return false
     if (move[0] < 0 || move[0] >= game.board.length || move[1] < 0 || move[1] >= game.board.length) return false
     return game.board[move[0]][move[1]] === undefined
   }
-  const symmetries = game.nMoves <= 5 ? detectSymmetry(game) : []
-  const center = Math.floor(game.board.length / 2)
 
   const registerMove = function (m: number[]) {
     moveHashes.add(m.toString())
@@ -88,7 +99,11 @@ export function* makeOrderedMoveIterator(
 
   // first move must be in center
   if (game.nMoves === 0) {
-    yield [center, center]
+    // check if valid, because it might be excluded if we are on the second variation
+    // in which case we wouldn't return any other moves, because this is the only possible move
+    if(isValidNewMove([center, center])){
+      yield [center, center]
+    }
     return
   }
   // second move should be one of the only moves that Pente forums think are tenable
@@ -100,7 +115,7 @@ export function* makeOrderedMoveIterator(
         registerMove(m)
       }
     }
-    return
+    if (moveHashes.size !== 0) return
   }
   // third move should be orthogonal to center, two spaces away, no matter what the second player did
   // pretty good consensus here: https://pente.org/gameServer/forums/thread.jspa?forumID=27&threadID=4043&start=0&tstart=125#15843
@@ -111,7 +126,7 @@ export function* makeOrderedMoveIterator(
         registerMove(m)
       }
     }
-    if (ply === 1 || ply === 3) return  // limit it to this if we are making the move
+    if (moveHashes.size !== 0 && (ply === 1 || ply === 3)) return  // ply check: limit it to this if we are making the move
   }
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
@@ -170,7 +185,7 @@ export function* makeOrderedMoveIterator(
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice()
-  
+
   let includeNonShapeMoves = true  // set to false if we've narrowed down sensible moves to be within shapes, see below
 
   // if I have a pente threat, the only relevant move is winning

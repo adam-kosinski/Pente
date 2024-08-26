@@ -251,20 +251,20 @@ function principalVariationSearch(
   // note that I won't have a pente or 5th capture threat (only the opponent will),
   // because if I did the eval function would have seen this and marked this position
   // as won for me (since I have a winning move)
+  // don't extend on depth 1, because need to return something for the depth 1 iteration of iterative deepening,
+  // and extensions might cause us to run out of time
   let extension = 0
-  const fourOpponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1] === 4
-  const penteThreatExists = game.linearShapes.some(shape => shape.type.includes("pente-threat"))
-  if (penteThreatExists || (fourOpponentCaptures && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer))) {
-    extension = 1
+  if(depth > 1){
+    const fourOpponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1] === 4
+    const penteThreatExists = game.linearShapes.some(shape => shape.type.includes("pente-threat"))
+    if (penteThreatExists || (fourOpponentCaptures && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner !== game.currentPlayer))) {
+      extension = 1
+    }
   }
 
   let moveIndex = 0
-  const moveIterator = makeOrderedMoveIterator(game, ply, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
+  const moveIterator = makeOrderedMoveIterator(game, ply, movesToExclude, principalVariation[0], tableEntry, killerMoves, prevDepthResults)
   for (const [r, c] of moveIterator) {
-    if (movesToExclude.some(move => move[0] === r && move[1] === c)) {
-      continue
-    }
-
     // search child
     makeMove(game, r, c)
     const restOfPrincipalVariation = principalVariation.slice(1)
