@@ -71,16 +71,6 @@ export function loadFromString(s: string) {
 }
 
 
-// function to prevent the first player from placing their second piece within the center box
-export function isRestricted(game: GameState, r: number, c: number) {
-  // only relevant on the 3rd move of the game
-  if (game.nMoves !== 2) return false
-  const center = Math.floor(game.board.length / 2)
-  if (Math.abs(r - center) < 3 && Math.abs(c - center) < 3) return true
-  return false
-}
-
-
 export function makeMove(game: GameState, r: number, c: number) {
   if (r < 0 || r >= game.board.length || c < 0 || c >= game.board.length) return
   // can't go in a place with a piece

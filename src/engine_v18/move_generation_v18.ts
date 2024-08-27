@@ -1,5 +1,5 @@
 import { getCapturesBlockingAll } from "./evaluation_v18";
-import { isRestricted, type GameState, type SearchResult, type LinearShape } from "./model_v18";
+import { type GameState, type SearchResult, type LinearShape } from "./model_v18";
 import { type TTEntry } from "./ttable_v18";
 
 
@@ -34,6 +34,17 @@ const nonForcingShapes = [
 ]
 // convert to an object instead of an array for faster lookup
 const shapePriority: Record<string, number> = Object.fromEntries(shapePriorityDef.map((name, idx) => [name, idx]))
+
+
+
+// function to prevent the first player from placing their second piece within the center box
+export function isRestricted(game: GameState, r: number, c: number) {
+  // only relevant on the 3rd move of the game
+  if (game.nMoves !== 2) return false
+  const center = Math.floor(game.board.length / 2)
+  if (Math.abs(r - center) < 3 && Math.abs(c - center) < 3) return true
+  return false
+}
 
 
 export function* makeOrderedMoveIterator(
