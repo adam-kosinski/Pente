@@ -235,9 +235,10 @@ function principalVariationSearch(
     else if (tableEntry.result.evalFlag === "lower-bound") {
       alpha = Math.max(alpha, tableEntry.result.eval)
     }
-    else if (tableEntry.result.evalFlag === "upper-bound") {
-      beta = Math.min(beta, tableEntry.result.eval)
-    }
+    // this code seems to be incorrect because it leads to wrong evaluations of +Infinity when we are definitely losing
+    // else if (tableEntry.result.evalFlag === "upper-bound") {
+    //   beta = Math.min(beta, tableEntry.result.eval)
+    // }
     if (alpha >= beta && !returnAllMoveResults) {
       // cutoff
       return [tableEntry.result]
@@ -312,7 +313,7 @@ function principalVariationSearch(
     else if (myResult.eval > bestResult.eval && myResult.evalFlag !== "upper-bound") {
       bestResult = myResult
     }
-    // NOTE - COMMENTED BECAUSE SEEMS TO SOMETIMES CAUSE NONSENSICAL VARIATION PROBLEMS SOMETIMES
+    // NOTE - COMMENTED BECAUSE SEEMS TO SOMETIMES CAUSE NONSENSICAL VARIATION PROBLEMS SOMETIMES - though this code shouldn't get triggered anyways, since we stop looking as soon as we found a forced win
     // if we found another way to force a win that's shorter, prefer that one
     // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
     // else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
