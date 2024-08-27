@@ -20,6 +20,9 @@ export function evaluatePosition(game: GameState) {
       // if current player has a pente threat, they've won
       return Infinity
     }
+    else {
+      opponentPenteThreats.push(shape)
+    }
   }
   // if current player can complete 5 captures, they've won
   if (game.captures[game.currentPlayer] >= 4 && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
@@ -84,6 +87,7 @@ const laterFeatureWeights: Record<string, number> = {
   "my-actionable-threats": 0.6126010088619281
 }
 const laterCurrentPlayerBias = 0.13033237882815044
+
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -241,7 +245,7 @@ export function canBlockAllThreats(game: GameState, threats: LinearShape[]): boo
   // function to check whether placing a gem can block all the threats
   // a threat can be blocked by placing a gem within it, or by capturing one of its gems
 
-  if (threats.length === 0) return true
+  if (threats.length <= 1) return true
 
   let blockSpot: string = ""
   let normalBlockWorks = true
