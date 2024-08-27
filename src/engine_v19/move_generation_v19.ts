@@ -189,14 +189,16 @@ export function* makeOrderedMoveIterator(
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
+  const keyMap = new Map(game.linearShapes.map(shape => [
+    shape.hash,
+    (shape.owner === game.currentPlayer ? "my-" : "opponent-") + shape.type
+  ]))
   game.linearShapes.sort((a, b) => {
-    const aKey = (a.owner === game.currentPlayer ? "my-" : "opponent-") + a.type
-    const bKey = (b.owner === game.currentPlayer ? "my-" : "opponent-") + b.type
-
-    if (aKey in shapePriority && bKey in shapePriority) return shapePriority[aKey] - shapePriority[bKey]
-    else if (aKey in shapePriority) return -1
-    else if (bKey in shapePriority) return 1
-    return 0
+    const aKey = keyMap.get(a.hash) || 0
+    const bKey = keyMap.get(b.hash) || 0
+    const aPriority = shapePriority[aKey] || Infinity  // infinity is worst priority
+    const bPriority = shapePriority[bKey] || Infinity
+    return aPriority - bPriority
   })
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice()
