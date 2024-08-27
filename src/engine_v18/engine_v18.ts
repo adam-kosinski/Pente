@@ -224,9 +224,9 @@ function principalVariationSearch(
     else if (tableEntry.result.evalFlag === "lower-bound") {
       alpha = Math.max(alpha, tableEntry.result.eval)
     }
-    else if (tableEntry.result.evalFlag === "upper-bound") {
-      beta = Math.min(beta, tableEntry.result.eval)
-    }
+    // else if (tableEntry.result.evalFlag === "upper-bound") {
+    //   beta = Math.min(beta, tableEntry.result.eval)
+    // }
     if (alpha >= beta && !returnAllMoveResults) {
       // cutoff
       return [tableEntry.result]

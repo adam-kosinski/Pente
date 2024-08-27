@@ -143,16 +143,19 @@ export function* makeOrderedMoveIterator(
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
   // the principal variation move will come first by default
-  if (prevDepthResults.length > 0) {
-    for (const result of prevDepthResults) {
-      const m = result.bestVariation[0]
-      if (isValidNewMove(m)) {
-        yield m
-        registerMove(m)
-      }
-    }
-    return
-  }
+  // ACTUALLY - there are positions where this hurts the program, because it is too short sighted
+  //    in Pente, continuing momentum matters more than the static eval along the way, so I kinda think I trust my
+  //    move ordering more - commenting this out
+  // if (prevDepthResults.length > 0) {
+  //   for (const result of prevDepthResults) {
+  //     const m = result.bestVariation[0]
+  //     if (isValidNewMove(m)) {
+  //       yield m
+  //       registerMove(m)
+  //     }
+  //   }
+  //   return
+  // }
   // if we don't have such a nice list, use heuristics
 
   // first priority is principal variation move
@@ -432,6 +435,7 @@ export function getNonQuietMoves(game: GameState): number[][] {
     nonQuietShapes = [...opponentPenteThreats, ...myBlockingCaptures]
   }
   else nonQuietShapes = [...myOpenTrias, ...myExtendableTrias, ...opponentOpenTrias, ...myCaptureThreats]
+
 
   // get moves from shapes - similar logic to the main move generator
   const moves = []
