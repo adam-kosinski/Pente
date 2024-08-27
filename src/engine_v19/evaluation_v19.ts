@@ -12,9 +12,14 @@ export function evaluatePosition(game: GameState) {
     // player who just moved won (not current player)
     return -Infinity
   }
-  // if current player has a pente threat, they've won
-  if (game.linearShapes.some(shape => shape.type.includes("pente-threat") && shape.owner === game.currentPlayer)) {
-    return Infinity
+  // count up pente threats, only do this once for efficiency
+  const opponentPenteThreats: LinearShape[] = []
+  for (const shape of game.linearShapes) {
+    if (!shape.type.includes("pente-threat")) continue
+    if (shape.owner === game.currentPlayer) {
+      // if current player has a pente threat, they've won
+      return Infinity
+    }
   }
   // if current player can complete 5 captures, they've won
   if (game.captures[game.currentPlayer] >= 4 && game.linearShapes.some(shape => shape.type === "capture-threat" && shape.owner === game.currentPlayer)) {
@@ -22,17 +27,6 @@ export function evaluatePosition(game: GameState) {
   }
   // we now establish that we can't win immediately on our turn
   // look for unstoppable opponent threats
-  const opponentPenteThreats: LinearShape[] = []
-  for (const shape of game.linearShapes) {
-    // if the opponent has an open tessera that can't be blocked by a capture, they've won
-    if (shape.owner !== game.currentPlayer && shape.type === "open-tessera") {
-      const blockingCaptures = getBlockingCaptures(game, shape)
-      if (blockingCaptures.length === 0) return -Infinity
-    }
-    else if (shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")) {
-      opponentPenteThreats.push(shape)
-    }
-  }
   // if opponent has multiple pente threats, check if we can block them all
   if (!canBlockAllThreats(game, opponentPenteThreats)) return -Infinity
 
@@ -42,56 +36,11 @@ export function evaluatePosition(game: GameState) {
   // init eval as the intercept, and then add in features * weights
   let evaluation = openingCurrentPlayerBias * openingWeight + laterCurrentPlayerBias * (1 - openingWeight)
   for (const [k, v] of Object.entries(featureDict)) {
-    if (k in openingFeatureWeights && k in laterFeatureWeights) {
-      evaluation += v * (openingFeatureWeights[k] * openingWeight + laterFeatureWeights[k] * (1 - openingWeight))
-    }
+    evaluation += v * ((openingFeatureWeights[k] || 0) * openingWeight + (laterFeatureWeights[k] || 0) * (1 - openingWeight))
   }
   return 10 * evaluation  // arbitrary scaling
 }
 
-
-// const openingIdx = 16
-// const blendRange = 6
-
-// const openingFeatureWeights: Record<string, number> = {
-//   "open-tessera": 1.5800361583241551,
-//   "pente-threat-4": 1.5573451139374546,
-//   "pente-threat-31": 1.5011009863684164,
-//   "pente-threat-22": 0.4943074850110272,
-//   "open-tria": 2.1186410679271597,
-//   "stretch-tria": 1.54770181379938,
-//   "open-pair": 0.16128319158284185,
-//   "capture-threat": 0.7258347928402414,
-//   "stretch-two": 0.608285107786762,
-//   "double-stretch-two": 0.08091272465642917,
-//   "pente-potential-1": 0.10144722373654137,
-//   "pente-potential-2": 0.49984395924082275,
-//   "captures": 1.2694753125162082,
-//   "4-captures": 0.0,
-//   "can-block-trias": 0.4323967274961564,
-//   "non-quiet-moves": 0.37726244755075405
-// }
-// const openingCurrentPlayerBias = -0.0850041688242528
-
-// const laterFeatureWeights: Record<string, number> = {
-//   "open-tessera": 2.931578258304389,
-//   "pente-threat-4": 1.2830313893161918,
-//   "pente-threat-31": 1.3214981916970956,
-//   "pente-threat-22": 1.1577312801528532,
-//   "open-tria": 1.7672003234971663,
-//   "stretch-tria": 1.3166788231617974,
-//   "open-pair": 0.11119788167440409,
-//   "capture-threat": 0.5596711026250584,
-//   "stretch-two": 0.29782511418214397,
-//   "double-stretch-two": -0.052585067385276144,
-//   "pente-potential-1": 0.6194378199789838,
-//   "pente-potential-2": 0.32380421658297615,
-//   "captures": 0.9203612444566837,
-//   "4-captures": 0.9637238806245773,
-//   "can-block-trias": 0.8245110196664015,
-//   "non-quiet-moves": 0.2824086561191755
-// }
-// const laterCurrentPlayerBias = -0.08611943274393973
 
 const openingIdx = 18
 const blendRange = 6
@@ -213,39 +162,39 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
 
 
-    // // count fraction of gems in a linear shape
-    // const gemLocations = new Set<string>()
-    // // iterate through linear shapes
-    // for(const shape of game.linearShapes){
-    //   for(let i=0; i<shape.length; i++){
-    //     if(shape.pattern.charAt(i) !== "_"){
-    //       gemLocations.add(loc(shape, i))
-    //     }
-    //   }
-    // }
-    // // iterate through gems on board
-    // let nGems = 0
-    // for (let r = 0; r < game.board.length; r++) {
-    //   for (const c in game.board[r]) {
-    //     nGems++
-    //     if(!gemLocations.has([r,c].toString())){
-    //       featureDict["not-in-shape"] += game.board[r][c] === game.currentPlayer ? 1 : -1
-    //     }
-    //   }
-    // }
-    // // want fraction
-    // featureDict["not-in-shape"] /= nGems
+  // // count fraction of gems in a linear shape
+  // const gemLocations = new Set<string>()
+  // // iterate through linear shapes
+  // for(const shape of game.linearShapes){
+  //   for(let i=0; i<shape.length; i++){
+  //     if(shape.pattern.charAt(i) !== "_"){
+  //       gemLocations.add(loc(shape, i))
+  //     }
+  //   }
+  // }
+  // // iterate through gems on board
+  // let nGems = 0
+  // for (let r = 0; r < game.board.length; r++) {
+  //   for (const c in game.board[r]) {
+  //     nGems++
+  //     if(!gemLocations.has([r,c].toString())){
+  //       featureDict["not-in-shape"] += game.board[r][c] === game.currentPlayer ? 1 : -1
+  //     }
+  //   }
+  // }
+  // // want fraction
+  // featureDict["not-in-shape"] /= nGems
 
-    // look at recent threat history to evaluate momentum
-    // for(let i = 1; i<=3; i++){
-    //   if (game.threatHistory.length - i < 0) break
-    //   const parity = i%2 === 0 ? 1 : -1
-    //   const weight = 1//0.8**(i-1)
-    //   const threatsAdded = game.threatHistory[game.threatHistory.length - i]
-    //   featureDict["momentum"] += (parity * weight * threatsAdded)
-    // }
+  // look at recent threat history to evaluate momentum
+  // for(let i = 1; i<=3; i++){
+  //   if (game.threatHistory.length - i < 0) break
+  //   const parity = i%2 === 0 ? 1 : -1
+  //   const weight = 1//0.8**(i-1)
+  //   const threatsAdded = game.threatHistory[game.threatHistory.length - i]
+  //   featureDict["momentum"] += (parity * weight * threatsAdded)
+  // }
 
-    return featureDict
+  return featureDict
 }
 
 
