@@ -45,49 +45,92 @@ export function evaluatePosition(game: GameState) {
 }
 
 
+// const openingIdx = 18
+// const blendRange = 6
+
+// const openingFeatureWeights: Record<string, number> = {
+//   "open-tessera": 1.6085084494259336,
+//   "pente-threat-4": 1.115003416967804,
+//   "pente-threat-31": 1.246049318966599,
+//   "pente-threat-22": 0.25482744469468266,
+//   "open-tria": 1.3325614977709654,
+//   "stretch-tria": 0.5834479896023617,
+//   "open-pair": 0.13961684529712087,
+//   "capture-threat": 0.8349701222499559,
+//   "stretch-two": 0.5643228653681883,
+//   "double-stretch-two": 0.0738089482566214,
+//   "pente-potential-1": 0.06934238414772222,
+//   "pente-potential-2": 0.4723936012263175,
+//   "captures": 1.1134932575365581,
+//   "4-captures": 0.0,
+//   "can-block-trias": 0.4339429415213888,
+//   "my-actionable-threats": 0.6822150553609636
+// }
+// const openingCurrentPlayerBias = -0.08872933404187151
+
+// const laterFeatureWeights: Record<string, number> = {
+//   "open-tessera": 2.0149197557852903,
+//   "pente-threat-4": 1.3843212110101661,
+//   "pente-threat-31": 1.4127048623896605,
+//   "pente-threat-22": 1.1945038484957324,
+//   "open-tria": 1.2273983963429824,
+//   "stretch-tria": 0.7120579016171655,
+//   "open-pair": 0.08750840745129898,
+//   "capture-threat": 0.686158688880905,
+//   "stretch-two": 0.26522223584297167,
+//   "double-stretch-two": -0.09609730015137292,
+//   "pente-potential-1": 0.6865740072150387,
+//   "pente-potential-2": 0.3126572574727892,
+//   "captures": 0.9635311407469281,
+//   "4-captures": 0.9552378921686513,
+//   "can-block-trias": 0.5588340915954773,
+//   "my-actionable-threats": 0.6126010088619281
+// }
+// const laterCurrentPlayerBias = 0.13033237882815044
+
+
 const openingIdx = 18
 const blendRange = 6
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.6085084494259336,
-  "pente-threat-4": 1.115003416967804,
-  "pente-threat-31": 1.246049318966599,
-  "pente-threat-22": 0.25482744469468266,
-  "open-tria": 1.3325614977709654,
-  "stretch-tria": 0.5834479896023617,
-  "open-pair": 0.13961684529712087,
-  "capture-threat": 0.8349701222499559,
-  "stretch-two": 0.5643228653681883,
-  "double-stretch-two": 0.0738089482566214,
-  "pente-potential-1": 0.06934238414772222,
-  "pente-potential-2": 0.4723936012263175,
-  "captures": 1.1134932575365581,
+  "open-tessera": 1.480600847693804,
+  "pente-threat-4": 1.2601788098522422,
+  "pente-threat-31": 1.4050981806306992,
+  "pente-threat-22": 0.297456539585987,
+  "open-tria": 1.6881843384525759,
+  "stretch-tria": 0.9129455297868706,
+  "open-pair": 0.13736180595748426,
+  "capture-threat": 0.8606148883212263,
+  "stretch-two": 0.5626732930560531,
+  "double-stretch-two": 0.07526767566141417,
+  "pente-potential-1": 0.06724285244684196,
+  "pente-potential-2": 0.4808434141062712,
+  "captures": 1.1176866637995992,
   "4-captures": 0.0,
-  "can-block-trias": 0.4339429415213888,
-  "my-actionable-threats": 0.6822150553609636
+  "can-block-trias": -0.6207395663614992,
+  "my-actionable-threats": 0.6597476306183961
 }
-const openingCurrentPlayerBias = -0.08872933404187151
+const openingCurrentPlayerBias = 0.9638939938052172
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.0149197557852903,
-  "pente-threat-4": 1.3843212110101661,
-  "pente-threat-31": 1.4127048623896605,
-  "pente-threat-22": 1.1945038484957324,
-  "open-tria": 1.2273983963429824,
-  "stretch-tria": 0.7120579016171655,
-  "open-pair": 0.08750840745129898,
-  "capture-threat": 0.686158688880905,
-  "stretch-two": 0.26522223584297167,
-  "double-stretch-two": -0.09609730015137292,
-  "pente-potential-1": 0.6865740072150387,
-  "pente-potential-2": 0.3126572574727892,
-  "captures": 0.9635311407469281,
-  "4-captures": 0.9552378921686513,
-  "can-block-trias": 0.5588340915954773,
-  "my-actionable-threats": 0.6126010088619281
+  "open-tessera": 2.0812288245478396,
+  "pente-threat-4": 1.408726233042535,
+  "pente-threat-31": 1.4396609633980715,
+  "pente-threat-22": 1.2370003665092626,
+  "open-tria": 1.474860739756405,
+  "stretch-tria": 0.8912940088866981,
+  "open-pair": 0.08504258687049143,
+  "capture-threat": 0.712665396374152,
+  "stretch-two": 0.2643075690365077,
+  "double-stretch-two": -0.10009093543319748,
+  "pente-potential-1": 0.6874717514533865,
+  "pente-potential-2": 0.3164319787675807,
+  "captures": 0.9670466196934006,
+  "4-captures": 0.9465185873176082,
+  "can-block-trias": 0.17368992623647253,
+  "my-actionable-threats": 0.5839565406004761
 }
-const laterCurrentPlayerBias = 0.13033237882815044
-
+const laterCurrentPlayerBias = 0.4419363005680806
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -125,7 +168,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // count linear shapes, for me (current player) and for the opponent
   let myThreatScore = 0  // keep track of forcing threats I can make, which we will count if the opponent doesn't have pente threats
   const opponentTrias: LinearShape[] = []
-  let opponentHasPenteThreat = false
+  let opponentPenteThreats: LinearShape[] = []
   for (const shape of game.linearShapes) {
     if (shape.type === "pente") continue  // not helpful, we already know who won if we find this
     // count me minus opponent
@@ -143,10 +186,10 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     }
     // check for opponent pente threat
     if (shape.type.includes("pente-threat") && shape.owner !== game.currentPlayer) {
-      opponentHasPenteThreat = true
+      opponentPenteThreats.push(shape)
     }
   }
-  if (!opponentHasPenteThreat) {
+  if (opponentPenteThreats.length === 0) {
     featureDict["my-actionable-threats"] = myThreatScore
   }
 
@@ -162,8 +205,8 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   if (myCaptures === 4) featureDict["4-captures"] += 1
   if (opponentCaptures === 4) featureDict["4-captures"] -= 1
 
-  // see if we can block all opponent trias
-  featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentTrias))
+  // see if we can block all opponent trias (in addition to pente threats, which are more forcing)
+  featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias)))
 
 
   // // count fraction of gems in a linear shape
