@@ -47,7 +47,9 @@ const testPositions = [
   // and again! - lost on move 10 by playing 6.9 because didn't look far enough ahead
   "19~9.9|11.10|9.6|8.6|7.9|9.8|7.8|7.10|7.7|6.9|5.8|7.5|8.11|7.10|8.9|6.9|6.7|5.6|8.10|8.8|10.8|6.8|6.10|6.8|8.12|9.11|8.10|8.13|8.8",
   // transposition table bug, thinks white has a forced win
-  "19~9.9|9.10|6.9|11.10|6.7|10.10|8.10|10.8|7.11|10.9"
+  "19~9.9|9.10|6.9|11.10|6.7|10.10|8.10|10.8|7.11|10.9",
+  // on 2+ variations only, thinks white has a forced win
+  "19~9.9|10.10|9.6|8.10|7.6|8.12|8.6|10.6"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {

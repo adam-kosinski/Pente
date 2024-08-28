@@ -67,7 +67,6 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
 
   game = copyGame(game)  // don't mess with the game object we got
-  transpositionTable.clear()  // weirdness tends to happen occasionally if we don't do this
   let resultsToReturn: SearchResult[] = []
 
   searchLoop:
@@ -76,6 +75,10 @@ export function findBestMoves(game: GameState, variations: number, maxDepth: num
 
     const startTime = performance.now()
     const deadlineMs = performance.now() + maxMsPerVariation
+
+    // make sure other variations aren't polluting this, fixes some buggy behavior
+    // though why would clearing it matter, since in theory it's position -> result, and positions don't care where they came from
+    transpositionTable.clear()
 
     // exclude previously found best moves, to force it to find the next best move
     try {  // test for weird bug
@@ -236,6 +239,7 @@ function principalVariationSearch(
       alpha = Math.max(alpha, tableEntry.result.eval)
     }
     // this code seems to be incorrect because it leads to wrong evaluations of +Infinity when we are definitely losing
+    // although maybe that was another transposition table bug (e.g. not clearing after each variation fixed some stuff?)
     // else if (tableEntry.result.evalFlag === "upper-bound") {
     //   beta = Math.min(beta, tableEntry.result.eval)
     // }
