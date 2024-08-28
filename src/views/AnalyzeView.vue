@@ -224,7 +224,9 @@ onUnmounted(() => {
       <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Linear Shapes</button><br>
       <button @click="console.log(getNonlinearShapes(game))">Nonlinear Shapes</button><br>
       <button @click="console.log(gameToString(game))">Save Game</button><br>
+      <a :href="'/analyze?s=' + gameToString(game)" target="_blank"><button>Analyze in new tab</button></a><br>
       <button @click="console.log(JSON.stringify(game, null, 2))">Game Object</button><br>
+      <button @click="console.log(JSON.stringify(game.threatHistory))">Threat History</button><br>
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="runComputerGame()">Play Computer Game</button><br>
