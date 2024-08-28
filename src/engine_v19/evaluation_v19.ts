@@ -45,92 +45,92 @@ export function evaluatePosition(game: GameState) {
 }
 
 
-// const openingIdx = 18
-// const blendRange = 6
-
-// const openingFeatureWeights: Record<string, number> = {
-//   "open-tessera": 1.6085084494259336,
-//   "pente-threat-4": 1.115003416967804,
-//   "pente-threat-31": 1.246049318966599,
-//   "pente-threat-22": 0.25482744469468266,
-//   "open-tria": 1.3325614977709654,
-//   "stretch-tria": 0.5834479896023617,
-//   "open-pair": 0.13961684529712087,
-//   "capture-threat": 0.8349701222499559,
-//   "stretch-two": 0.5643228653681883,
-//   "double-stretch-two": 0.0738089482566214,
-//   "pente-potential-1": 0.06934238414772222,
-//   "pente-potential-2": 0.4723936012263175,
-//   "captures": 1.1134932575365581,
-//   "4-captures": 0.0,
-//   "can-block-trias": 0.4339429415213888,
-//   "my-actionable-threats": 0.6822150553609636
-// }
-// const openingCurrentPlayerBias = -0.08872933404187151
-
-// const laterFeatureWeights: Record<string, number> = {
-//   "open-tessera": 2.0149197557852903,
-//   "pente-threat-4": 1.3843212110101661,
-//   "pente-threat-31": 1.4127048623896605,
-//   "pente-threat-22": 1.1945038484957324,
-//   "open-tria": 1.2273983963429824,
-//   "stretch-tria": 0.7120579016171655,
-//   "open-pair": 0.08750840745129898,
-//   "capture-threat": 0.686158688880905,
-//   "stretch-two": 0.26522223584297167,
-//   "double-stretch-two": -0.09609730015137292,
-//   "pente-potential-1": 0.6865740072150387,
-//   "pente-potential-2": 0.3126572574727892,
-//   "captures": 0.9635311407469281,
-//   "4-captures": 0.9552378921686513,
-//   "can-block-trias": 0.5588340915954773,
-//   "my-actionable-threats": 0.6126010088619281
-// }
-// const laterCurrentPlayerBias = 0.13033237882815044
-
+// OLD WEIGHTS
 
 const openingIdx = 18
 const blendRange = 6
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.480600847693804,
-  "pente-threat-4": 1.2601788098522422,
-  "pente-threat-31": 1.4050981806306992,
-  "pente-threat-22": 0.297456539585987,
-  "open-tria": 1.6881843384525759,
-  "stretch-tria": 0.9129455297868706,
-  "open-pair": 0.13736180595748426,
-  "capture-threat": 0.8606148883212263,
-  "stretch-two": 0.5626732930560531,
-  "double-stretch-two": 0.07526767566141417,
-  "pente-potential-1": 0.06724285244684196,
-  "pente-potential-2": 0.4808434141062712,
-  "captures": 1.1176866637995992,
+  "open-tessera": 1.6085084494259336,
+  "pente-threat-4": 1.115003416967804,
+  "pente-threat-31": 1.246049318966599,
+  "pente-threat-22": 0.25482744469468266,
+  "open-tria": 1.3325614977709654,
+  "stretch-tria": 0.5834479896023617,
+  "open-pair": 0.13961684529712087,
+  "capture-threat": 0.8349701222499559,
+  "stretch-two": 0.5643228653681883,
+  "double-stretch-two": 0.0738089482566214,
+  "pente-potential-1": 0.06934238414772222,
+  "pente-potential-2": 0.4723936012263175,
+  "captures": 1.1134932575365581,
   "4-captures": 0.0,
-  "can-block-trias": -0.6207395663614992,
-  "my-actionable-threats": 0.6597476306183961
+  "my-actionable-threats": 0.6822150553609636
 }
-const openingCurrentPlayerBias = 0.9638939938052172
+const openingCurrentPlayerBias = -0.08872933404187151
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.0812288245478396,
-  "pente-threat-4": 1.408726233042535,
-  "pente-threat-31": 1.4396609633980715,
-  "pente-threat-22": 1.2370003665092626,
-  "open-tria": 1.474860739756405,
-  "stretch-tria": 0.8912940088866981,
-  "open-pair": 0.08504258687049143,
-  "capture-threat": 0.712665396374152,
-  "stretch-two": 0.2643075690365077,
-  "double-stretch-two": -0.10009093543319748,
-  "pente-potential-1": 0.6874717514533865,
-  "pente-potential-2": 0.3164319787675807,
-  "captures": 0.9670466196934006,
-  "4-captures": 0.9465185873176082,
-  "can-block-trias": 0.17368992623647253,
-  "my-actionable-threats": 0.5839565406004761
+  "open-tessera": 2.0149197557852903,
+  "pente-threat-4": 1.3843212110101661,
+  "pente-threat-31": 1.4127048623896605,
+  "pente-threat-22": 1.1945038484957324,
+  "open-tria": 1.2273983963429824,
+  "stretch-tria": 0.7120579016171655,
+  "open-pair": 0.08750840745129898,
+  "capture-threat": 0.686158688880905,
+  "stretch-two": 0.26522223584297167,
+  "double-stretch-two": -0.09609730015137292,
+  "pente-potential-1": 0.6865740072150387,
+  "pente-potential-2": 0.3126572574727892,
+  "captures": 0.9635311407469281,
+  "4-captures": 0.9552378921686513,
+  "my-actionable-threats": 0.6126010088619281
 }
-const laterCurrentPlayerBias = 0.4419363005680806
+const laterCurrentPlayerBias = 0.13033237882815044
+
+
+// new weights doing worse???
+
+// const openingIdx = 15
+// const blendRange = 6
+
+// const openingFeatureWeights: Record<string, number> = {
+//   "open-tessera": 1.0604939347252764,
+//   "pente-threat-4": 1.2532234445008936,
+//   "pente-threat-31": 1.272252739520419,
+//   "pente-threat-22": 0.12044739438316983,
+//   "open-tria": 1.6860243605029244,
+//   "stretch-tria": 0.6960150533695698,
+//   "open-pair": 0.12650847774757887,
+//   "capture-threat": 0.8740215735617041,
+//   "stretch-two": 0.6101810280845278,
+//   "double-stretch-two": 0.06983196029375506,
+//   "pente-potential-1": 0.07542636340814032,
+//   "pente-potential-2": 0.4948854584193558,
+//   "captures": 1.2636046484893795,
+//   "4-captures": 0.0,
+//   "my-actionable-threats": 0.8039744256254606
+// }
+// const openingCurrentPlayerBias = 0.3108507329405698
+
+// const laterFeatureWeights: Record<string, number> = {
+//   "open-tessera": 2.072042146097884,
+//   "pente-threat-4": 1.4422205789724345,
+//   "pente-threat-31": 1.5362912488160239,
+//   "pente-threat-22": 1.235564343950295,
+//   "open-tria": 1.5578236286408156,
+//   "stretch-tria": 0.9627790489001417,
+//   "open-pair": 0.10416294247694242,
+//   "capture-threat": 0.7336924454172289,
+//   "stretch-two": 0.29789338456718434,
+//   "double-stretch-two": -0.07625143455437397,
+//   "pente-potential-1": 0.6098039359208919,
+//   "pente-potential-2": 0.31416966920575734,
+//   "captures": 0.9555794412896881,
+//   "4-captures": 0.9527215220837341,
+//   "my-actionable-threats": 0.5352418948544375
+// }
+// const laterCurrentPlayerBias = 0.6119906088700732
 
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
@@ -158,7 +158,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // }
   featureDict["captures"] = 0  // me minus opponent
   featureDict["4-captures"] = 0  // if I have 4 captures, +=1, if opponent has 4 captures, -=1
-  featureDict["can-block-trias"] = 0
+  // featureDict["can-block-trias"] = 0
   // featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves
   featureDict["my-actionable-threats"] = 0
@@ -206,7 +206,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   if (opponentCaptures === 4) featureDict["4-captures"] -= 1
 
   // see if we can block all opponent trias (in addition to pente threats, which are more forcing)
-  featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias)))
+  // featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias)))
 
 
   // // count fraction of gems in a linear shape
