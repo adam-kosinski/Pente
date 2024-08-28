@@ -1,33 +1,36 @@
-import { type GameState, type SearchResult } from "./model_v19"
-
+import { type GameState, type SearchResult } from "./model_v19";
 
 // transposition table - key comes from TTableKey(game) function below
 export interface TTEntry {
-  depth: number
-  result: SearchResult
+  depth: number;
+  result: SearchResult;
 }
-export const transpositionTable: Map<string, TTEntry> = new Map()
-const maxTTableEntries = 20000
+export const transpositionTable: Map<string, TTEntry> = new Map();
+const maxTTableEntries = 20000;
 
 export function TTableKey(game: GameState) {
-  let key = String(game.currentPlayer)
-  game.board.forEach(row => {
+  let key = String(game.currentPlayer);
+  game.board.forEach((row) => {
     for (const col in row) {
-      key += col + row[col] + ","
+      key += col + row[col] + ",";
     }
-    key += "."
-  })
-  return key
+    key += ".";
+  });
+  return key;
 }
-export function transpositionTableSet(game: GameState, result: SearchResult, depth: number) {
+export function transpositionTableSet(
+  game: GameState,
+  result: SearchResult,
+  depth: number
+) {
   const entry: TTEntry = {
     depth: depth,
-    result: result
-  }
+    result: result,
+  };
   if (transpositionTable.size === maxTTableEntries) {
     // remove the oldest entry to make space
-    const oldKey = transpositionTable.keys().next().value
-    transpositionTable.delete(oldKey)
+    const oldKey = transpositionTable.keys().next().value;
+    transpositionTable.delete(oldKey);
   }
-  transpositionTable.set(TTableKey(game), entry)
+  transpositionTable.set(TTableKey(game), entry);
 }
