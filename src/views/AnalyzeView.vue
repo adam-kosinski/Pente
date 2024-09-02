@@ -8,7 +8,7 @@ import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup'
 
 import { createNewGame, copyGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v19/model_v19';
 import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v19/move_generation_v19'
-import { evaluatePosition, getNonlinearShapes, positionFeatureDict } from '@/engine_v19/evaluation_v19';
+import { evaluatePosition, getNonlinearShapes, positionFeatureDict, evaluateMomentum } from '@/engine_v19/evaluation_v19';
 
 import AnalysisWorker from "../analysisWorker?worker"
 import { detectSymmetry } from '@/engine_v19/move_generation_v19';
@@ -217,7 +217,6 @@ onUnmounted(() => {
     </div>
 
     <div v-if="showDebug" class="button-panel">
-      <button @click="analyzePosition()">Analyze</button><br>
       <button @click="printMoves()">Generate Moves</button><br>
       <button @click="printForcingMoves()">Forcing Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
@@ -233,6 +232,7 @@ onUnmounted(() => {
       <button @click="runCompetition(4, 5, 30, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="console.log(detectSymmetry(game))">Symmetry</button><br>
+      <button @click="evaluateMomentum(game)">Evaluate Momentum</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>

@@ -76,7 +76,9 @@ export function* makeOrderedMoveIterator(
   prevDepthResults: SearchResult[] = []
 ) {
   // because good moves often cause a cutoff, don't generate more less-good moves unless needed
-  // so, create an iterator that generates moves as needed (using generator syntax for readability)
+  // so, this function returns an iterator that only generates moves as needed (using generator syntax for readability)
+
+  if (game.isOver) return;
 
   // setup
   const moveHashes = new Set(); // remember moves we've returned already, so we don't repeat - values are just "r,c"
@@ -163,9 +165,10 @@ export function* makeOrderedMoveIterator(
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
   // the principal variation move will come first by default
-  // ACTUALLY - there are positions where this hurts the program, because it is too short sighted
-  //    in Pente, continuing momentum matters more than the static eval along the way, so I kinda think I trust my
-  //    move ordering more - commenting this out
+  // ACTUALLY - there are positions where this hurts the program, because it is too short sighted.
+  // In Pente, continuing momentum matters more than the static eval along the way, so I kinda think I trust my
+  // move ordering more - commenting this out
+  //
   // if (prevDepthResults.length > 0) {
   //   for (const result of prevDepthResults) {
   //     const m = result.bestVariation[0]

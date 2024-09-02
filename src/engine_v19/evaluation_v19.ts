@@ -1,9 +1,12 @@
 import {
   type GameState,
+  gameToString,
   type LinearShape,
   linearShapeDef,
+  makeMove,
   nonlinearShapeTypes,
   type Shape,
+  undoMove,
 } from "./model_v19";
 import {
   getNonQuietMoves,
@@ -351,6 +354,23 @@ export function canBlockAllThreats(
   let capturesBlockingAll = getCapturesBlockingAll(game, threats);
   if (capturesBlockingAll.length === 0) return false;
   return true;
+}
+
+export function evaluateMomentum(game: GameState, depth = 8): number {
+  // play several moves in the future, using only the first suggested move
+  // and look at the threat history to see who is making the threats
+  let nMovesMade = 0; // keep track of how many moves we will need to undo, in case the game ends before reaching full depth
+  for (let d = 0; d < depth; d++) {
+    const move = makeOrderedMoveIterator(game, 1).next().value; // pass 1 for ply, won't affect much of anything b/c we aren't passing killer moves in
+    console.log(JSON.stringify(move));
+    if (!move) break;
+    makeMove(game, move[0], move[1]);
+    nMovesMade++;
+  }
+  for (let i = 0; i < nMovesMade; i++) {
+    undoMove(game);
+  }
+  return 0;
 }
 
 export function getNonlinearShapes(game: GameState): Shape[] {
