@@ -148,7 +148,7 @@ function analyzePosition() {
 }
 
 function runComputerGame() {
-  window.open(router.resolve("/analyze?s=" + playGame(5, 5, 15, 100).gameString).href, "_blank")
+  window.open(router.resolve("/analyze?s=" + playGame(6, 6, 15, 100).gameString).href, "_blank")
 }
 
 onMounted(() => {
