@@ -3,7 +3,7 @@
 import { computed, ref } from 'vue';
 import Board from '@/components/Board.vue';
 
-import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v19/model_v19';
+import { createNewGame, makeMove, undoMove, loadFromString, gameToString } from '@/engine_v20/model_v20';
 import PlayerWorker from "../playerWorker?worker"
 import router from "../router/index"
 
@@ -64,7 +64,8 @@ function reload() {
       </button>
     </div>
     <div class="board-container">
-      <Board class="board" :game="game" :show-coord-labels="false" :disabled="boardDisabled" :flip-pair-locations="playingAs === 1" @make-move="playerMove" />
+      <Board class="board" :game="game" :show-coord-labels="false" :disabled="boardDisabled"
+        :flip-pair-locations="playingAs === 1" @make-move="playerMove" />
     </div>
   </div>
 

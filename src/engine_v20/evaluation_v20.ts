@@ -7,11 +7,11 @@ import {
   nonlinearShapeTypes,
   type Shape,
   undoMove,
-} from "./model_v19";
+} from "./model_v20";
 import {
   getNonQuietMoves,
   makeOrderedMoveIterator,
-} from "./move_generation_v19";
+} from "./move_generation_v20";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -354,6 +354,30 @@ export function canBlockAllThreats(
   let capturesBlockingAll = getCapturesBlockingAll(game, threats);
   if (capturesBlockingAll.length === 0) return false;
   return true;
+}
+
+export function evaluateMomentum(game: GameState, depth = 10): number {
+  // play several moves in the future, using only the first suggested move
+
+  // and look at the threat history to see who is making the threats
+  let nMovesMade = 0; // keep track of how many moves we will need to undo, in case the game ends before reaching full depth
+  let myThreats = 0; // keep track of threats I and my opponent make along the way, for momentum evaluation
+  let opponentThreats = 0;
+  for (let d = 0; d < depth; d++) {
+    const move = makeOrderedMoveIterator(game, 1).next().value; // pass 1 for ply, won't affect much of anything b/c we aren't passing killer moves in
+    console.log(JSON.stringify(move));
+    if (!move) break;
+    makeMove(game, move[0], move[1]);
+    nMovesMade++;
+    const threatsJustMade = game.threatHistory.slice(-1)[0];
+    if (d % 2 === 0) myThreats += threatsJustMade;
+    else opponentThreats += threatsJustMade;
+  }
+  // undo moves
+  for (let i = 0; i < nMovesMade; i++) {
+    undoMove(game);
+  }
+  return myThreats - opponentThreats;
 }
 
 export function getNonlinearShapes(game: GameState): Shape[] {
