@@ -63,7 +63,8 @@ export function chooseMove(
   verbose: boolean = true
 ): number[] {
   // in the opening, look into several variations and choose one randomly, weighted by how good it is
-  if (game.nMoves < 6) {
+  // don't do this on the third move, just stick to the known best 2nd moves for the first player
+  if (game.nMoves < 6 && game.nMoves !== 2) {
     const nVariations = game.nMoves === 2 ? 4 : game.nMoves < 4 ? 3 : 2;
     const results = findBestMoves(
       game,

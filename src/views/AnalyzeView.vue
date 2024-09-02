@@ -229,10 +229,10 @@ onUnmounted(() => {
       <button @click="timeTest()">Time Test</button><br>
       <button @click="console.log(positionFeatureDict(game))">Feature Dict</button><br>
       <button @click="runComputerGame()">Play Computer Game</button><br>
-      <button @click="runCompetition(5, 6, 30, 10)">Run Competition</button><br>
+      <button @click="runCompetition(5, 6, 30, 30)">Run Competition</button><br>
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="console.log(detectSymmetry(game))">Symmetry</button><br>
-      <button @click="console.log(evaluateMomentum(game))">Evaluate Momentum</button><br>
+      <button @click="console.log(evaluateMomentum(game, 10))">Evaluate Momentum</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>

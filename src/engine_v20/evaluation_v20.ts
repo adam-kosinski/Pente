@@ -183,7 +183,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["move-index"] = game.nMoves;
   featureDict["my-actionable-threats"] = 0;
   // featureDict["not-in-shape"] = 0
-  // featureDict["momentum"] = 0
+  // featureDict["momentum"] = evaluateMomentum(game, 6);
 
   // count linear shapes, for me (current player) and for the opponent
   let myThreatScore = 0; // keep track of forcing threats I can make, which we will count if the opponent doesn't have pente threats
@@ -256,15 +256,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // }
   // // want fraction
   // featureDict["not-in-shape"] /= nGems
-
-  // look at recent threat history to evaluate momentum
-  // for(let i = 1; i<=3; i++){
-  //   if (game.threatHistory.length - i < 0) break
-  //   const parity = i%2 === 0 ? 1 : -1
-  //   const weight = 1//0.8**(i-1)
-  //   const threatsAdded = game.threatHistory[game.threatHistory.length - i]
-  //   featureDict["momentum"] += (parity * weight * threatsAdded)
-  // }
 
   return featureDict;
 }
@@ -356,7 +347,7 @@ export function canBlockAllThreats(
   return true;
 }
 
-export function evaluateMomentum(game: GameState, depth = 10): number {
+export function evaluateMomentum(game: GameState, depth: number): number {
   // play several moves in the future, using only the first suggested move
 
   // and look at the threat history to see who is making the threats
@@ -365,7 +356,6 @@ export function evaluateMomentum(game: GameState, depth = 10): number {
   let opponentThreats = 0;
   for (let d = 0; d < depth; d++) {
     const move = makeOrderedMoveIterator(game, 1).next().value; // pass 1 for ply, won't affect much of anything b/c we aren't passing killer moves in
-    console.log(JSON.stringify(move));
     if (!move) break;
     makeMove(game, move[0], move[1]);
     nMovesMade++;
@@ -377,7 +367,8 @@ export function evaluateMomentum(game: GameState, depth = 10): number {
   for (let i = 0; i < nMovesMade; i++) {
     undoMove(game);
   }
-  return myThreats - opponentThreats;
+
+  return (myThreats - opponentThreats) / nMovesMade;
 }
 
 export function getNonlinearShapes(game: GameState): Shape[] {

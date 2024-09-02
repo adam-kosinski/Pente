@@ -43,7 +43,7 @@ import {
 import {
   evaluatePosition,
   positionFeatureDict,
-} from "./engine_v19/evaluation_v19";
+} from "./engine_v20/evaluation_v20";
 import { createNewGame, gameToString, makeMove } from "./engine_v20/model_v20";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
