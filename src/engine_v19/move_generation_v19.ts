@@ -284,6 +284,16 @@ export function* makeOrderedMoveIterator(
       i < shape.length;
       i++, r += dy, c += dx
     ) {
+      // for my double stretch twos only suggest the moves that make a stretch tria, the other two aren't that good
+      // for opponent ones though all spots are reasonable blocking locations
+      if (
+        shape.type === "double-stretch-two" &&
+        shape.owner === game.currentPlayer &&
+        (i === 0 || i === 5)
+      ) {
+        continue;
+      }
+      // suggest move
       const m = [r, c];
       if (isValidNewMove(m)) {
         yield m;
