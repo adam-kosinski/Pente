@@ -4,12 +4,11 @@ import { type GameState, type SearchResult } from "./model_v20";
 export interface TTEntry {
   depth: number;
   result: SearchResult;
-  usingNullWindow: boolean;
 }
 export const transpositionTable: Map<string, TTEntry> = new Map();
 const maxTTableEntries = 20000;
 
-export function TTableKey(game: GameState) {
+export function TTableKey(game: GameState, usingNullWindow: boolean) {
   let key = String(game.currentPlayer);
   game.board.forEach((row) => {
     for (const col in row) {
@@ -17,6 +16,7 @@ export function TTableKey(game: GameState) {
     }
     key += ".";
   });
+  if (usingNullWindow) key += "-null";
   return key;
 }
 export function transpositionTableSet(
@@ -28,12 +28,11 @@ export function transpositionTableSet(
   const entry: TTEntry = {
     depth: depth,
     result: result,
-    usingNullWindow: usingNullWindow,
   };
   if (transpositionTable.size === maxTTableEntries) {
     // remove the oldest entry to make space
     const oldKey = transpositionTable.keys().next().value;
     transpositionTable.delete(oldKey);
   }
-  transpositionTable.set(TTableKey(game), entry);
+  transpositionTable.set(TTableKey(game, usingNullWindow), entry);
 }

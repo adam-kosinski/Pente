@@ -283,15 +283,15 @@ function principalVariationSearch(
   }
 
   // leaf node base cases
-  const evaluation = evaluatePosition(game);
+  const staticEval = evaluatePosition(game);
   if (
     game.isOver ||
     depth === 0 ||
-    (Math.abs(evaluation) === Infinity && ply > 1)
+    (Math.abs(staticEval) === Infinity && ply > 1)
   ) {
     // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
     return [
-      { eval: evaluation, evalFlag: "exact", bestVariation: [], valid: true },
+      { eval: staticEval, evalFlag: "exact", bestVariation: [], valid: true },
     ];
   }
 
@@ -305,12 +305,8 @@ function principalVariationSearch(
   }; // start with worst possible eval
 
   // check transposition table
-  const tableEntry = transpositionTable.get(TTableKey(game));
-  if (
-    tableEntry &&
-    tableEntry.depth >= depth &&
-    tableEntry.usingNullWindow === usingNullWindow
-  ) {
+  const tableEntry = transpositionTable.get(TTableKey(game, usingNullWindow));
+  if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++;
     if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
       return [tableEntry.result];
