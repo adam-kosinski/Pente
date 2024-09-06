@@ -4,6 +4,7 @@ import { type GameState, type SearchResult } from "./model_v20";
 export interface TTEntry {
   depth: number;
   result: SearchResult;
+  usingNullWindow: boolean;
 }
 export const transpositionTable: Map<string, TTEntry> = new Map();
 const maxTTableEntries = 20000;
@@ -21,11 +22,13 @@ export function TTableKey(game: GameState) {
 export function transpositionTableSet(
   game: GameState,
   result: SearchResult,
-  depth: number
+  depth: number,
+  usingNullWindow: boolean
 ) {
   const entry: TTEntry = {
     depth: depth,
     result: result,
+    usingNullWindow: usingNullWindow,
   };
   if (transpositionTable.size === maxTTableEntries) {
     // remove the oldest entry to make space

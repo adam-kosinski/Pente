@@ -304,9 +304,13 @@ function principalVariationSearch(
     valid: true,
   }; // start with worst possible eval
 
-  // transposition table cutoff / info
+  // check transposition table
   const tableEntry = transpositionTable.get(TTableKey(game));
-  if (tableEntry && tableEntry.depth >= depth) {
+  if (
+    tableEntry &&
+    tableEntry.depth >= depth &&
+    tableEntry.usingNullWindow === usingNullWindow
+  ) {
     ttableHit++;
     if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
       return [tableEntry.result];
@@ -394,6 +398,7 @@ function principalVariationSearch(
         true,
         restOfPrincipalVariation
       )[0]; // technically no longer the principal variation, but PV moves are probably still good in other positions
+
       // if failed high (we found a way to do better), do a full search
       // need to check equal to as well as the inequalities, because if the null window was -Infinity, -Infinity, any move will cause a cutoff by being equal to -Infinity
       // beta - alpha > 1 avoids a redundant null window search
@@ -486,8 +491,7 @@ function principalVariationSearch(
       bestResult.eval === Infinity ? "exact" : "lower-bound";
   else bestResult.evalFlag = "exact";
 
-  // store in transposition table if not null window (null window used an incorrect assumption, so the conclusion is probably unreliable)
-  if (!usingNullWindow) transpositionTableSet(game, bestResult, depth);
+  transpositionTableSet(game, bestResult, depth, usingNullWindow);
 
   if (allMoveResults.length === 0) {
     console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`);
