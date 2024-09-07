@@ -8,7 +8,7 @@ import PlayerWorker from "../playerWorker?worker"
 import router from "../router/index"
 
 const game = ref(createNewGame(19))
-// game.value = loadFromString("19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11")
+game.value = loadFromString("19~9.9|9.11|9.6|9.13|7.6|7.13|8.6|6.6|10.6|11.6|9.7|9.8|8.8|9.5|9.7|7.9|10.10|11.11|8.7|8.9|6.9|7.9|8.5|6.5")
 
 const worker = new PlayerWorker()
 const started = ref(false)
@@ -36,6 +36,14 @@ function reload() {
   window.location.reload()
 }
 
+function undoMovePair() {
+  undoMove(game.value)
+  // if I had just won, then we will only be undoing one move - make sure we undo the correct number of moves
+  if (game.value.currentPlayer !== playingAs.value) {
+    undoMove(game.value)
+  }
+}
+
 </script>
 
 
@@ -56,7 +64,7 @@ function reload() {
       <button class="go-to-analysis" @click="goToAnalysis()">
         <p>Analyze</p><span style="font-size: 2em; transform: rotateZ(-45deg) translateY(-5%);">⚲</span>
       </button>
-      <button @click="undoMove(game); undoMove(game)">
+      <button @click="undoMovePair()">
         <p>Undo</p><span style="font-size: 2em; transform: translateY(-5%);">⎌</span>
       </button>
       <button @click="reload()">
