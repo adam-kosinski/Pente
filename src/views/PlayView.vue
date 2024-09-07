@@ -8,7 +8,7 @@ import PlayerWorker from "../playerWorker?worker"
 import router from "../router/index"
 
 const game = ref(createNewGame(19))
-game.value = loadFromString("19~9.9|9.11|9.6|9.13|7.6|7.13|8.6|6.6|10.6|11.6|9.7|9.8|8.8|9.5|9.7|7.9|10.10|11.11|8.7|8.9|6.9|7.9|8.5|6.5")
+// game.value = loadFromString("19~9.9|9.11|9.6|9.13|7.6|7.13|8.6|6.6|10.6|11.6|9.7|9.8|8.8|9.5|9.7|7.9|10.10|11.11|8.7|8.9|6.9|7.9|8.5|6.5")
 
 const worker = new PlayerWorker()
 const started = ref(false)
