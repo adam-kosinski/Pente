@@ -38,7 +38,8 @@ function getFuturePosition(moveIndex: number) {
     <div v-if="result" class="move-container">
       <div class="move" v-for="m, i in result.bestVariation"
         @mousemove="result && emit('show-future-position', getFuturePosition(i))"
-        @mouseleave="emit('clear-future-position')" @click="emit('go-to-position', getFuturePosition(i))">
+        @mouseleave="emit('clear-future-position')"
+        @click="emit('go-to-position', getFuturePosition(i)); emit('clear-future-position')">
         {{ useStandardCoords ? toStandardCoords(m[0], m[1], game.board.length).join("") : m[0] + "." + m[1] }}
       </div>
     </div>
