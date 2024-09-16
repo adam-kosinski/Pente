@@ -411,6 +411,10 @@ export function updateLinearShapes(
           const pattern: string = match.pattern;
           const patternInfo = linearShapes.get(pattern);
           const begin = [rInit + dy * match.index, cInit + dx * match.index];
+          let hash: string;
+          (() => {
+            hash = [patternInfo.type, patternInfo.owner, begin, dy, dx].join();
+          })();
           const shape: LinearShape = {
             type: patternInfo.type,
             pattern: pattern,
@@ -419,7 +423,7 @@ export function updateLinearShapes(
             dy: dy,
             dx: dx,
             length: patternInfo.length,
-            hash: [patternInfo.type, patternInfo.owner, begin, dy, dx].join(),
+            hash: hash,
           };
           if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
             game.linearShapes.push(shape);
