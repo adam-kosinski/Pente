@@ -314,103 +314,119 @@ export function updateLinearShapes(
   // shapes containing its location, or locations of captured stones.
   // Also, update the shape update object passed in with the shapes that were added and removed.
 
-  // remove any shapes that are no longer there
-  game.linearShapes = game.linearShapes.filter((shape) => {
-    const dy = shape.dy;
-    const dx = shape.dx;
+  (() => {
+    // remove any shapes that are no longer there
+    game.linearShapes = game.linearShapes.filter((shape) => {
+      const dy = shape.dy;
+      const dx = shape.dx;
 
-    // if no overlap with the changed location, couldn't possibly be gone now
-    // checking this for horizontal and vertical shapes is really cheap so do it
-    // not worth it for diagonal shapes
-    if (dy === 0 && r0 !== shape.begin[0]) return true;
-    if (dx === 0 && c0 !== shape.begin[1]) return true;
+      // if no overlap with the changed location, couldn't possibly be gone now
+      // checking this for horizontal and vertical shapes is really cheap so do it
+      // not worth it for diagonal shapes
+      if (dy === 0 && r0 !== shape.begin[0]) return true;
+      if (dx === 0 && c0 !== shape.begin[1]) return true;
 
-    for (
-      let i = 0, r = shape.begin[0], c = shape.begin[1];
-      i < shape.length;
-      i++, r += dy, c += dx
-    ) {
-      const s =
-        game.board[r][c] === undefined ? "_" : game.board[r][c].toString();
-      if (s !== shape.pattern.charAt(i)) {
-        update.removed.push(shape);
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // add new shapes
-
-  // find the center character outside the loop, so only have to do it once
-  const value0 = game.board[r0][c0];
-  const s0 = value0 === undefined ? "_" : value0.toString();
-
-  // iterate over each of four directions
-  for (const [dy, dx] of [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [-1, 1],
-  ]) {
-    // row, col, (\) diagonal, (/) diagonal
-
-    // construct string to search for patterns in
-    let s = s0;
-    // prepend to s and find rInit and cInit, treating rInit and cInit as indices - when we find
-    let rInit = r0 - dy;
-    let cInit = c0 - dx;
-    for (let i = 1; i < maxLinearShapeLength; i++, rInit -= dy, cInit -= dx) {
-      if (
-        rInit < 0 ||
-        cInit < 0 ||
-        rInit >= game.board.length ||
-        cInit >= game.board.length
+      for (
+        let i = 0, r = shape.begin[0], c = shape.begin[1];
+        i < shape.length;
+        i++, r += dy, c += dx
       ) {
-        break;
+        const s =
+          game.board[r][c] === undefined ? "_" : game.board[r][c].toString();
+        if (s !== shape.pattern.charAt(i)) {
+          update.removed.push(shape);
+          return false;
+        }
       }
-      const value = game.board[rInit][cInit];
-      s = (value === undefined ? "_" : value) + s;
-    }
-    // in both the case where we went off the edge of the board, and the case where the loop exited naturally,
-    // rInit and cInit will be currently one spot further than they should be, so rewind them
-    rInit += dy;
-    cInit += dx;
+      return true;
+    });
+  })();
 
-    // append to s
-    for (
-      let i = 1, r = r0 + dy, c = c0 + dx;
-      i < maxLinearShapeLength;
-      i++, r += dy, c += dx
-    ) {
-      if (r < 0 || c < 0 || r >= game.board.length || c >= game.board.length) {
-        break;
-      }
-      const value = game.board[r][c];
-      s += value === undefined ? "_" : value;
-    }
+  (() => {
+    // add new shapes
 
-    // search for each pattern
-    const matches = getPatternMatches(s);
-    if (!matches) continue;
-    for (const match of matches) {
-      const pattern: string = match.pattern;
-      const patternInfo = linearShapes.get(pattern);
-      const begin = [rInit + dy * match.index, cInit + dx * match.index];
-      const shape: LinearShape = {
-        type: patternInfo.type,
-        pattern: pattern,
-        owner: patternInfo.owner,
-        begin: begin,
-        dy: dy,
-        dx: dx,
-        length: patternInfo.length,
-        hash: [patternInfo.type, patternInfo.owner, begin, dy, dx].join(),
-      };
-      if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
-        game.linearShapes.push(shape);
-        update.added.push(shape);
-      }
+    // find the center character outside the loop, so only have to do it once
+    const value0 = game.board[r0][c0];
+    const s0 = value0 === undefined ? "_" : value0.toString();
+
+    // iterate over each of four directions - row, col, (\) diagonal, (/) diagonal
+    for (const [dy, dx] of [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [-1, 1],
+    ]) {
+      // construct string to search for patterns in
+      let s = s0;
+      // prepend to s and find rInit and cInit, treating rInit and cInit as indices - when we find
+      let rInit = r0 - dy;
+      let cInit = c0 - dx;
+      (() => {
+        for (
+          let i = 1;
+          i < maxLinearShapeLength;
+          i++, rInit -= dy, cInit -= dx
+        ) {
+          if (
+            rInit < 0 ||
+            cInit < 0 ||
+            rInit >= game.board.length ||
+            cInit >= game.board.length
+          ) {
+            break;
+          }
+          const value = game.board[rInit][cInit];
+          s = (value === undefined ? "_" : value) + s;
+        }
+        // in both the case where we went off the edge of the board, and the case where the loop exited naturally,
+        // rInit and cInit will be currently one spot further than they should be, so rewind them
+        rInit += dy;
+        cInit += dx;
+
+        // append to s
+        for (
+          let i = 1, r = r0 + dy, c = c0 + dx;
+          i < maxLinearShapeLength;
+          i++, r += dy, c += dx
+        ) {
+          if (
+            r < 0 ||
+            c < 0 ||
+            r >= game.board.length ||
+            c >= game.board.length
+          ) {
+            break;
+          }
+          const value = game.board[r][c];
+          s += value === undefined ? "_" : value;
+        }
+      })();
+
+      // search for each pattern
+      const matches = getPatternMatches(s);
+      if (!matches) continue;
+
+      (() => {
+        for (const match of matches) {
+          const pattern: string = match.pattern;
+          const patternInfo = linearShapes.get(pattern);
+          const begin = [rInit + dy * match.index, cInit + dx * match.index];
+          const shape: LinearShape = {
+            type: patternInfo.type,
+            pattern: pattern,
+            owner: patternInfo.owner,
+            begin: begin,
+            dy: dy,
+            dx: dx,
+            length: patternInfo.length,
+            hash: [patternInfo.type, patternInfo.owner, begin, dy, dx].join(),
+          };
+          if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
+            game.linearShapes.push(shape);
+            update.added.push(shape);
+          }
+        }
+      })();
     }
-  }
+  })();
 }
