@@ -20,10 +20,9 @@ export function TTableKey(game: GameState, usingNullWindow: boolean) {
   return key;
 }
 export function transpositionTableSet(
-  game: GameState,
+  key: string,
   result: SearchResult,
-  depth: number,
-  usingNullWindow: boolean
+  depth: number
 ) {
   const entry: TTEntry = {
     depth: depth,
@@ -34,5 +33,5 @@ export function transpositionTableSet(
     const oldKey = transpositionTable.keys().next().value;
     transpositionTable.delete(oldKey);
   }
-  transpositionTable.set(TTableKey(game, usingNullWindow), entry);
+  transpositionTable.set(key, entry);
 }

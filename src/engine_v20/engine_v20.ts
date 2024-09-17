@@ -305,7 +305,8 @@ function principalVariationSearch(
   }; // start with worst possible eval
 
   // check transposition table
-  const tableEntry = transpositionTable.get(TTableKey(game, usingNullWindow));
+  const tableKey = TTableKey(game, usingNullWindow);
+  const tableEntry = transpositionTable.get(tableKey);
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++;
     if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
@@ -487,7 +488,7 @@ function principalVariationSearch(
       bestResult.eval === Infinity ? "exact" : "lower-bound";
   else bestResult.evalFlag = "exact";
 
-  transpositionTableSet(game, bestResult, depth, usingNullWindow);
+  transpositionTableSet(tableKey, bestResult, depth);
 
   if (allMoveResults.length === 0) {
     console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`);
