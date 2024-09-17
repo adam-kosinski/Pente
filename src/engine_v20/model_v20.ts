@@ -358,7 +358,7 @@ export function updateLinearShapes(
     ]) {
       // construct string to search for patterns in
       let s = s0;
-      // prepend to s and find rInit and cInit, treating rInit and cInit as indices - when we find
+      // prepend to s and find rInit and cInit, treating rInit and cInit as indices
       let rInit = r0 - dy;
       let cInit = c0 - dx;
       (() => {
