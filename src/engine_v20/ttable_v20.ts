@@ -6,16 +6,16 @@ export interface TTEntry {
   result: SearchResult;
 }
 export const transpositionTable: Map<string, TTEntry> = new Map();
-const maxTTableEntries = 20000;
+const maxTTableEntries = 200000;
 
 export function TTableKey(game: GameState, usingNullWindow: boolean) {
   let key = String(game.currentPlayer);
-  game.board.forEach((row) => {
+  for (const row of game.board) {
     for (const col in row) {
       key += col + row[col] + ",";
     }
     key += ".";
-  });
+  }
   if (usingNullWindow) key += "-null";
   return key;
 }
