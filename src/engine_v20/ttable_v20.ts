@@ -9,14 +9,8 @@ export const transpositionTable: Map<string, TTEntry> = new Map();
 const maxTTableEntries = 200000;
 
 export function TTableKey(game: GameState, usingNullWindow: boolean) {
-  let key = String(game.currentPlayer);
-  for (const row of game.board) {
-    for (const col in row) {
-      key += col + row[col] + ",";
-    }
-    key += ".";
-  }
-  if (usingNullWindow) key += "-null";
+  let key = String(game.currentPlayer) + game.boardString;
+  if (usingNullWindow) key += "n";
   return key;
 }
 export function transpositionTableSet(
