@@ -96,7 +96,7 @@ export function chooseMove(
 
 export function findBestMoves(
   game: GameState,
-  variations: number,
+  nVariations: number,
   maxDepth: number,
   maxMs = Infinity,
   absoluteEval = false,
@@ -113,7 +113,7 @@ export function findBestMoves(
   const startTime = performance.now();
   const deadlineMs = performance.now() + maxMs;
 
-  // make sure other variations aren't polluting this, fixes some buggy behavior
+  // used to fix some buggy behavior to clear the ttable
   // though why would clearing it matter, since in theory it's position -> result, and positions don't care where they came from
   transpositionTable.clear();
 
@@ -144,7 +144,7 @@ export function findBestMoves(
       principalVariation,
       prevDepthResults,
       true,
-      variations
+      nVariations
     ); // start alpha and beta at worst possible scores, and return results for all moves
 
     if (results.length === 0) {
@@ -187,7 +187,7 @@ export function findBestMoves(
         if (n > maxMovesGenerated) maxMovesGenerated = n;
       }
       console.log("max " + maxMovesGenerated + " moves generated");
-      results.slice(0).forEach((r) => {
+      results.slice(0, nVariations).forEach((r) => {
         const flagChar =
           r.evalFlag === "exact"
             ? "="
