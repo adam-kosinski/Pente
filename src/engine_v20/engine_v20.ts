@@ -81,6 +81,7 @@ export function chooseMove(
       false,
       verbose
     );
+    if (results.length === 0) console.warn("chooseMove - opening - no moves");
     const choiceProbs = softmax(
       results.map((r) => r.eval),
       0.3
@@ -88,8 +89,9 @@ export function chooseMove(
     const chosenIdx = chooseFromWeights(choiceProbs);
     return results[chosenIdx].bestVariation[0];
   }
-  return findBestMoves(game, 1, maxDepth, maxMs, false, verbose)[0]
-    .bestVariation[0];
+  const bestMoves = findBestMoves(game, 1, maxDepth, maxMs, false, verbose);
+  if (bestMoves.length === 0) console.warn("chooseMove - no moves");
+  return bestMoves[0].bestVariation[0];
 }
 
 export function findBestMoves(

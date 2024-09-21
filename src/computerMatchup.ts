@@ -90,8 +90,7 @@ export function playGame(
       v[secondPlayer].move(game1, move[0], move[1]);
     } else {
       console.log("ERROR, game string:", gameToString(game1));
-      console.error("Couldn't find a move");
-      console.log(game1.currentPlayer === 0 ? "first player" : "second player");
+      console.error(`Player ${game1.currentPlayer} couldn't find a move`);
     }
   }
 
