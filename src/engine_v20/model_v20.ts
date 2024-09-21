@@ -1,5 +1,6 @@
 export interface GameState {
   board: Record<number, 0 | 1>[];
+  boardString: string; // string uniquely identifying the position, see createNewGame() and makeMove()
   currentPlayer: 0 | 1;
   captures: Record<0 | 1, number>;
   nMoves: number;
@@ -49,6 +50,9 @@ export type EvalFlag = "exact" | "upper-bound" | "lower-bound";
 export function createNewGame(boardSize: number): GameState {
   const game = {
     board: [],
+    boardString: Array(boardSize ** 2)
+      .fill("_")
+      .join(""),
     currentPlayer: 0 as 0 | 1,
     captures: { 0: 0, 1: 0 },
     nMoves: 0,
@@ -66,6 +70,7 @@ export function createNewGame(boardSize: number): GameState {
 export function copyGame(game: GameState): GameState {
   return {
     board: game.board.map((row) => Object.assign({}, row)),
+    boardString: game.boardString,
     currentPlayer: game.currentPlayer,
     captures: { ...game.captures },
     nMoves: game.nMoves,
@@ -83,6 +88,7 @@ export function gameToString(game: GameState) {
     game.prevMoves.map((m) => m.addedGems[0].join(".")).join("|")
   );
 }
+
 export function loadFromString(s: string) {
   const [size, moveString] = s.split("~");
   const moves = moveString
@@ -97,8 +103,20 @@ export function loadFromString(s: string) {
 
 export function toStandardCoords(r: number, c: number, boardSize: number) {
   // convert to coords used by Pente.org, useful when reading the website
-  const letterCoords = "ABCDEFGHJKLMNOPQRST"; // omit I for clarity I suppose
+  const letterCoords = "ABCDEFGHJKLMNOPQRST"; // omit "I" for some reason, but that's the standard
   return [letterCoords[c] || "_", boardSize - r];
+}
+
+export function updateBoardString(
+  game: GameState,
+  r: number,
+  c: number,
+  value: string
+) {
+  const boardSize = game.board.length;
+  const idx = r * boardSize + c;
+  game.boardString =
+    game.boardString.slice(0, idx) + value + game.boardString.slice(idx + 1);
 }
 
 export function makeMove(game: GameState, r: number, c: number) {
@@ -121,12 +139,13 @@ export function makeMove(game: GameState, r: number, c: number) {
 
   // place gemstone onto board
   game.board[r][c] = game.currentPlayer;
+  updateBoardString(game, r, c, game.currentPlayer.toString());
   moveInfo.addedGems.push([r, c]);
 
   // check for capture of opponent pair(s)
   // iterate over directions
-  for (let dx of [-1, 0, 1]) {
-    for (let dy of [-1, 0, 1]) {
+  for (const dx of [-1, 0, 1]) {
+    for (const dy of [-1, 0, 1]) {
       if (dx === 0 && dy === 0) continue;
       // out of bounds check
       if (c + 3 * dx < 0 || c + 3 * dx >= game.board.length) continue;
@@ -140,6 +159,8 @@ export function makeMove(game: GameState, r: number, c: number) {
       ) {
         delete game.board[r + dy][c + dx];
         delete game.board[r + 2 * dy][c + 2 * dx];
+        updateBoardString(game, r + dy, c + dx, "_");
+        updateBoardString(game, r + 2 * dy, c + 2 * dx, "_");
         moveInfo.removedGems.push([r + dy, c + dx], [r + 2 * dy, c + 2 * dx]);
         game.captures[game.currentPlayer]++;
       }
@@ -186,11 +207,13 @@ export function undoMove(game: GameState) {
   // remove added gems
   prevMove.addedGems.forEach(([r, c]) => {
     delete game.board[r][c];
+    updateBoardString(game, r, c, "_");
   });
   // undo captures
   game.captures[prevPlayer] -= prevMove.removedGems.length / 2;
   prevMove.removedGems.forEach(([r, c]) => {
     game.board[r][c] = game.currentPlayer; // current player is whose gems were just captured
+    updateBoardString(game, r, c, game.currentPlayer.toString());
   });
 
   // remove added linear shapes
@@ -411,10 +434,7 @@ export function updateLinearShapes(
           const pattern: string = match.pattern;
           const patternInfo = linearShapes.get(pattern);
           const begin = [rInit + dy * match.index, cInit + dx * match.index];
-          let hash: string;
-          (() => {
-            hash = `${patternInfo.type},${patternInfo.owner},${begin[0]},${begin[1]},${dy},${dx}`;
-          })();
+          const hash: string = `${patternInfo.type},${patternInfo.owner},${begin[0]},${begin[1]},${dy},${dx}`;
           const shape: LinearShape = {
             type: patternInfo.type,
             pattern: pattern,

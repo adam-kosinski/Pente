@@ -9,6 +9,7 @@ import { generateFeatureCSV, playGame, runCompetition } from '@/computerMatchup'
 import { createNewGame, copyGame, makeMove, undoMove, gameToString, loadFromString, type SearchResult, type GameState } from '@/engine_v20/model_v20';
 import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v20/move_generation_v20'
 import { evaluatePosition, getNonlinearShapes, positionFeatureDict, evaluateMomentum } from '@/engine_v20/evaluation_v20';
+import { TTableKey } from "@/engine_v20/ttable_v20"
 
 import AnalysisWorker from "../analysisWorker?worker"
 import { detectSymmetry } from '@/engine_v20/move_generation_v20';
@@ -22,7 +23,7 @@ function toggleDebug(e: KeyboardEvent) {
 
 const game = ref(createNewGame(19))
 
-const testPositionIndex = ref(0)
+const testPositionIndex = ref(4)
 const testPositions = [
   "19~9.9",
   "19~9.9|9.7|12.10|7.5|11.7|7.7|10.8|8.10|12.6|13.5|12.8|7.6|12.9|12.7|12.12|12.11|7.8|8.7|6.7|8.9|8.8|5.6|11.8|9.8|9.6",
@@ -101,18 +102,27 @@ function goToPosition(position: GameState) {
 }
 
 function timeTest() {
-  const iterations = 1000000000
-  const f = (n: number) => n < 0
+  const iterations = 100000
   let start = performance.now()
+  // find time that the loop takes by itself
   for (let i = 0; i < iterations; i++) {
-    -1 < 0
+
+  }
+  console.log("loop only: ", performance.now() - start + " ms")
+
+  start = performance.now()
+  for (let i = 0; i < iterations; i++) {
+    TTableKey(game.value, true)
+    TTableKey(game.value, true)
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
+  let s = Array(19 * 19).fill("-").join("")
   for (let i = 0; i < iterations; i++) {
-    f(-1)
+    s = s.slice(0, 9 * 19 + 9) + "0" + s.slice(9 * 19 + 10)
+    s = s.slice(0, 9 * 19 + 9) + "1" + s.slice(9 * 19 + 10)
   }
-  console.log("B:", performance.now() - start + " ms")
+  console.log("B:", performance.now() - start + " ms\n\n")
 
 }
 
