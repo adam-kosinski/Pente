@@ -157,16 +157,6 @@ export function findBestMoves(
       console.warn("undefined result", results);
     }
 
-    // if ran out of time, disregard this result and stop looking
-    if (results[0].ranOutOfTime) {
-      if (verbose) console.log("ran out of time searching depth " + depth);
-      if (prevDepthResults.length === 0)
-        console.warn(
-          "no answer returned because ran out of time on depth " + depth
-        );
-      break;
-    }
-
     prevDepthResults = results;
 
     // log results
@@ -203,6 +193,18 @@ export function findBestMoves(
       console.log("");
     }
 
+    // if ran out of time, stop looking
+    if (performance.now() > deadlineMs) {
+      if (verbose) console.log("ran out of time searching depth " + depth);
+      if (prevDepthResults.length === 0) {
+        // shouldn't happen (should always return something) but highlights bugs
+        console.warn(
+          "no answer returned because ran out of time on depth " + depth
+        );
+      }
+      break;
+    }
+
     // if found a forced win for either player, no need to keep looking
     if (Math.abs(results[0].eval) === Infinity) break;
 
@@ -229,6 +231,8 @@ export function findBestMoves(
 
 function prepResultsOutput(results: SearchResult[], flipEval: boolean) {
   const output = results.map((r) => {
+    // make a shallow copy so flipping the eval doesn't mess with future searches,
+    // since results gets passed to the next iteration of iterative deepening
     const copy = { ...r };
     if (flipEval) {
       // flip eval sign
@@ -420,6 +424,18 @@ function principalVariationSearch(
     undoMove(game);
 
     if (childResult.ranOutOfTime) {
+      // If we've found moves already, return those.
+      // This is safe even though we haven't looked at all reasonable moves yet, because we started
+      //   by looking at the best move from the previous iteration of iterative deepening (principal variaiton),
+      //   so we either don't change our answer or found a better move(can't be returning a worse move than the
+      //   previous PV by doing this)
+      // Also - these search results aren't flagged as ranOutOfTime aka invalid, but our parent
+      //  function will realize we ran out of time the next time it calls a child and gets ranOutOfTime
+      //  back immediately
+      if (bestVariations.length > 0) {
+        return bestVariations;
+      }
+      // if we didn't find moves yet, the best we can do is say we ran out of time and ignore the result
       return [childResult]; // return another dummy result indicating ran out of time
     }
 
