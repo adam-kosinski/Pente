@@ -287,12 +287,6 @@ function principalVariationSearch(
   const alphaOrig = alpha; // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
   const allMoveResults: SearchResult[] = []; // all the results, used for debugging
   const bestVariations: SearchResult[] = []; // stores only the best several variations, as requested, kept sorted best first
-  let bestResult: SearchResult = {
-    eval: -Infinity,
-    evalFlag: "exact",
-    bestVariation: [],
-    valid: true,
-  }; // start with worst possible eval
 
   // check transposition table
   const tableKey = TTableKey(game, usingNullWindow);
@@ -439,18 +433,6 @@ function principalVariationSearch(
     }
     allMoveResults.push(myResult);
 
-    // if no result recorded yet, ours is the best
-    // - important not to skip this, so that we end up with a meaningful (i.e. at least "try" to stop the threat) variation in the case that all moves lead to -Infinity eval
-    if (bestResult.bestVariation.length === 0) bestResult = myResult;
-    // check if best so far - exclude upper-bound results from being the best line, for all you know the true eval could be -Infinity
-    // use strict inequality for max, b/c we would like to retain the earlier (more sensible) moves
-    else if (
-      myResult.eval > bestResult.eval &&
-      myResult.evalFlag !== "upper-bound"
-    ) {
-      bestResult = myResult;
-    }
-
     // check if this result is one of the best variations
     // if not enough variations found, then this one is one, otherwise compare to the last aka worst result in bestVariations
     // upper bound results don't count (unless we have nothing), b/c for all we know they could be -Infinity
@@ -496,15 +478,15 @@ function principalVariationSearch(
   }
   nMovesGenerated.push(moveIndex);
 
-  if (bestResult.eval <= alphaOrig)
-    bestResult.evalFlag =
-      bestResult.eval === -Infinity ? "exact" : "upper-bound";
-  else if (bestResult.eval >= beta)
-    bestResult.evalFlag =
-      bestResult.eval === Infinity ? "exact" : "lower-bound";
-  else bestResult.evalFlag = "exact";
+  if (bestVariations[0].eval <= alphaOrig)
+    bestVariations[0].evalFlag =
+      bestVariations[0].eval === -Infinity ? "exact" : "upper-bound";
+  else if (bestVariations[0].eval >= beta)
+    bestVariations[0].evalFlag =
+      bestVariations[0].eval === Infinity ? "exact" : "lower-bound";
+  else bestVariations[0].evalFlag = "exact";
 
-  transpositionTableSet(tableKey, bestResult, depth);
+  transpositionTableSet(tableKey, bestVariations[0], depth);
 
   if (allMoveResults.length === 0) {
     console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`);
