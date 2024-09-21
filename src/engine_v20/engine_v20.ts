@@ -5,6 +5,7 @@ import {
   copyGame,
   type GameState,
   type SearchResult,
+  type EvalFlag,
 } from "./model_v20";
 import { makeOrderedMoveIterator } from "./move_generation_v20";
 import {
@@ -43,6 +44,7 @@ export function softmax(z: number[], b = 1) {
   }
   return z.map((zi) => Math.exp(b * zi) / expSum);
 }
+
 function chooseFromWeights(weights: number[]): number {
   if (Math.abs(weights.reduce((sum, x) => sum + x) - 1) > 0.001) {
     console.error("weights don't add to 1");
@@ -54,6 +56,12 @@ function chooseFromWeights(weights: number[]): number {
     if (rand <= cumWeights[i]) return i;
   }
   return 0; // just in case
+}
+
+function flipEvalFlag(flag: EvalFlag) {
+  if (flag === "lower-bound") return "upper-bound";
+  if (flag === "upper-bound") return "lower-bound";
+  return flag;
 }
 
 export function chooseMove(
@@ -149,15 +157,14 @@ export function findBestMoves(
         principalVariation,
         prevDepthResults,
         movesToExclude,
-        true
+        true,
+        variations
       ); // start alpha and beta at worst possible scores, and return results for all moves
 
       if (results.length === 0) {
         // ran out of moves
         console.warn(
-          "Searching depth " +
-            depth +
-            " resulted in no results, returning what we have:"
+          `Searching depth ${depth} resulted in no results, returning what we have:`
         );
         console.log(JSON.stringify(resultsToReturn));
         break searchLoop;
@@ -196,7 +203,7 @@ export function findBestMoves(
           if (n > maxMovesGenerated) maxMovesGenerated = n;
         }
         console.log("max " + maxMovesGenerated + " moves generated");
-        results.slice(0, 1).forEach((r) => {
+        results.slice(0, 5).forEach((r) => {
           const flagChar =
             r.evalFlag === "exact"
               ? "="
@@ -206,7 +213,7 @@ export function findBestMoves(
           console.log(
             "eval",
             flagChar,
-            r.eval,
+            r.eval.toFixed(2),
             JSON.stringify(r.bestVariation)
           );
         });
@@ -229,9 +236,7 @@ export function findBestMoves(
     if (absoluteEval && game.currentPlayer === 1) {
       // flip eval sign
       answer.eval = -answer.eval;
-      if (answer.evalFlag === "lower-bound") answer.evalFlag = "upper-bound";
-      else if (answer.evalFlag === "upper-bound")
-        answer.evalFlag = "lower-bound";
+      answer.evalFlag = flipEvalFlag(answer.evalFlag);
     }
 
     resultsToReturn.push(answer);
@@ -262,7 +267,8 @@ function principalVariationSearch(
   principalVariation: number[][] = [],
   prevDepthResults: SearchResult[] = [],
   movesToExclude: number[][] = [], // used for searching multiple variations, by excluding best moves from prev variations
-  returnAllMoveResults: boolean = false
+  returnAllMoveResults: boolean = false,
+  nVariations = 1
 ): SearchResult[] {
   // returns a list of evaluations for either just the best move, or all moves (if all moves, it will be sorted with best moves first)
   // note that the evaluation is from the current player's perspective (higher better)
@@ -296,7 +302,8 @@ function principalVariationSearch(
   }
 
   const alphaOrig = alpha; // we need this in order to correctly set transposition table flags, but I'm unclear for sure why
-  const allMoveResults: SearchResult[] = [];
+  const allMoveResults: SearchResult[] = []; // all the results, used for debugging
+  const bestVariations: SearchResult[] = []; // stores only the best several variations, as requested, kept sorted best first
   let bestResult: SearchResult = {
     eval: -Infinity,
     evalFlag: "exact",
@@ -309,20 +316,28 @@ function principalVariationSearch(
   const tableEntry = transpositionTable.get(tableKey);
   if (tableEntry && tableEntry.depth >= depth) {
     ttableHit++;
-    if (tableEntry.result.evalFlag === "exact" && !returnAllMoveResults) {
+    if (
+      tableEntry.result.evalFlag === "exact" &&
+      !returnAllMoveResults &&
+      nVariations === 1
+    ) {
       return [tableEntry.result];
-    } else if (tableEntry.result.evalFlag === "lower-bound") {
-      alpha = Math.max(alpha, tableEntry.result.eval);
     }
+    // note - not sure if this clause will cause bugs with the new code for best variations, since alpha is conditioned on having found at least a certain number of variations
+    //        so commenting out for now
+    // else if (tableEntry.result.evalFlag === "lower-bound") {
+    //   alpha = Math.max(alpha, tableEntry.result.eval);
+    // }
+
     // this code seems to be incorrect because it leads to wrong evaluations of +Infinity when we are definitely losing
     // although maybe that was another transposition table bug (e.g. not clearing after each variation fixed some stuff?)
     // else if (tableEntry.result.evalFlag === "upper-bound") {
     //   beta = Math.min(beta, tableEntry.result.eval)
     // }
-    if (alpha >= beta && !returnAllMoveResults) {
-      // cutoff
-      return [tableEntry.result];
-    }
+    // if (alpha >= beta && !returnAllMoveResults) {
+    //   // cutoff
+    //   return [tableEntry.result];
+    // }
   } else {
     ttableMiss++;
   }
@@ -429,15 +444,17 @@ function principalVariationSearch(
     // get my move's result, including negating the eval and evalFlag from the child search b/c we are doing negamax
     const myResult: SearchResult = {
       eval: -childResult.eval,
-      evalFlag:
-        childResult.evalFlag === "lower-bound"
-          ? "upper-bound"
-          : childResult.evalFlag === "upper-bound"
-          ? "lower-bound"
-          : "exact",
+      evalFlag: flipEvalFlag(childResult.evalFlag),
       bestVariation: [[r, c], ...childResult.bestVariation],
       valid: childResult.valid,
     };
+    // upper bound of -Infinity is an exact eval, similar with Infinity
+    if (
+      (myResult.eval === -Infinity && myResult.evalFlag === "upper-bound") ||
+      (myResult.eval === Infinity && myResult.evalFlag === "lower-bound")
+    ) {
+      myResult.evalFlag = "exact";
+    }
     allMoveResults.push(myResult);
 
     // if no result recorded yet, ours is the best
@@ -451,24 +468,41 @@ function principalVariationSearch(
     ) {
       bestResult = myResult;
     }
-    // NOTE - COMMENTED BECAUSE SEEMS TO SOMETIMES CAUSE NONSENSICAL VARIATION PROBLEMS SOMETIMES - though this code shouldn't get triggered anyways, since we stop looking as soon as we found a forced win
-    // if we found another way to force a win that's shorter, prefer that one
-    // don't do this for normal moves, because then it will prefer a line where someone does something dumb with the same result (e.g. losing anyways)
-    // else if (myResult.eval === Infinity && myResult.evalFlag !== "upper-bound" && myResult.bestVariation.length < bestResult.bestVariation.length) {
-    //   bestResult = myResult
-    // }
-    // // if dead lost, prefer the longer line
-    // else if (myResult.eval === -Infinity && myResult.evalFlag !== "lower-bound" && myResult.bestVariation.length > bestResult.bestVariation.length) {
-    //   bestResult = myResult
-    // }
+
+    // check if this result is one of the best variations
+    // if not enough variations found, then this one is one, otherwise compare to the last aka worst result in bestVariations
+    // upper bound results don't count (unless we have nothing), b/c for all we know they could be -Infinity
+    if (
+      bestVariations.length < nVariations ||
+      (myResult.evalFlag !== "upper-bound" &&
+        myResult.eval > bestVariations.slice(-1)[0].eval)
+    ) {
+      // I'm one of the best variations!
+      bestVariations.push(myResult);
+      // maintain ordering
+      bestVariations.sort(searchResultComparator);
+      // bring back down to max length = nVariations, by removing the worst variation
+      bestVariations.splice(nVariations);
+    }
 
     // alpha-beta pruning: if the opponent could force a worse position for us elsewhere in the tree (beta) than we could force here (best eval),
     // they would avoid coming here, so we can stop looking at this node
     // first check that this move can raise alpha (if upper bound, for all we know the true eval could be -Infinity)
-    if (bestResult.evalFlag !== "upper-bound") {
-      alpha = Math.max(alpha, bestResult.eval);
-      if (bestResult.eval >= beta) {
-        if (bestResult.eval !== -Infinity) addKillerMove(r, c, ply); // you don't get to be a killer move for just being any move in a losing position
+    if (bestVariations[0].evalFlag !== "upper-bound") {
+      // to ensure that we get correct exact evaluations for the number of variations we want (e.g. 3),
+      // only update alpha to what the worst of the 3 best variations can achieve
+      // if we don't have 3 variations yet, don't change alpha, don't want to exclude anything yet
+      if (bestVariations.length === nVariations) {
+        alpha = Math.max(alpha, bestVariations.slice(-1)[0].eval);
+      }
+      if (bestVariations[0].eval >= beta) {
+        // killer move - you don't get to be a killer move for just being any move in a losing position
+        if (
+          bestVariations[0].eval !== -Infinity &&
+          bestVariations[0] === myResult
+        ) {
+          addKillerMove(r, c, ply);
+        }
         break;
       }
     }
@@ -496,12 +530,16 @@ function principalVariationSearch(
 
   // return
   if (returnAllMoveResults) {
-    allMoveResults.sort((a, b) => {
-      if (a.evalFlag === "exact" && b.evalFlag !== "exact") return -1;
-      if (b.evalFlag === "exact" && a.evalFlag !== "exact") return 1;
-      return b.eval - a.eval;
-    });
+    allMoveResults.sort(searchResultComparator);
     return allMoveResults;
   }
-  return [bestResult];
+  return bestVariations;
+}
+
+function searchResultComparator(a: SearchResult, b: SearchResult): number {
+  // exact evaluations beat upper bounds (if upper bound, true eval could be -Infinity)
+  if (a.evalFlag === "exact" && b.evalFlag === "upper-bound") return -1;
+  if (b.evalFlag === "exact" && a.evalFlag === "upper-bound") return 1;
+  // lower bounds can beat exact evaluations, need to compare the eval
+  return b.eval - a.eval;
 }
