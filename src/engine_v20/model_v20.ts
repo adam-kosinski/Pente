@@ -371,12 +371,14 @@ export function updateLinearShapes(
 
   (() => {
     // iterate over each of four directions - row, col, (\) diagonal, (/) diagonal
-    for (const [dy, dx] of [
+    for (const dir of [
       [0, 1],
       [1, 0],
       [1, 1],
       [-1, 1],
     ]) {
+      const dy = dir[0];
+      const dx = dir[1];
       // construct string to search for patterns in
       let s = s0;
       // prepend to s and find rInit and cInit, treating rInit and cInit as indices
