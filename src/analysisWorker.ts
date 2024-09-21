@@ -6,14 +6,15 @@ onmessage = (e) => {
   const nVariations = e.data[1];
   // update the main thread at each depth level
   console.profile();
-  for (let d = 1; d < 10; d++) {
-    const start = performance.now();
-    const results = findBestMoves(game, nVariations, d, 3000, true);
-    postMessage(results);
-    // if ran out of time that iteration, don't keep looking, same thing will happen
-    if (performance.now() - start > 3000) break;
-    // if found a forced win, don't bother looking deeper
-    if (results[0].valid && Math.abs(results[0].eval) === Infinity) break;
-  }
+  const results = findBestMoves(
+    game,
+    nVariations,
+    10, // max depth
+    3000, // max time in ms
+    true, // absolute eval
+    true, // verbose
+    postMessage // provide callback to send intermediate results
+  );
+  postMessage(results);
   console.profileEnd();
 };

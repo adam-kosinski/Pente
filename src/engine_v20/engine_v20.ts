@@ -96,164 +96,148 @@ export function findBestMoves(
   game: GameState,
   variations: number,
   maxDepth: number,
-  maxMsPerVariation = Infinity,
+  maxMs = Infinity,
   absoluteEval = false,
-  verbose = true
+  verbose = true,
+  intermediateResultsCallback?: (results: SearchResult[]) => void
 ): SearchResult[] {
   // principal variation search aka negascout, with alpha beta pruning and iterative deepening
   // https://en.wikipedia.org/wiki/Principal_variation_search
   // if absoluteEval is true, return positive eval if player 0 winning, negative if player 1 winning (otherwise positive means current player winning)
 
   game = copyGame(game); // don't mess with the game object we got
-  let resultsToReturn: SearchResult[] = [];
+  const flipEval = absoluteEval && game.currentPlayer === 1;
 
-  searchLoop: for (let v = 0; v < variations; v++) {
-    if (verbose)
-      console.log("\nVARIATION " + (v + 1) + " ======================");
+  const startTime = performance.now();
+  const deadlineMs = performance.now() + maxMs;
 
-    const startTime = performance.now();
-    const deadlineMs = performance.now() + maxMsPerVariation;
+  // make sure other variations aren't polluting this, fixes some buggy behavior
+  // though why would clearing it matter, since in theory it's position -> result, and positions don't care where they came from
+  transpositionTable.clear();
 
-    // make sure other variations aren't polluting this, fixes some buggy behavior
-    // though why would clearing it matter, since in theory it's position -> result, and positions don't care where they came from
-    transpositionTable.clear();
+  let prevDepthResults: SearchResult[] = [];
 
-    // exclude previously found best moves, to force it to find the next best move
-    try {
-      // test for weird bug
-      resultsToReturn.map((x) => x.bestVariation[0]);
-    } catch {
-      console.log(resultsToReturn);
-      console.log(gameToString(game));
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    if (verbose) console.log(`searching depth ${depth}...`);
+
+    killerMoves = [];
+
+    normalNodesVisited = 0;
+    confirmAlpha = 0;
+    failHigh = 0;
+    ttableHit = 0;
+    ttableMiss = 0;
+    nMovesGenerated = [];
+
+    const principalVariation =
+      prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : [];
+    const results = principalVariationSearch(
+      game,
+      depth,
+      1,
+      -Infinity,
+      Infinity,
+      deadlineMs,
+      false,
+      principalVariation,
+      prevDepthResults,
+      false,
+      variations
+    ); // start alpha and beta at worst possible scores, and return results for all moves
+
+    if (results.length === 0) {
+      // ran out of moves - shouldn't happen but might if I have a bug
+      console.warn(
+        `Searching depth ${depth} resulted in no results, will use what we have:`
+      );
+      console.log(JSON.stringify(prevDepthResults));
     }
-    const movesToExclude = resultsToReturn.map((x) => x.bestVariation[0]);
-    if (verbose)
-      console.log("excluding " + JSON.stringify(movesToExclude) + "\n");
+    if (results[0] === undefined) {
+      // shouldn't happen - but highlights bugs
+      console.warn("undefined result", results);
+    }
 
-    let prevDepthResults: SearchResult[] = [];
-
-    for (let depth = 1; depth <= maxDepth; depth++) {
-      if (verbose) console.log(`searching depth ${depth}...`);
-
-      killerMoves = [];
-
-      normalNodesVisited = 0;
-      confirmAlpha = 0;
-      failHigh = 0;
-      ttableHit = 0;
-      ttableMiss = 0;
-      nMovesGenerated = [];
-
-      const principalVariation =
-        prevDepthResults.length > 0 ? prevDepthResults[0].bestVariation : [];
-      const results = principalVariationSearch(
-        game,
-        depth,
-        1,
-        -Infinity,
-        Infinity,
-        deadlineMs,
-        false,
-        principalVariation,
-        prevDepthResults,
-        movesToExclude,
-        true,
-        variations
-      ); // start alpha and beta at worst possible scores, and return results for all moves
-
-      if (results.length === 0) {
-        // ran out of moves
+    // if ran out of time, disregard this result and stop looking
+    if (!results[0].valid) {
+      if (verbose) console.log("ran out of time searching depth " + depth);
+      if (prevDepthResults.length === 0)
         console.warn(
-          `Searching depth ${depth} resulted in no results, returning what we have:`
+          "no answer returned because ran out of time on depth " + depth
         );
-        console.log(JSON.stringify(resultsToReturn));
-        break searchLoop;
-      }
-
-      if (results[0] === undefined) {
-        console.warn("undefined result", results);
-      }
-
-      // if ran out of time, disregard this result and stop looking
-      if (!results[0].valid) {
-        if (verbose) console.log("ran out of time searching depth " + depth);
-        if (prevDepthResults.length === 0)
-          console.warn(
-            "no answer returned because ran out of time on depth " + depth
-          );
-        break;
-      }
-
-      prevDepthResults = results;
-
-      // log results
-      if (verbose) {
-        console.log(normalNodesVisited + " normal nodes visited");
-        console.log("confirm alpha", confirmAlpha, "fail high", failHigh);
-        console.log("ttable hit", ttableHit, "ttable miss", ttableMiss);
-        console.log(
-          (
-            nMovesGenerated.reduce((sum, x) => sum + x, 0) /
-            nMovesGenerated.length
-          ).toFixed(2),
-          "moves generated on average"
-        );
-        let maxMovesGenerated = 0;
-        for (const n of nMovesGenerated) {
-          if (n > maxMovesGenerated) maxMovesGenerated = n;
-        }
-        console.log("max " + maxMovesGenerated + " moves generated");
-        results.slice(0, 5).forEach((r) => {
-          const flagChar =
-            r.evalFlag === "exact"
-              ? "="
-              : r.evalFlag === "upper-bound"
-              ? "≤"
-              : "≥";
-          console.log(
-            "eval",
-            flagChar,
-            r.eval.toFixed(2),
-            JSON.stringify(r.bestVariation)
-          );
-        });
-        console.log("");
-      }
-
-      // if found a forced win for either player, no need to keep looking
-      if (Math.abs(results[0].eval) === Infinity) break;
+      break;
     }
 
-    if (prevDepthResults.length === 0) {
-      console.warn("no prev results", prevDepthResults);
-    }
-    if (prevDepthResults[0] === undefined) {
-      console.warn("undefined prev result", prevDepthResults);
-    }
+    prevDepthResults = results;
 
-    const answer = prevDepthResults[0];
-
-    if (absoluteEval && game.currentPlayer === 1) {
-      // flip eval sign
-      answer.eval = -answer.eval;
-      answer.evalFlag = flipEvalFlag(answer.evalFlag);
-    }
-
-    resultsToReturn.push(answer);
-
-    // because of late move reductions, variations aren't guaranteed to be in order of best to worst, so sort them
-    resultsToReturn.sort((a, b) => {
-      if (absoluteEval && game.currentPlayer === 1) return a.eval - b.eval;
-      return b.eval - a.eval;
-    });
-
+    // log results
     if (verbose) {
-      console.log("time taken", performance.now() - startTime);
-      console.log("---------------------");
+      console.log(normalNodesVisited + " normal nodes visited");
+      console.log("confirm alpha", confirmAlpha, "fail high", failHigh);
+      console.log("ttable hit", ttableHit, "ttable miss", ttableMiss);
+      console.log(
+        (
+          nMovesGenerated.reduce((sum, x) => sum + x, 0) /
+          nMovesGenerated.length
+        ).toFixed(2),
+        "moves generated on average"
+      );
+      let maxMovesGenerated = 0;
+      for (const n of nMovesGenerated) {
+        if (n > maxMovesGenerated) maxMovesGenerated = n;
+      }
+      console.log("max " + maxMovesGenerated + " moves generated");
+      results.slice(0).forEach((r) => {
+        const flagChar =
+          r.evalFlag === "exact"
+            ? "="
+            : r.evalFlag === "upper-bound"
+            ? "≤"
+            : "≥";
+        console.log(
+          "eval",
+          flagChar,
+          r.eval.toFixed(2),
+          JSON.stringify(r.bestVariation)
+        );
+      });
+      console.log("");
     }
+
+    // if found a forced win for either player, no need to keep looking
+    if (Math.abs(results[0].eval) === Infinity) break;
+
+    // send intermediate results if the caller provided a callback
+    intermediateResultsCallback?.(
+      prepResultsOutput(prevDepthResults, flipEval)
+    );
   }
 
-  return resultsToReturn;
+  if (prevDepthResults.length === 0) {
+    console.warn("no prev results", prevDepthResults);
+  }
+  if (prevDepthResults[0] === undefined) {
+    console.warn("undefined prev result", prevDepthResults);
+  }
+
+  if (verbose) {
+    console.log("time taken", performance.now() - startTime);
+    console.log("---------------------");
+  }
+
+  return prepResultsOutput(prevDepthResults, flipEval);
+}
+
+function prepResultsOutput(results: SearchResult[], flipEval: boolean) {
+  const output = results.map((r) => {
+    const copy = { ...r };
+    if (flipEval) {
+      // flip eval sign
+      copy.eval = -copy.eval;
+      copy.evalFlag = flipEvalFlag(copy.evalFlag);
+    }
+    return copy;
+  });
+  return output;
 }
 
 function principalVariationSearch(
@@ -266,7 +250,6 @@ function principalVariationSearch(
   usingNullWindow: boolean,
   principalVariation: number[][] = [],
   prevDepthResults: SearchResult[] = [],
-  movesToExclude: number[][] = [], // used for searching multiple variations, by excluding best moves from prev variations
   returnAllMoveResults: boolean = false,
   nVariations = 1
 ): SearchResult[] {
@@ -372,7 +355,6 @@ function principalVariationSearch(
   const moveIterator = makeOrderedMoveIterator(
     game,
     ply,
-    movesToExclude,
     principalVariation[0],
     tableEntry,
     killerMoves,

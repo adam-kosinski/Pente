@@ -69,7 +69,6 @@ export function isRestricted(game: GameState, r: number, c: number) {
 export function* makeOrderedMoveIterator(
   game: GameState,
   ply: number, // only used if have killer moves
-  movesToExclude: number[][] = [],
   principalVariationMove: number[] | undefined = undefined,
   tableEntry: TTEntry | undefined = undefined,
   killerMoves: number[][][] = [],
@@ -82,21 +81,12 @@ export function* makeOrderedMoveIterator(
 
   // setup
   const moveHashes = new Set(); // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const movesToExcludeHashes = new Set(movesToExclude.map((m) => m.toString()));
   const symmetries = game.nMoves <= 5 ? detectSymmetry(game) : [];
   const center = Math.floor(game.board.length / 2);
-  // mark any symmetric moves to exclude so they don't get tried
-  for (const sym of symmetries) {
-    for (const m of movesToExclude) {
-      const duplicate = applySymmetry(m[0], m[1], sym, center);
-      movesToExcludeHashes.add(duplicate.toString());
-    }
-  }
 
   const isValidNewMove = function (move: number[]) {
     if (isRestricted(game, move[0], move[1])) return false;
     if (moveHashes.has(move.toString())) return false;
-    if (movesToExcludeHashes.has(move.toString())) return false;
     if (
       move[0] < 0 ||
       move[0] >= game.board.length ||
