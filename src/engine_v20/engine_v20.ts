@@ -77,7 +77,7 @@ export function chooseMove(
       game,
       nVariations,
       maxDepth,
-      maxMs / nVariations,
+      maxMs,
       false,
       verbose
     );
