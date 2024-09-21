@@ -40,10 +40,10 @@ export interface LinearShape extends Shape {
 }
 
 export interface SearchResult {
-  eval: number; // NaN indicates ran out of time
+  eval: number;
   evalFlag: EvalFlag;
   bestVariation: number[][];
-  valid: boolean;
+  ranOutOfTime: boolean;
 }
 export type EvalFlag = "exact" | "upper-bound" | "lower-bound";
 

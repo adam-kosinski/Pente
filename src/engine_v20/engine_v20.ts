@@ -158,7 +158,7 @@ export function findBestMoves(
     }
 
     // if ran out of time, disregard this result and stop looking
-    if (!results[0].valid) {
+    if (results[0].ranOutOfTime) {
       if (verbose) console.log("ran out of time searching depth " + depth);
       if (prevDepthResults.length === 0)
         console.warn(
@@ -267,8 +267,10 @@ function principalVariationSearch(
 
   // ran out of time base case - don't allow for original depth 1 search because need to return something
   if (performance.now() > deadlineMs && !(ply === 1 && depth === 1)) {
-    // return valid = false to indicate ran out of time and to disregard, eval 0 is arbitrary
-    return [{ eval: 0, evalFlag: "exact", bestVariation: [], valid: false }];
+    // return result indicating ran out of time, eval 0 is arbitrary
+    return [
+      { eval: 0, evalFlag: "exact", bestVariation: [], ranOutOfTime: true },
+    ];
   }
 
   // leaf node base cases
@@ -280,7 +282,12 @@ function principalVariationSearch(
   ) {
     // need to check ply > 1 if we evaluate forcing win/loss, so that we will actually generate some move
     return [
-      { eval: staticEval, evalFlag: "exact", bestVariation: [], valid: true },
+      {
+        eval: staticEval,
+        evalFlag: "exact",
+        bestVariation: [],
+        ranOutOfTime: false,
+      },
     ];
   }
 
@@ -412,8 +419,7 @@ function principalVariationSearch(
     }
     undoMove(game);
 
-    // check for run out of time result
-    if (!childResult.valid) {
+    if (childResult.ranOutOfTime) {
       return [childResult]; // return another dummy result indicating ran out of time
     }
 
@@ -422,7 +428,7 @@ function principalVariationSearch(
       eval: -childResult.eval,
       evalFlag: flipEvalFlag(childResult.evalFlag),
       bestVariation: [[r, c], ...childResult.bestVariation],
-      valid: childResult.valid,
+      ranOutOfTime: childResult.ranOutOfTime,
     };
     // upper bound of -Infinity is an exact eval, similar with Infinity
     if (
