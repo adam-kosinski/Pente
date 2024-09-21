@@ -159,6 +159,15 @@ export function findBestMoves(
       console.warn("undefined result", results);
     }
 
+    if (results[0].ranOutOfTime) {
+      // then this iteration is invalid - no results at all returned
+      if (verbose)
+        console.log(
+          `ran out of time searching depth ${depth}, got ranOutOfTime result`
+        );
+      break;
+    }
+
     prevDepthResults = results;
 
     // log results
@@ -197,7 +206,10 @@ export function findBestMoves(
 
     // if ran out of time, stop looking
     if (performance.now() > deadlineMs) {
-      if (verbose) console.log("ran out of time searching depth " + depth);
+      if (verbose)
+        console.log(
+          `ran out of time searching depth ${depth}, but got results`
+        );
       if (prevDepthResults.length === 0) {
         // shouldn't happen (should always return something) but highlights bugs
         console.warn(
