@@ -102,25 +102,45 @@ function goToPosition(position: GameState) {
 }
 
 function timeTest() {
-  const iterations = 100000
+  const iterations = 10000000
+  const openingFeatureWeights: Record<string, number> = {
+    "open-tessera": 1.6085084494259336,
+    "pente-threat-4": 1.115003416967804,
+    "pente-threat-31": 1.246049318966599,
+    "pente-threat-22": 0.25482744469468266,
+    "open-tria": 1.3325614977709654,
+    "stretch-tria": 0.5834479896023617,
+    "open-pair": 0.13961684529712087,
+    "capture-threat": 0.8349701222499559,
+    "stretch-two": 0.5643228653681883,
+    "double-stretch-two": 0.0738089482566214,
+    "pente-potential-1": 0.06934238414772222,
+    "pente-potential-2": 0.4723936012263175,
+    captures: 1.1134932575365581,
+    "4-captures": 0.0,
+    "my-actionable-threats": 0.6822150553609636,
+  };
   let start = performance.now()
   // find time that the loop takes by itself
   for (let i = 0; i < iterations; i++) {
-
+    for (const entry in Object.entries(openingFeatureWeights)) {
+      const k = entry[0]
+      const v = entry[1]
+    }
   }
   console.log("loop only: ", performance.now() - start + " ms")
 
   start = performance.now()
   for (let i = 0; i < iterations; i++) {
-    TTableKey(game.value, true)
-    TTableKey(game.value, true)
+    for (const k in openingFeatureWeights) {
+      const v = openingFeatureWeights[k]
+    }
   }
   console.log("A:", performance.now() - start + " ms")
   start = performance.now()
   let s = Array(19 * 19).fill("-").join("")
   for (let i = 0; i < iterations; i++) {
-    s = s.slice(0, 9 * 19 + 9) + "0" + s.slice(9 * 19 + 10)
-    s = s.slice(0, 9 * 19 + 9) + "1" + s.slice(9 * 19 + 10)
+
   }
   console.log("B:", performance.now() - start + " ms\n\n")
 

@@ -59,16 +59,12 @@ export function evaluatePosition(game: GameState) {
   let evaluation =
     openingCurrentPlayerBias * openingWeight +
     laterCurrentPlayerBias * (1 - openingWeight);
-  (() => {
-    for (const entry of Object.entries(featureDict)) {
-      const key = entry[0];
-      const value = entry[1];
-      evaluation +=
-        value *
-        ((openingFeatureWeights[key] || 0) * openingWeight +
-          (laterFeatureWeights[key] || 0) * (1 - openingWeight));
-    }
-  })();
+  for (const key in featureDict) {
+    evaluation +=
+      featureDict[key] *
+      ((openingFeatureWeights[key] || 0) * openingWeight +
+        (laterFeatureWeights[key] || 0) * (1 - openingWeight));
+  }
   return 10 * evaluation; // arbitrary scaling
 }
 
