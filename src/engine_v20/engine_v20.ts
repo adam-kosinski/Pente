@@ -15,7 +15,7 @@ import {
 } from "./ttable_v20";
 import { evaluatePosition } from "./evaluation_v20";
 
-let normalNodesVisited = 0;
+let nodesVisited = 0;
 let confirmAlpha = 0;
 let failHigh = 0;
 let ttableHit = 0;
@@ -122,7 +122,7 @@ export function findBestMoves(
 
     killerMoves = [];
 
-    normalNodesVisited = 0;
+    nodesVisited = 0;
     confirmAlpha = 0;
     failHigh = 0;
     ttableHit = 0;
@@ -171,7 +171,7 @@ export function findBestMoves(
 
     // log results
     if (verbose) {
-      console.log(normalNodesVisited + " normal nodes visited");
+      console.log(nodesVisited + " nodes visited");
       console.log("confirm alpha", confirmAlpha, "fail high", failHigh);
       console.log("ttable hit", ttableHit, "ttable miss", ttableMiss);
       console.log(
@@ -263,7 +263,7 @@ function principalVariationSearch(
   // prevDepthResults (optional): results from previous iteration of iterative deepening, will be used to help order moves
   // returnAllMoveResults is useful for debugging
 
-  normalNodesVisited++;
+  nodesVisited++;
 
   // ran out of time base case - don't allow for original depth 1 search because need to return something
   if (performance.now() > deadlineMs && !(ply === 1 && depth === 1)) {
