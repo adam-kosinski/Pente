@@ -379,7 +379,10 @@ function principalVariationSearch(
     killerMoves,
     prevDepthResults
   );
-  for (const [r, c] of moveIterator) {
+  for (const move of moveIterator) {
+    const r = move[0];
+    const c = move[1];
+
     // search child
     makeMove(game, r, c);
     const restOfPrincipalVariation = principalVariation.slice(1);
