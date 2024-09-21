@@ -369,80 +369,86 @@ export function updateLinearShapes(
   const value0 = game.board[r0][c0];
   const s0 = value0 === undefined ? "_" : value0.toString();
 
-  // iterate over each of four directions - row, col, (\) diagonal, (/) diagonal
-  for (const [dy, dx] of [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [-1, 1],
-  ]) {
-    // construct string to search for patterns in
-    let s = s0;
-    // prepend to s and find rInit and cInit, treating rInit and cInit as indices
-    let rInit = r0 - dy;
-    let cInit = c0 - dx;
-    (() => {
-      for (let i = 1; i < maxLinearShapeLength; i++, rInit -= dy, cInit -= dx) {
-        if (
-          rInit < 0 ||
-          cInit < 0 ||
-          rInit >= game.board.length ||
-          cInit >= game.board.length
+  (() => {
+    // iterate over each of four directions - row, col, (\) diagonal, (/) diagonal
+    for (const [dy, dx] of [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [-1, 1],
+    ]) {
+      // construct string to search for patterns in
+      let s = s0;
+      // prepend to s and find rInit and cInit, treating rInit and cInit as indices
+      let rInit = r0 - dy;
+      let cInit = c0 - dx;
+      (() => {
+        for (
+          let i = 1;
+          i < maxLinearShapeLength;
+          i++, rInit -= dy, cInit -= dx
         ) {
-          break;
+          if (
+            rInit < 0 ||
+            cInit < 0 ||
+            rInit >= game.board.length ||
+            cInit >= game.board.length
+          ) {
+            break;
+          }
+          const value = game.board[rInit][cInit];
+          s = (value === undefined ? "_" : value) + s;
         }
-        const value = game.board[rInit][cInit];
-        s = (value === undefined ? "_" : value) + s;
-      }
-      // in both the case where we went off the edge of the board, and the case where the loop exited naturally,
-      // rInit and cInit will be currently one spot further than they should be, so rewind them
-      rInit += dy;
-      cInit += dx;
+        // in both the case where we went off the edge of the board, and the case where the loop exited naturally,
+        // rInit and cInit will be currently one spot further than they should be, so rewind them
+        rInit += dy;
+        cInit += dx;
 
-      // append to s
-      for (
-        let i = 1, r = r0 + dy, c = c0 + dx;
-        i < maxLinearShapeLength;
-        i++, r += dy, c += dx
-      ) {
-        if (
-          r < 0 ||
-          c < 0 ||
-          r >= game.board.length ||
-          c >= game.board.length
+        // append to s
+        for (
+          let i = 1, r = r0 + dy, c = c0 + dx;
+          i < maxLinearShapeLength;
+          i++, r += dy, c += dx
         ) {
-          break;
+          if (
+            r < 0 ||
+            c < 0 ||
+            r >= game.board.length ||
+            c >= game.board.length
+          ) {
+            break;
+          }
+          const value = game.board[r][c];
+          s += value === undefined ? "_" : value;
         }
-        const value = game.board[r][c];
-        s += value === undefined ? "_" : value;
-      }
-    })();
+      })();
 
-    // search for each pattern
-    const matches = getPatternMatches(s);
-    if (!matches) continue;
+      // search for each pattern
+      const matches = getPatternMatches(s);
+      if (!matches) continue;
 
-    (() => {
-      for (const match of matches) {
-        const pattern: string = match.pattern;
-        const patternInfo = linearShapes.get(pattern);
-        const begin = [rInit + dy * match.index, cInit + dx * match.index];
-        const hash: string = `${patternInfo.type},${patternInfo.owner},${begin[0]},${begin[1]},${dy},${dx}`;
-        const shape: LinearShape = {
-          type: patternInfo.type,
-          pattern: pattern,
-          owner: patternInfo.owner,
-          begin: begin,
-          dy: dy,
-          dx: dx,
-          length: patternInfo.length,
-          hash: hash,
-        };
-        if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
-          game.linearShapes.push(shape);
-          update.added.push(shape);
+      (() => {
+        for (const match of matches) {
+          const pattern: string = match.pattern;
+          const patternInfo = linearShapes.get(pattern);
+          const begin = [rInit + dy * match.index, cInit + dx * match.index];
+          const hash: string = `${patternInfo.type},${patternInfo.owner},${begin[0]},${begin[1]},${dy},${dx}`;
+          const shape: LinearShape = {
+            type: patternInfo.type,
+            pattern: pattern,
+            owner: patternInfo.owner,
+            begin: begin,
+            dy: dy,
+            dx: dx,
+            length: patternInfo.length,
+            hash: hash,
+          };
+          if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
+            game.linearShapes.push(shape);
+            update.added.push(shape);
+          }
         }
-      }
-    })();
-  }
+      })();
+    }
+  })();
 }
