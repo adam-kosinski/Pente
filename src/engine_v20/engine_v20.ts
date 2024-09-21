@@ -143,7 +143,7 @@ export function findBestMoves(
       false,
       principalVariation,
       prevDepthResults,
-      false,
+      true,
       variations
     ); // start alpha and beta at worst possible scores, and return results for all moves
 

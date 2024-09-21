@@ -325,6 +325,15 @@ function getPatternMatches(str: string) {
   return matches;
 }
 
+// define four directions out here for performance
+// row, col, (\) diagonal, (/) diagonal
+const dirs = [
+  [0, 1],
+  [1, 0],
+  [1, 1],
+  [-1, 1],
+];
+
 export function updateLinearShapes(
   game: GameState,
   r0: number,
@@ -371,12 +380,7 @@ export function updateLinearShapes(
 
   (() => {
     // iterate over each of four directions - row, col, (\) diagonal, (/) diagonal
-    for (const dir of [
-      [0, 1],
-      [1, 0],
-      [1, 1],
-      [-1, 1],
-    ]) {
+    for (const dir of dirs) {
       const dy = dir[0];
       const dx = dir[1];
       // construct string to search for patterns in

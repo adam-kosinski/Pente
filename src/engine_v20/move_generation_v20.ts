@@ -155,20 +155,16 @@ export function* makeOrderedMoveIterator(
 
   // use order from prevDepthResults - this will contain all remaining moves, ranked
   // the principal variation move will come first by default
-  // ACTUALLY - there are positions where this hurts the program, because it is too short sighted.
-  // In Pente, continuing momentum matters more than the static eval along the way, so I kinda think I trust my
-  // move ordering more - commenting this out
-  //
-  // if (prevDepthResults.length > 0) {
-  //   for (const result of prevDepthResults) {
-  //     const m = result.bestVariation[0]
-  //     if (isValidNewMove(m)) {
-  //       yield m
-  //       registerMove(m)
-  //     }
-  //   }
-  //   return
-  // }
+  if (prevDepthResults.length > 0) {
+    for (const result of prevDepthResults) {
+      const m = result.bestVariation[0];
+      if (isValidNewMove(m)) {
+        yield m;
+        registerMove(m);
+      }
+    }
+    return;
+  }
   // if we don't have such a nice list, use heuristics
 
   // first priority is principal variation move
