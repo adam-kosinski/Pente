@@ -171,7 +171,8 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   for (const shapeType in linearShapeDef) {
     if (shapeType === "pente") continue; // not helpful, we already know who won if we find this
     if (shapesToExclude.includes(shapeType)) continue;
-    featureDict[shapeType] = 0; // counts number I have minus number opponent has
+    featureDict["my-" + shapeType] = 0;
+    featureDict["opp-" + shapeType] = 0;
   }
   // for(const shapeType of nonlinearShapeTypes) {
   //   featureDict[shapeType] = 0
@@ -193,7 +194,11 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if (shape.type === "pente") continue; // not helpful, we already know who won if we find this
     // count me minus opponent
     if (!shapesToExclude.includes(shape.type)) {
-      featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1;
+      if (shape.owner === game.currentPlayer) {
+        featureDict["my-" + shape.type]++;
+      } else {
+        featureDict["opp-" + shape.type]++;
+      }
     }
     // count trias
     if (["open-tria", "stretch-tria"].includes(shape.type)) {

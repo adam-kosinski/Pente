@@ -158,7 +158,17 @@ export function runCompetition(
   }
   console.log(JSON.stringify(Array.from(gameStringSet.values()), null, 2));
   console.log(gameStringSet.size + " total games now");
+
+  // print competition results, along with statistics for p (probability B wins a game)
+  const n = winCounts["A"] + winCounts["B"];
+  const pHat = winCounts["B"] / n;
+  const stdErrEstim = Math.sqrt((1 / (n - 1)) * pHat * (1 - pHat));
   console.log(winCounts);
+  console.log(
+    `B wins w probability ${pHat.toFixed(3)}, 95% CI ` +
+      `[${(pHat - 2 * stdErrEstim).toFixed(3)}, ` +
+      `${(pHat + 2 * stdErrEstim).toFixed(3)}]`
+  );
 }
 
 export function generateFeatureCSV(
