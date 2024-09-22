@@ -68,91 +68,66 @@ export function evaluatePosition(game: GameState) {
   return 10 * evaluation; // arbitrary scaling
 }
 
-// OLD WEIGHTS
-
-const openingIdx = 18;
+const openingIdx = 19;
 const blendRange = 6;
 
 const openingFeatureWeights: Record<string, number> = {
-  "open-tessera": 1.6085084494259336,
-  "pente-threat-4": 1.115003416967804,
-  "pente-threat-31": 1.246049318966599,
-  "pente-threat-22": 0.25482744469468266,
-  "open-tria": 1.3325614977709654,
-  "stretch-tria": 0.5834479896023617,
-  "open-pair": 0.13961684529712087,
-  "capture-threat": 0.8349701222499559,
-  "stretch-two": 0.5643228653681883,
-  "double-stretch-two": 0.0738089482566214,
-  "pente-potential-1": 0.06934238414772222,
-  "pente-potential-2": 0.4723936012263175,
-  captures: 1.1134932575365581,
-  "4-captures": 0.0,
-  "my-actionable-threats": 0.6822150553609636,
+  "opp-open-tessera": -1.501266685684894,
+  "opp-pente-threat-4": -1.4970996919514639,
+  "opp-pente-threat-31": -1.5097172860752919,
+  "opp-pente-threat-22": -1.13762600691966,
+  "my-open-tria": 1.550115779602984,
+  "opp-open-tria": -1.8329314071160114,
+  "my-stretch-tria": 1.1101678639712869,
+  "opp-stretch-tria": -1.0313204774868312,
+  "my-open-pair": 0.31489762188218834,
+  "opp-open-pair": -0.04206903766040025,
+  "my-capture-threat": 1.098601463129866,
+  "opp-capture-threat": -0.7737789061800467,
+  "my-stretch-two": 0.6425445824680261,
+  "opp-stretch-two": -0.5033365725539397,
+  "my-double-stretch-two": 0.1331809772949043,
+  "opp-double-stretch-two": -0.05976820915304173,
+  "my-pente-potential-1": 0.098665214561219,
+  "opp-pente-potential-1": -0.15404044889695961,
+  "my-pente-potential-2": 0.5882582040514875,
+  "opp-pente-potential-2": -0.4793033328763009,
+  "my-captures": 1.1996563258837927,
+  "opp-captures": -1.0594093851458255,
+  "my-4-captures": 0.0,
+  "opp-4-captures": 0.0,
+  "my-actionable-threats": 0.570153045120629,
 };
-const openingCurrentPlayerBias = -0.08872933404187151;
+const openingCurrentPlayerBias = 0.18072793301764986;
 
 const laterFeatureWeights: Record<string, number> = {
-  "open-tessera": 2.0149197557852903,
-  "pente-threat-4": 1.3843212110101661,
-  "pente-threat-31": 1.4127048623896605,
-  "pente-threat-22": 1.1945038484957324,
-  "open-tria": 1.2273983963429824,
-  "stretch-tria": 0.7120579016171655,
-  "open-pair": 0.08750840745129898,
-  "capture-threat": 0.686158688880905,
-  "stretch-two": 0.26522223584297167,
-  "double-stretch-two": -0.09609730015137292,
-  "pente-potential-1": 0.6865740072150387,
-  "pente-potential-2": 0.3126572574727892,
-  captures: 0.9635311407469281,
-  "4-captures": 0.9552378921686513,
-  "my-actionable-threats": 0.6126010088619281,
+  "opp-open-tessera": -2.1912729731767975,
+  "opp-pente-threat-4": -1.4275590520953554,
+  "opp-pente-threat-31": -1.4668901049193543,
+  "opp-pente-threat-22": -1.265863621756788,
+  "my-open-tria": 1.3373656991765925,
+  "opp-open-tria": -1.5292682585957824,
+  "my-stretch-tria": 1.1505671227067449,
+  "opp-stretch-tria": -0.8034251682798529,
+  "my-open-pair": 0.13109363335491495,
+  "opp-open-pair": -0.03919807818672472,
+  "my-capture-threat": 0.7952997399640607,
+  "opp-capture-threat": -0.6286127841114798,
+  "my-stretch-two": 0.2845380519007305,
+  "opp-stretch-two": -0.23360778708607868,
+  "my-double-stretch-two": -0.07319346447230184,
+  "opp-double-stretch-two": 0.11028970867012787,
+  "my-pente-potential-1": 0.8735300976510494,
+  "opp-pente-potential-1": -0.5854491649017737,
+  "my-pente-potential-2": 0.505825973950463,
+  "opp-pente-potential-2": -0.21492384445442309,
+  "my-captures": 1.0003554089282385,
+  "opp-captures": -0.9782673009599122,
+  "my-4-captures": 0.6546643885214608,
+  "opp-4-captures": -1.2085250785056305,
+  "my-actionable-threats": 0.5725324693821173,
 };
-const laterCurrentPlayerBias = 0.13033237882815044;
-
-// new weights doing worse???
-
-// const openingIdx = 15
-// const blendRange = 6
-
-// const openingFeatureWeights: Record<string, number> = {
-//   "open-tessera": 1.0604939347252764,
-//   "pente-threat-4": 1.2532234445008936,
-//   "pente-threat-31": 1.272252739520419,
-//   "pente-threat-22": 0.12044739438316983,
-//   "open-tria": 1.6860243605029244,
-//   "stretch-tria": 0.6960150533695698,
-//   "open-pair": 0.12650847774757887,
-//   "capture-threat": 0.8740215735617041,
-//   "stretch-two": 0.6101810280845278,
-//   "double-stretch-two": 0.06983196029375506,
-//   "pente-potential-1": 0.07542636340814032,
-//   "pente-potential-2": 0.4948854584193558,
-//   "captures": 1.2636046484893795,
-//   "4-captures": 0.0,
-//   "my-actionable-threats": 0.8039744256254606
-// }
-// const openingCurrentPlayerBias = 0.3108507329405698
-
-// const laterFeatureWeights: Record<string, number> = {
-//   "open-tessera": 2.072042146097884,
-//   "pente-threat-4": 1.4422205789724345,
-//   "pente-threat-31": 1.5362912488160239,
-//   "pente-threat-22": 1.235564343950295,
-//   "open-tria": 1.5578236286408156,
-//   "stretch-tria": 0.9627790489001417,
-//   "open-pair": 0.10416294247694242,
-//   "capture-threat": 0.7336924454172289,
-//   "stretch-two": 0.29789338456718434,
-//   "double-stretch-two": -0.07625143455437397,
-//   "pente-potential-1": 0.6098039359208919,
-//   "pente-potential-2": 0.31416966920575734,
-//   "captures": 0.9555794412896881,
-//   "4-captures": 0.9527215220837341,
-//   "my-actionable-threats": 0.5352418948544375
-// }
-// const laterCurrentPlayerBias = 0.6119906088700732
+const laterCurrentPlayerBias = 0.17887124938464527;
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
 const shapesToExclude = [
@@ -171,14 +146,19 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   for (const shapeType in linearShapeDef) {
     if (shapeType === "pente") continue; // not helpful, we already know who won if we find this
     if (shapesToExclude.includes(shapeType)) continue;
-    featureDict["my-" + shapeType] = 0;
+    if (!shapeType.includes("pente-threat") && shapeType !== "open-tessera") {
+      featureDict["my-" + shapeType] = 0;
+    }
     featureDict["opp-" + shapeType] = 0;
   }
   // for(const shapeType of nonlinearShapeTypes) {
   //   featureDict[shapeType] = 0
   // }
-  featureDict["captures"] = 0; // me minus opponent
-  featureDict["4-captures"] = 0; // if I have 4 captures, +=1, if opponent has 4 captures, -=1
+  featureDict["my-captures"] = game.captures[game.currentPlayer];
+  featureDict["opp-captures"] =
+    game.captures[Number(!game.currentPlayer) as 0 | 1];
+  featureDict["my-4-captures"] = Number(featureDict["my-captures"] === 4);
+  featureDict["opp-4-captures"] = Number(featureDict["opp-captures"] === 4);
   // featureDict["can-block-trias"] = 0
   // featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves;
@@ -194,7 +174,11 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     if (shape.type === "pente") continue; // not helpful, we already know who won if we find this
     // count me minus opponent
     if (!shapesToExclude.includes(shape.type)) {
-      if (shape.owner === game.currentPlayer) {
+      if (
+        shape.owner === game.currentPlayer &&
+        !shape.type.includes("pente-threat") &&
+        shape.type !== "open-tessera"
+      ) {
         featureDict["my-" + shape.type]++;
       } else {
         featureDict["opp-" + shape.type]++;
@@ -228,13 +212,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // for(const shape of getNonlinearShapes(game)){
   //   featureDict[shape.type] += shape.owner === game.currentPlayer ? 1 : -1
   // }
-
-  // count captures
-  const myCaptures = game.captures[game.currentPlayer];
-  const opponentCaptures = game.captures[Number(!game.currentPlayer) as 0 | 1];
-  featureDict["captures"] = myCaptures - opponentCaptures;
-  if (myCaptures === 4) featureDict["4-captures"] += 1;
-  if (opponentCaptures === 4) featureDict["4-captures"] -= 1;
 
   // see if we can block all opponent trias (in addition to pente threats, which are more forcing)
   // featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias)))
