@@ -449,10 +449,12 @@ export function updateLinearShapes(
             length: patternInfo.length,
             hash: hash,
           };
-          if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
-            game.linearShapes.push(shape);
-            update.added.push(shape);
-          }
+          (() => {
+            if (!game.linearShapes.some((s) => s.hash === shape.hash)) {
+              game.linearShapes.push(shape);
+              update.added.push(shape);
+            }
+          })();
         }
       })();
     }

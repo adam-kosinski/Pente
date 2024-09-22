@@ -56,7 +56,7 @@ const v = [
   { engine: engine17, create: create17, move: move17 }, // more eval features
   { engine: engine18, create: create18, move: move18 }, // better move generation and search extension, most importantly uses different opening evaluation, softmax for move choice
   { engine: engine19, create: create19, move: move19 }, // linear shapes store dx and dy and other updateLinearShapes optimizations, removed unnecessary eval features
-  { engine: engine20, create: create20, move: move20 }, // faster ttable key, transposition table for null window, updateLinearShapes optimizations, do all variations together, return partial results of ran out time iteration
+  { engine: engine20, create: create20, move: move20 }, // faster ttable key, transposition table for null window, optimizations, do all variations together, return partial results of ran out time iteration
 ];
 
 const gameStringSet = new Set<string>(gameStrings);

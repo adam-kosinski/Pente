@@ -113,10 +113,6 @@ export function findBestMoves(
   const startTime = performance.now();
   const deadlineMs = performance.now() + maxMs;
 
-  // used to fix some buggy behavior to clear the ttable
-  // though why would clearing it matter, since in theory it's position -> result, and positions don't care where they came from
-  transpositionTable.clear();
-
   let prevDepthResults: SearchResult[] = [];
 
   for (let depth = 1; depth <= maxDepth; depth++) {
