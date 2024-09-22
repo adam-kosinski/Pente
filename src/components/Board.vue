@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
 import { computed, inject } from 'vue'
-import { type GameState, toStandardCoords } from '@/engine_v20/model_v20';
-import { isRestricted } from '@/engine_v20/move_generation_v20';
+import { type GameState, toStandardCoords } from '@/engine_v21/model_v21';
+import { isRestricted } from '@/engine_v21/move_generation_v21';
 import CapturesArea from './CapturesArea.vue';
 
 interface Props {

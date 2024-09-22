@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type SearchResult, type GameState, createNewGame, copyGame, makeMove, toStandardCoords } from '@/engine_v20/model_v20';
+import { type SearchResult, type GameState, createNewGame, copyGame, makeMove, toStandardCoords } from '@/engine_v21/model_v21';
 import { computed, inject } from 'vue';
 
 const props = defineProps<{ result: SearchResult | undefined, game: GameState }>()

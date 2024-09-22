@@ -5,6 +5,7 @@ import { chooseMove as engine17 } from "./engine_v17/engine_v17";
 import { chooseMove as engine18 } from "./engine_v18/engine_v18";
 import { chooseMove as engine19 } from "./engine_v19/engine_v19";
 import { chooseMove as engine20 } from "./engine_v20/engine_v20";
+import { chooseMove as engine21 } from "./engine_v21/engine_v21";
 import { createNewGame as create14 } from "./engine_v14/model_v14";
 import { createNewGame as create15 } from "./engine_v15/model_v15";
 import { createNewGame as create16 } from "./engine_v16_diag_orthog/model_v16";
@@ -12,6 +13,8 @@ import { createNewGame as create17 } from "./engine_v17/model_v17";
 import { createNewGame as create18 } from "./engine_v18/model_v18";
 import { createNewGame as create19 } from "./engine_v19/model_v19";
 import { createNewGame as create20 } from "./engine_v20/model_v20";
+import { createNewGame as create21 } from "./engine_v21/model_v21";
+
 import {
   makeMove as move14,
   type GameState as Game14,
@@ -41,10 +44,15 @@ import {
   type GameState as Game20,
 } from "./engine_v20/model_v20";
 import {
+  makeMove as move21,
+  type GameState as Game21,
+} from "./engine_v21/model_v21";
+
+import {
   evaluatePosition,
   positionFeatureDict,
-} from "./engine_v20/evaluation_v20";
-import { createNewGame, gameToString, makeMove } from "./engine_v20/model_v20";
+} from "./engine_v21/evaluation_v21";
+import { createNewGame, gameToString, makeMove } from "./engine_v21/model_v21";
 import * as papa from "papaparse";
 import { gameStrings } from "./gameStrings";
 
@@ -57,6 +65,7 @@ const v = [
   { engine: engine18, create: create18, move: move18 }, // better move generation and search extension, most importantly uses different opening evaluation, softmax for move choice
   { engine: engine19, create: create19, move: move19 }, // linear shapes store dx and dy and other updateLinearShapes optimizations, removed unnecessary eval features
   { engine: engine20, create: create20, move: move20 }, // faster ttable key, transposition table for null window, optimizations, do all variations together, return partial results of ran out time iteration
+  { engine: engine21, create: create21, move: move21 }, //
 ];
 
 const gameStringSet = new Set<string>(gameStrings);
