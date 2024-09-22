@@ -196,6 +196,7 @@ export function* makeOrderedMoveIterator(
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
+  // map shape hash to its key in the priority list (speeds up sorting to only do this once)
   const keyMap = new Map(
     game.linearShapes.map((shape) => [
       shape.hash,
@@ -214,35 +215,35 @@ export function* makeOrderedMoveIterator(
 
   let includeNonShapeMoves = true; // set to false if we've narrowed down sensible moves to be within shapes, see below
 
-  // if I have a pente threat, the only relevant move is winning
+  // calculate if threatening things exist
   const myPenteThreat = sortedShapes.find(
     (shape) =>
       shape.owner === game.currentPlayer && shape.type.includes("pente-threat")
   );
+  const captureThreats = sortedShapes.filter(
+    (shape) => shape.type === "capture-threat"
+  );
+  const myCaptureThreat = captureThreats.find(
+    (threat) => threat.owner === game.currentPlayer
+  );
+
+  // if I have a pente threat, the only relevant move is winning
   if (myPenteThreat) {
     sortedShapes = [myPenteThreat];
     includeNonShapeMoves = false;
   }
   // else if I have 4 captures and a capture threat, only relevant move is winning
-  else if (game.captures[game.currentPlayer] === 4) {
-    const captureThreat = sortedShapes.find(
-      (shape) =>
-        shape.owner === game.currentPlayer && shape.type === "capture-threat"
-    );
-    if (captureThreat) {
-      sortedShapes = [captureThreat];
-      includeNonShapeMoves = false;
-    }
+  else if (game.captures[game.currentPlayer] === 4 && myCaptureThreat) {
+    sortedShapes = [myCaptureThreat];
+    includeNonShapeMoves = false;
   }
   // else if opponent has 4 captures and a capture threat, only relevant moves are blocking it or making a capture that blocks the threatening piece
-  else if (game.captures[Number(!game.currentPlayer) as 0 | 1] === 4) {
-    const captureThreats = sortedShapes.filter(
-      (shape) => shape.type === "capture-threat"
-    );
-    if (captureThreats.some((threat) => threat.owner !== game.currentPlayer)) {
-      sortedShapes = captureThreats;
-      includeNonShapeMoves = false;
-    }
+  else if (
+    game.captures[Number(!game.currentPlayer) as 0 | 1] === 4 &&
+    captureThreats.some((threat) => threat.owner !== game.currentPlayer)
+  ) {
+    sortedShapes = captureThreats;
+    includeNonShapeMoves = false;
   } else {
     // else if there is an opponent pente threat, the only relevant moves are within it or making a capture that blocks all opponent pente threats
     const opponentPenteThreats = sortedShapes.filter(

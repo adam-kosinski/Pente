@@ -50,7 +50,9 @@ const testPositions = [
   // transposition table bug, thinks white has a forced win
   "19~9.9|9.10|6.9|11.10|6.7|10.10|8.10|10.8|7.11|10.9",
   // on 2+ variations only, thinks white has a forced win
-  "19~9.9|10.10|9.6|8.10|7.6|8.12|8.6|10.6"
+  "19~9.9|10.10|9.6|8.10|7.6|8.12|8.6|10.6",
+  // faulty analysis in complex position, missed an opponent move that wins (13.13), b/c it was the #22 ranked move
+  "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9|14.9|10.11|11.11|15.11|11.9|13.9|9.12|12.9|16.10"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
