@@ -436,6 +436,15 @@ function principalVariationSearch(
     }
     undoMove(game);
 
+    // upper bound of -Infinity is an exact eval, similar with Infinity
+    if (
+      (childResult.eval === -Infinity &&
+        childResult.evalFlag === "upper-bound") ||
+      (childResult.eval === Infinity && childResult.evalFlag === "lower-bound")
+    ) {
+      childResult.evalFlag = "exact";
+    }
+
     if (childResult.ranOutOfTime) {
       // If we've found moves already, return those.
       // This is safe even though we haven't looked at all reasonable moves yet, because we started
@@ -459,13 +468,6 @@ function principalVariationSearch(
       bestVariation: [[r, c], ...childResult.bestVariation],
       ranOutOfTime: childResult.ranOutOfTime,
     };
-    // upper bound of -Infinity is an exact eval, similar with Infinity
-    if (
-      (myResult.eval === -Infinity && myResult.evalFlag === "upper-bound") ||
-      (myResult.eval === Infinity && myResult.evalFlag === "lower-bound")
-    ) {
-      myResult.evalFlag = "exact";
-    }
     allMoveResults.push(myResult);
 
     // check if this result is one of the best variations

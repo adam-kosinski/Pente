@@ -33,8 +33,6 @@ const testPositions = [
   "19~9.9|9.7|11.9|11.5|11.7|10.6|8.8|7.7|10.10|12.4|13.3|9.11|12.8|13.9|12.8|11.11|10.9|10.11",
   // used to blunder b/c thought it was dead lost when it wasn't
   "19~9.9|9.8|12.7|7.8|11.7|10.7|8.9|11.6|7.9|6.9|11.9|10.9|11.10|11.11|8.7|10.9|5.10|5.9|6.9|7.8|10.8|8.10|13.7|12.6|14.7|15.7|12.10|9.7|14.12|13.11|14.10|13.10|14.11",
-  // variations originally out of order - second variation finds a better result
-  "19~9.9|10.10|9.11|9.12|7.9|10.12|8.9|10.9|6.9|5.9|10.11|10.8|8.11|10.7|10.6|7.11|8.12",
   // linear shape update used to be broken
   "19~9.9|11.9|9.7|9.6|9.5|7.4|5.3|5.2|6.2|6.3",
   // (!!!) analyze (-Infinity), then go back one move and analyze -> line switches to +Infinity, but if you follow it to the end, the final position of the +Infinity line is actually -Infinity
@@ -47,12 +45,8 @@ const testPositions = [
   "19~9.9|10.9|9.11|9.8|11.10|8.7|11.11|8.11|11.12|7.6|6.5|11.13|11.8|11.9|12.9|11.9|12.12|13.13|10.11|9.12|12.11|10.10|11.11|13.11|12.8|11.9|12.10|12.12|12.7",
   // and again! - lost on move 10 by playing 6.9 because didn't look far enough ahead
   "19~9.9|11.10|9.6|8.6|7.9|9.8|7.8|7.10|7.7|6.9|5.8|7.5|8.11|7.10|8.9|6.9|6.7|5.6|8.10|8.8|10.8|6.8|6.10|6.8|8.12|9.11|8.10|8.13|8.8",
-  // transposition table bug, thinks white has a forced win
-  "19~9.9|9.10|6.9|11.10|6.7|10.10|8.10|10.8|7.11|10.9",
-  // on 2+ variations only, thinks white has a forced win
-  "19~9.9|10.10|9.6|8.10|7.6|8.12|8.6|10.6",
-  // faulty analysis in complex position, missed an opponent move that wins (13.13), b/c it was the #22 ranked move
-  "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9|14.9|10.11|11.11|15.11|11.9|13.9|9.12|12.9|16.10"
+  // chooses a dumb move when exiting early from a search at depth 10 - this seems to be because it realized it lost?? but it reports it's winning (-27.9) sometimes
+  "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -146,7 +140,9 @@ let analysisWorker: Worker
 
 function analyzePosition() {
   if (!analysisStarted.value) return
-  if (analysisWorker) analysisWorker.terminate()
+  if (analysisWorker) {
+    analysisWorker.terminate()
+  }
   analysisWorker = new AnalysisWorker()
 
   analysisWorker.postMessage([JSON.stringify(game.value), nAnalysisVariations.value])
