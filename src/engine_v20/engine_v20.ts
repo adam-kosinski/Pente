@@ -521,7 +521,12 @@ function principalVariationSearch(
       bestVariations[0].eval === Infinity ? "exact" : "lower-bound";
   else bestVariations[0].evalFlag = "exact";
 
-  transpositionTableSet(tableKey, bestVariations[0], depth);
+  // store result in transposition table unless time is up (don't store partial solutions)
+  // it is possible to be past the deadline, if the child handed up partial but still useful solutions
+  // (see check for child ran out of time above)
+  if (performance.now() < deadlineMs) {
+    transpositionTableSet(tableKey, bestVariations[0], depth);
+  }
 
   if (allMoveResults.length === 0) {
     console.warn(`no moves found, depth: ${depth} and nMoves: ${game.nMoves}`);
