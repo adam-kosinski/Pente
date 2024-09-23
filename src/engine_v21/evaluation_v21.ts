@@ -131,12 +131,17 @@ const laterCurrentPlayerBias = 0.17887124938464527;
 
 // some shapes aren't useful for evaluation, but are still used for move ordering
 const shapesToExclude = [
+  "pente-potential-2",
   "extendable-tria",
   "extendable-stretch-tria-1",
   "extendable-stretch-tria-2",
   "three-gap",
   "three",
 ];
+
+function sum(array: number[]) {
+  return array.reduce((total, current) => total + current, 0);
+}
 
 export function positionFeatureDict(game: GameState): Record<string, number> {
   // returns an object of useful information for evaluating the position
@@ -159,12 +164,22 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
     game.captures[Number(!game.currentPlayer) as 0 | 1];
   featureDict["my-4-captures"] = Number(featureDict["my-captures"] === 4);
   featureDict["opp-4-captures"] = Number(featureDict["opp-captures"] === 4);
-  // featureDict["can-block-trias"] = 0
+  // featureDict["can-block-trias"] = 0;
   // featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves;
   featureDict["my-actionable-threats"] = 0;
-  // featureDict["not-in-shape"] = 0
+  // featureDict["not-in-shape"] = 0;
   // featureDict["momentum"] = evaluateMomentum(game, 6);
+  // const myThreatHistory = game.threatHistory.filter(
+  //   (value, index) => (index + Number(!game.currentPlayer)) % 2
+  // );
+  // const oppThreatHistory = game.threatHistory.filter(
+  //   (value, index) => (index + Number(game.currentPlayer)) % 2
+  // );
+  // featureDict["my-threat-history"] = sum(myThreatHistory) / game.nMoves;
+  // featureDict["opp-threat-history"] = sum(oppThreatHistory) / game.nMoves;
+  // featureDict["my-threat-history-4"] = sum(myThreatHistory.slice(-4));
+  // featureDict["opp-threat-history-4"] = sum(oppThreatHistory.slice(-4));
 
   // count linear shapes, for me (current player) and for the opponent
   let myThreatScore = 0; // keep track of forcing threats I can make, which we will count if the opponent doesn't have pente threats
@@ -204,6 +219,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
       opponentPenteThreats.push(shape);
     }
   }
+
   if (opponentPenteThreats.length === 0) {
     featureDict["my-actionable-threats"] = myThreatScore;
   }
@@ -214,30 +230,39 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // }
 
   // see if we can block all opponent trias (in addition to pente threats, which are more forcing)
-  // featureDict["can-block-trias"] = Number(canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias)))
+  // featureDict["can-block-trias"] = Number(
+  //   canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias))
+  // );
 
-  // // count fraction of gems in a linear shape
-  // const gemLocations = new Set<string>()
-  // // iterate through linear shapes
-  // for(const shape of game.linearShapes){
-  //   for(let i=0; i<shape.length; i++){
-  //     if(shape.pattern.charAt(i) !== "_"){
-  //       gemLocations.add(loc(shape, i))
+  // count number of gems in a linear shape, for each player
+  // const gemLocations0 = new Set<string>();
+  // const gemLocations1 = new Set<string>();
+  // for (const shape of game.linearShapes) {
+  //   for (let i = 0; i < shape.length; i++) {
+  //     if (shape.pattern.charAt(i) === "0") {
+  //       gemLocations0.add(loc(shape, i));
+  //     } else if (shape.pattern.charAt(i) === "1") {
+  //       gemLocations1.add(loc(shape, i));
   //     }
   //   }
   // }
-  // // iterate through gems on board
-  // let nGems = 0
-  // for (let r = 0; r < game.board.length; r++) {
-  //   for (const c in game.board[r]) {
-  //     nGems++
-  //     if(!gemLocations.has([r,c].toString())){
-  //       featureDict["not-in-shape"] += game.board[r][c] === game.currentPlayer ? 1 : -1
-  //     }
-  //   }
+  // const gemsPlaced0 = Math.ceil(game.nMoves / 2);
+  // const gemsCaptured0 = game.captures[1] * 2;
+  // const nGems0 = gemsPlaced0 - gemsCaptured0;
+  // const nGemsNotInShape0 = nGems0 - gemLocations0.size;
+
+  // const gemsPlaced1 = Math.floor(game.nMoves / 2);
+  // const gemsCaptured1 = game.captures[0] * 2;
+  // const nGems1 = gemsPlaced1 - gemsCaptured1;
+  // const nGemsNotInShape1 = nGems1 - gemLocations1.size;
+
+  // if (game.currentPlayer === 0) {
+  //   featureDict["my-stranded-gems"] = nGemsNotInShape0;
+  //   featureDict["opp-stranded-gems"] = nGemsNotInShape1;
+  // } else {
+  //   featureDict["my-stranded-gems"] = nGemsNotInShape1;
+  //   featureDict["opp-stranded-gems"] = nGemsNotInShape0;
   // }
-  // // want fraction
-  // featureDict["not-in-shape"] /= nGems
 
   return featureDict;
 }
