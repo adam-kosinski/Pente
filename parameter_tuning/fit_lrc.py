@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import json
@@ -15,17 +13,6 @@ def split_data(X, y, train_fraction):
     split_idx = int(len(X) * train_fraction)
     # split (note that pandas slice indices are both inclusive)
     return X.loc[:split_idx-1], X.loc[split_idx:], y.loc[:split_idx-1], y.loc[split_idx:]
-
-
-# def split_data(data, train_size, opening_idx):
-#     # train test split (note that pandas slice indices are both inclusive)
-#     split_idx = int(len(data) * train_size)
-#     train = data.loc[:split_idx-1]
-#     test = data.loc[split_idx:]
-
-#     # opening / not opening split for training
-
-#     # X y split
 
 
 def check_collinearity(data):
@@ -105,7 +92,7 @@ def fit(data, opening_idx, show_coef=True):
 
         # plot model parameters
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
         fig.suptitle(
             f"Opening Index: {opening_idx}\nopening fraction [train, test] = [{opening_frac_train:.3f}, {opening_frac_test:.3f}]\nTrain accuracy: {accuracy_train:.4f}\nTest accuracy: {accuracy_test:.4f}")
 
@@ -135,7 +122,7 @@ def main():
     data = pd.read_csv("features.csv")
     check_collinearity(data)
 
-    # fit(data, 18)
+    # fit(data, 19)
     # return
 
     indices = []
