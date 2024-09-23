@@ -454,9 +454,10 @@ function principalVariationSearch(
       // Also - these search results aren't flagged as ranOutOfTime aka invalid, but our parent
       //  function will realize we ran out of time the next time it calls a child and gets ranOutOfTime
       //  back immediately
-      if (bestVariations.length > 0) {
-        return bestVariations;
-      }
+      // TODO - this has some buggy behavior, commenting out for now
+      // if (bestVariations.length > 0) {
+      //   return bestVariations;
+      // }
       // if we didn't find moves yet, the best we can do is say we ran out of time and ignore the result
       return [childResult]; // return another dummy result indicating ran out of time
     }
