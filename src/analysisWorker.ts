@@ -9,7 +9,7 @@ onmessage = (e) => {
   const results = findBestMoves(
     game,
     nVariations,
-    10, // max depth
+    12, // max depth
     3000, // max time in ms
     true, // absolute eval
     true, // verbose

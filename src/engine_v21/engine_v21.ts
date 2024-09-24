@@ -401,7 +401,7 @@ function principalVariationSearch(
       )[0];
     else {
       // not first-ordered move, so probably worse, do a fast null window search
-      let searchDepth = depth >= 3 && moveIndex >= 5 ? depth - 2 : depth - 1; // apply late move reduction
+      let searchDepth = depth >= 3 && moveIndex >= 8 ? depth - 2 : depth - 1; // apply late move reduction
       searchDepth += extension;
       childResult = principalVariationSearch(
         game,
