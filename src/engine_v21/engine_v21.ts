@@ -115,6 +115,9 @@ export function findBestMoves(
 
   let prevDepthResults: SearchResult[] = [];
 
+  // still seems to have some buggy behavior - of thinking something is forced win in 2, only to discover it isn't...
+  transpositionTable.clear();
+
   for (let depth = 1; depth <= maxDepth; depth++) {
     if (verbose) console.log(`searching depth ${depth}...`);
 
@@ -340,31 +343,31 @@ function principalVariationSearch(
     ttableMiss++;
   }
 
-  // extend on forcing positions (pente threat or 5th capture threat), since branching
-  // note that I won't have a pente or 5th capture threat (only the opponent will),
-  // because if I did the eval function would have seen this and marked this position
-  // as won for me (since I have a winning move)
-  // don't extend on depth 1, because need to return something for the depth 1 iteration of iterative deepening,
-  // and extensions might cause us to run out of time
+  // Extend on forcing positions (pente threat or 5th capture threat), since branching factor is small
+  // Note that I won't have a pente or 5th capture threat (only the opponent will),
+  //  because if I did the eval function would have seen this and marked this position
+  //  as won for me (since I have a winning move)
+  // Don't extend on depth 1, because need to return something for the depth 1 iteration of iterative deepening,
+  //  and extensions might cause us to run out of time
   let extension = 0;
-  if (depth > 1) {
-    const fourOpponentCaptures =
-      game.captures[Number(!game.currentPlayer) as 0 | 1] === 4;
-    const penteThreatExists = game.linearShapes.some((shape) =>
-      shape.type.includes("pente-threat")
-    );
-    if (
-      penteThreatExists ||
-      (fourOpponentCaptures &&
-        game.linearShapes.some(
-          (shape) =>
-            shape.type === "capture-threat" &&
-            shape.owner !== game.currentPlayer
-        ))
-    ) {
-      extension = 1;
-    }
-  }
+  // if (depth > 1) {
+  //   const fourOpponentCaptures =
+  //     game.captures[Number(!game.currentPlayer) as 0 | 1] === 4;
+  //   const penteThreatExists = game.linearShapes.some((shape) =>
+  //     shape.type.includes("pente-threat")
+  //   );
+  //   if (
+  //     penteThreatExists ||
+  //     (fourOpponentCaptures &&
+  //       game.linearShapes.some(
+  //         (shape) =>
+  //           shape.type === "capture-threat" &&
+  //           shape.owner !== game.currentPlayer
+  //       ))
+  //   ) {
+  //     extension = 1;
+  //   }
+  // }
 
   let moveIndex = 0;
   const moveIterator = makeOrderedMoveIterator(

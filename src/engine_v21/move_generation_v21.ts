@@ -153,7 +153,16 @@ export function* makeOrderedMoveIterator(
     if (moveHashes.size !== 0 && (ply === 1 || ply === 3)) return; // ply check: limit it to this if we are making the move
   }
 
-  // use order from prevDepthResults - this will contain all remaining moves, ranked
+  // first priority is principal variation move
+  if (principalVariationMove !== undefined) {
+    if (isValidNewMove(principalVariationMove)) {
+      yield principalVariationMove;
+      registerMove(principalVariationMove);
+    }
+  }
+
+  // for other moves, use order from prevDepthResults - this will contain all remaining moves,
+  // ranked by how good they were in the previous iteration of iterative deepening
   if (prevDepthResults.length > 0) {
     for (const result of prevDepthResults) {
       const m = result.bestVariation[0];
@@ -166,13 +175,6 @@ export function* makeOrderedMoveIterator(
   }
   // if we don't have such a nice list, use heuristics
 
-  // first priority is principal variation move
-  if (principalVariationMove !== undefined) {
-    if (isValidNewMove(principalVariationMove)) {
-      yield principalVariationMove;
-      registerMove(principalVariationMove);
-    }
-  }
   // second priority is transposition table entry (aka hash move)
   if (tableEntry !== undefined) {
     const goodMove = tableEntry.result.bestVariation[0];
