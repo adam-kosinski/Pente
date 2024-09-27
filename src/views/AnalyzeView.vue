@@ -46,7 +46,9 @@ const testPositions = [
   // and again! - lost on move 10 by playing 6.9 because didn't look far enough ahead
   "19~9.9|11.10|9.6|8.6|7.9|9.8|7.8|7.10|7.7|6.9|5.8|7.5|8.11|7.10|8.9|6.9|6.7|5.6|8.10|8.8|10.8|6.8|6.10|6.8|8.12|9.11|8.10|8.13|8.8",
   // chooses a dumb move when exiting early from a search at depth 10 - this seems to be because it realized it lost?? but it reports it's winning (-27.9) sometimes
-  "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9"
+  "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9",
+  // evaluation is busted here, thinks white cannot block all of black's pente threats
+  "19~9.9|10.10|6.9|10.6|6.11|12.9|6.10|6.12|6.8|6.7|8.9|7.9|7.10|10.9|8.9|9.8|5.12|4.13|5.10|10.8|10.7|8.10|3.10|4.10|4.11|10.12|10.11|9.11|11.13|9.9|11.9|9.9|7.11|11.7|12.6|7.12|7.11|9.12"
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
