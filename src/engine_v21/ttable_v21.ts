@@ -25,7 +25,7 @@ export function transpositionTableSet(
   if (transpositionTable.size === maxTTableEntries) {
     // remove the oldest entry to make space
     const oldKey = transpositionTable.keys().next().value;
-    transpositionTable.delete(oldKey);
+    if (oldKey) transpositionTable.delete(oldKey);
   }
   transpositionTable.set(key, entry);
 }

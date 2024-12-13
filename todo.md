@@ -1,0 +1,1 @@
+On Infinity evals, suggest reasonable moves in the line? The computer seems to suggest a very obviously bad move if it knows it's going to lose anyways, when to a human it's not obvious that it will lose anyway.

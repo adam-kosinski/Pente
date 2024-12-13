@@ -9,8 +9,9 @@ import {
   undoMove,
 } from "./model_v21";
 import {
-  getNonQuietMoves,
   makeOrderedMoveIterator,
+  emptySpotsInShape,
+  getMovesBlockingAllThreats,
 } from "./move_generation_v21";
 
 export function evaluatePosition(game: GameState) {
@@ -47,7 +48,12 @@ export function evaluatePosition(game: GameState) {
   // we now establish that we can't win immediately on our turn
   // look for unstoppable opponent threats
   // if opponent has multiple pente threats, check if we can block them all
-  if (!canBlockAllThreats(game, opponentPenteThreats)) return -Infinity;
+  if (
+    opponentPenteThreats.length > 0 &&
+    getMovesBlockingAllThreats(game, opponentPenteThreats).length === 0
+  ) {
+    return -Infinity;
+  }
 
   // use position feature dict along with weights and bias to compute evaluation
   const featureDict = positionFeatureDict(game);
@@ -165,7 +171,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   featureDict["my-4-captures"] = Number(featureDict["my-captures"] === 4);
   featureDict["opp-4-captures"] = Number(featureDict["opp-captures"] === 4);
   // featureDict["can-block-trias"] = 0;
-  // featureDict["non-quiet-moves"] = getNonQuietMoves(game).length
   featureDict["move-index"] = game.nMoves;
   featureDict["my-actionable-threats"] = 0;
   // featureDict["not-in-shape"] = 0;
@@ -230,9 +235,7 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // }
 
   // see if we can block all opponent trias (in addition to pente threats, which are more forcing)
-  // featureDict["can-block-trias"] = Number(
-  //   canBlockAllThreats(game, opponentPenteThreats.concat(opponentTrias))
-  // );
+  // NOTE - copy pente threat format above if we bring this idea back
 
   // count number of gems in a linear shape, for each player
   // const gemLocations0 = new Set<string>();
@@ -265,93 +268,6 @@ export function positionFeatureDict(game: GameState): Record<string, number> {
   // }
 
   return featureDict;
-}
-
-export function getBlockingCaptures(
-  game: GameState,
-  threat: LinearShape
-): LinearShape[] {
-  const blockingCaptures: LinearShape[] = [];
-
-  const threatGems: number[][] = [];
-  for (let i = 0; i < threat.length; i++) {
-    const r = threat.begin[0] + i * threat.dy;
-    const c = threat.begin[1] + i * threat.dx;
-    if (threat.pattern[i] !== "_") threatGems.push([r, c]);
-  }
-
-  for (const shape of game.linearShapes) {
-    if (shape.type !== "capture-threat" || shape.owner === threat.owner)
-      continue;
-
-    const dy = shape.dy;
-    const dx = shape.dx;
-    for (const i of [1, 2]) {
-      const r = shape.begin[0] + i * dy;
-      const c = shape.begin[1] + i * dx;
-      if (threatGems.some((gem) => gem[0] === r && gem[1] === c)) {
-        blockingCaptures.push(shape);
-        break;
-      }
-    }
-  }
-  return blockingCaptures;
-}
-
-export function getCapturesBlockingAll(
-  game: GameState,
-  threats: LinearShape[]
-) {
-  let capturesBlockingAll = getBlockingCaptures(game, threats[0]);
-  for (let i = 1; i < threats.length; i++) {
-    const captureHashSet = new Set(
-      getBlockingCaptures(game, threats[i]).map((s) => s.hash)
-    );
-    capturesBlockingAll = capturesBlockingAll.filter((s) =>
-      captureHashSet.has(s.hash)
-    );
-  }
-  return capturesBlockingAll;
-}
-
-export function canBlockAllThreats(
-  game: GameState,
-  threats: LinearShape[]
-): boolean {
-  // function to check whether placing a gem can block all the threats
-  // a threat can be blocked by placing a gem within it, or by capturing one of its gems
-
-  if (threats.length <= 1) return true;
-
-  let blockSpot: string = "";
-  let normalBlockWorks = true;
-
-  for (const threat of threats) {
-    const dy = threat.dy;
-    const dx = threat.dx;
-    for (let i = 0; i < threat.length; i++) {
-      const r = threat.begin[0] + i * dy;
-      const c = threat.begin[1] + i * dx;
-      if (threat.pattern[i] === "_") {
-        const s = r + "," + c;
-        if (blockSpot === "")
-          blockSpot = s; // if first spot we need to block, write it down
-        else if (blockSpot !== s) {
-          // if we found a second, different spot we need to block, can't do both at once
-          normalBlockWorks = false;
-          break;
-        }
-      }
-    }
-    if (!normalBlockWorks) break;
-  }
-
-  if (normalBlockWorks) return true;
-
-  // otherwise, try blocking by capturing from all the threats
-  let capturesBlockingAll = getCapturesBlockingAll(game, threats);
-  if (capturesBlockingAll.length === 0) return false;
-  return true;
 }
 
 export function evaluateMomentum(game: GameState, depth: number): number {

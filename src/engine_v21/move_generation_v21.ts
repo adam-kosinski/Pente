@@ -1,5 +1,4 @@
 import { gameStrings } from "@/gameStrings";
-import { getCapturesBlockingAll } from "./evaluation_v21";
 import {
   type GameState,
   type SearchResult,
@@ -64,6 +63,100 @@ export function isRestricted(game: GameState, r: number, c: number) {
   const center = Math.floor(game.board.length / 2);
   if (Math.abs(r - center) < 3 && Math.abs(c - center) < 3) return true;
   return false;
+}
+
+export function emptySpotsInShape(
+  shape: LinearShape,
+  excludeIndices: number[] = []
+): number[][] {
+  const spots: number[][] = [];
+  const dy = shape.dy;
+  const dx = shape.dx;
+  for (let i = 0; i < shape.length; i++) {
+    if (excludeIndices.includes(i)) continue;
+    const r = shape.begin[0] + i * dy;
+    const c = shape.begin[1] + i * dx;
+    if (shape.pattern[i] === "_") {
+      spots.push([r, c]);
+    }
+  }
+  return spots;
+}
+
+function getBlockingCaptures(
+  game: GameState,
+  threat: LinearShape
+): LinearShape[] {
+  const blockingCaptures: LinearShape[] = [];
+
+  const threatGems: number[][] = [];
+  for (let i = 0; i < threat.length; i++) {
+    const r = threat.begin[0] + i * threat.dy;
+    const c = threat.begin[1] + i * threat.dx;
+    if (threat.pattern[i] === String(threat.owner)) threatGems.push([r, c]);
+  }
+
+  for (const shape of game.linearShapes) {
+    if (shape.type !== "capture-threat" || shape.owner === threat.owner)
+      continue;
+
+    const dy = shape.dy;
+    const dx = shape.dx;
+    for (const i of [1, 2]) {
+      const r = shape.begin[0] + i * dy;
+      const c = shape.begin[1] + i * dx;
+      if (threatGems.some((gem) => gem[0] === r && gem[1] === c)) {
+        blockingCaptures.push(shape);
+        break;
+      }
+    }
+  }
+  return blockingCaptures;
+}
+
+export function getMovesBlockingThreat(game: GameState, threat: LinearShape) {
+  const blockingMoves = emptySpotsInShape(threat);
+
+  // get capture blocking spots
+  const blockingCaptureShapes = getBlockingCaptures(game, threat);
+  for (const shape of blockingCaptureShapes) {
+    const dy = shape.dy;
+    const dx = shape.dx;
+    // determine which location is the empty spot in the capture threat shape
+    for (const i of [0, 3]) {
+      const r = shape.begin[0] + i * dy;
+      const c = shape.begin[1] + i * dx;
+      if (shape.pattern[i] === "_") {
+        blockingMoves.push([r, c]);
+        break;
+      }
+    }
+  }
+  return blockingMoves;
+}
+
+export function getMovesBlockingAllThreats(
+  game: GameState,
+  threats: LinearShape[]
+) {
+  if (threats.length === 0) return [];
+
+  // get all block options for the first threat
+  let movesBlockingAll = Array.from(getMovesBlockingThreat(game, threats[0]));
+
+  // get all block options for other threats, intersect with first threat
+  for (let i = 1; i < threats.length; i++) {
+    const movesBlockingThreat = new Set(
+      getMovesBlockingThreat(game, threats[i]).map((m) => m.join(","))
+    );
+    movesBlockingAll = movesBlockingAll.filter((s) =>
+      movesBlockingThreat.has(s.join(","))
+    );
+    // if no moves exist that can block all threats, stop looking
+    if (movesBlockingAll.length === 0) break;
+  }
+  // if at the end of all threats, the intersection between all threats are the moves that block all of them
+  return movesBlockingAll;
 }
 
 export function* makeOrderedMoveIterator(
@@ -215,8 +308,6 @@ export function* makeOrderedMoveIterator(
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
   let sortedShapes = game.linearShapes.slice();
 
-  let includeNonShapeMoves = true; // set to false if we've narrowed down sensible moves to be within shapes, see below
-
   // calculate if threatening things exist
   const myPenteThreat = sortedShapes.find(
     (shape) =>
@@ -225,72 +316,83 @@ export function* makeOrderedMoveIterator(
   const captureThreats = sortedShapes.filter(
     (shape) => shape.type === "capture-threat"
   );
+  // find instances of capture threats, useful so don't have to search twice later
   const myCaptureThreat = captureThreats.find(
     (threat) => threat.owner === game.currentPlayer
+  );
+  const opponentCaptureThreat = captureThreats.find(
+    (threat) => threat.owner !== game.currentPlayer
   );
 
   // if I have a pente threat, the only relevant move is winning
   if (myPenteThreat) {
-    sortedShapes = [myPenteThreat];
-    includeNonShapeMoves = false;
+    for (const m of emptySpotsInShape(myPenteThreat)) {
+      if (isValidNewMove(m)) {
+        yield m;
+        registerMove(m);
+      }
+    }
+    return;
   }
   // else if I have 4 captures and a capture threat, only relevant move is winning
-  else if (game.captures[game.currentPlayer] === 4 && myCaptureThreat) {
-    sortedShapes = [myCaptureThreat];
-    includeNonShapeMoves = false;
+  if (game.captures[game.currentPlayer] === 4 && myCaptureThreat) {
+    for (const m of emptySpotsInShape(myCaptureThreat)) {
+      if (isValidNewMove(m)) {
+        yield m;
+        registerMove(m);
+      }
+    }
+    return;
   }
   // else if opponent has 4 captures and a capture threat, only relevant moves are blocking it or making a capture that blocks the threatening piece
-  else if (
+  if (
     game.captures[Number(!game.currentPlayer) as 0 | 1] === 4 &&
-    captureThreats.some((threat) => threat.owner !== game.currentPlayer)
+    opponentCaptureThreat
   ) {
-    sortedShapes = captureThreats;
-    includeNonShapeMoves = false;
-  } else {
-    // else if there is an opponent pente threat, the only relevant moves are within it or making a capture that blocks all opponent pente threats
-    const opponentPenteThreats = sortedShapes.filter(
-      (shape) =>
-        shape.owner !== game.currentPlayer &&
-        shape.type.includes("pente-threat")
-    );
-    if (opponentPenteThreats.length > 0) {
-      const blockingCaptures = getCapturesBlockingAll(
-        game,
-        opponentPenteThreats
-      );
-      sortedShapes = opponentPenteThreats.concat(blockingCaptures);
-      includeNonShapeMoves = false;
+    for (const m of getMovesBlockingThreat(game, opponentCaptureThreat)) {
+      if (isValidNewMove(m)) {
+        yield m;
+        registerMove(m);
+      }
     }
+    return;
+  }
+  // else if there is an opponent pente threat, the only relevant moves are within it or making a capture that blocks all opponent pente threats
+  const opponentPenteThreats = sortedShapes.filter(
+    (shape) =>
+      shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")
+  );
+  if (opponentPenteThreats.length > 0) {
+    for (const threat of opponentPenteThreats) {
+      for (const m of getMovesBlockingThreat(game, threat)) {
+        if (isValidNewMove(m)) {
+          yield m;
+          registerMove(m);
+        }
+      }
+    }
+    return;
   }
 
   // find moves in shapes
   for (const shape of sortedShapes) {
-    const dy = shape.dy;
-    const dx = shape.dx;
-    for (
-      let i = 0, r = shape.begin[0], c = shape.begin[1];
-      i < shape.length;
-      i++, r += dy, c += dx
+    // for my double stretch twos only suggest the moves that make a stretch tria, the other two aren't that good
+    // for opponent ones though all spots are reasonable blocking locations
+    let excludeIndices: number[] = [];
+    if (
+      shape.type === "double-stretch-two" &&
+      shape.owner === game.currentPlayer
     ) {
-      // for my double stretch twos only suggest the moves that make a stretch tria, the other two aren't that good
-      // for opponent ones though all spots are reasonable blocking locations
-      if (
-        shape.type === "double-stretch-two" &&
-        shape.owner === game.currentPlayer &&
-        (i === 0 || i === 5)
-      ) {
-        continue;
-      }
-      // suggest move
-      const m = [r, c];
+      excludeIndices = [0, 5];
+    }
+
+    for (const m of emptySpotsInShape(shape, excludeIndices)) {
       if (isValidNewMove(m)) {
         yield m;
         registerMove(m);
       }
     }
   }
-
-  if (!includeNonShapeMoves) return; // already looked at all possible relevant moves
 
   // find gems to generate moves near them
   const gemLocations = {
@@ -423,100 +525,6 @@ export function* makeOrderedMoveIterator(
       }
     }
   }
-}
-
-export function getNonQuietMoves(game: GameState): number[][] {
-  // function to tell if a position is quiet, used for quiescence search (QS), and which moves relevant to the non-quietness should be considered for the QS
-  // if the return move list has length 0, the position is quiet
-
-  // suppose it is my turn
-  // in order of urgency:
-  // if I have a pente threat, just complete pente
-  // if the opponent has a pente threat or open tessera, needs to be blocked - not quiet (if I have one the eval function will notice that as a win)
-  // else, examine these in order:
-  //  - if I have an open or extendable tria, we want to see what happens if I extend it to a open or closed tessera - not quiet
-  //  - if the opponent has a open (not just extendable) tria, we need to block it
-
-  // if there are pairs I can capture, that often can result in tactics - not quiet
-  //  - should always examine this, possibility for blocking any of the above situations, and to find out if I can force a 5-capture win via tactics
-  //  - but rank capture moves behind the more forcing moves above
-  // if there are pairs my opponent can capture, it's not immediately tactical, so we can probably just do the static eval
-
-  const myPenteThreats: LinearShape[] = [];
-  const opponentPenteThreats: LinearShape[] = [];
-  const myOpenTrias: LinearShape[] = [];
-  const myExtendableTrias: LinearShape[] = [];
-  const opponentOpenTrias: LinearShape[] = [];
-  const myCaptureThreats: LinearShape[] = [];
-
-  for (const shape of game.linearShapes) {
-    if (shape.type.includes("pente-threat")) {
-      if (shape.owner === game.currentPlayer) {
-        myPenteThreats.push(shape);
-        break; // no need to keep looking, just play this move and win
-      } else opponentPenteThreats.push(shape);
-    } else if (["open-tria", "stretch-tria"].includes(shape.type)) {
-      if (shape.owner === game.currentPlayer) myOpenTrias.push(shape);
-      else opponentOpenTrias.push(shape);
-    } else if (
-      [
-        "extendable-tria",
-        "extendable-stretch-tria-1",
-        "extendable-stretch-tria-2",
-      ].includes(shape.type) &&
-      shape.owner === game.currentPlayer
-    ) {
-      myExtendableTrias.push(shape);
-    } else if (
-      shape.type === "capture-threat" &&
-      shape.owner === game.currentPlayer
-    ) {
-      myCaptureThreats.push(shape);
-    }
-  }
-
-  let nonQuietShapes: LinearShape[] = [];
-  if (myPenteThreats.length > 0) nonQuietShapes = myPenteThreats;
-  else if (opponentPenteThreats.length > 0) {
-    const myBlockingCaptures = getCapturesBlockingAll(
-      game,
-      opponentPenteThreats
-    );
-    nonQuietShapes = [...opponentPenteThreats, ...myBlockingCaptures];
-  } else
-    nonQuietShapes = [
-      ...myOpenTrias,
-      ...myExtendableTrias,
-      ...opponentOpenTrias,
-      ...myCaptureThreats,
-    ];
-
-  // get moves from shapes - similar logic to the main move generator
-  const moves = [];
-
-  // setup
-  const moveHashes = new Set(); // remember moves we've returned already, so we don't repeat - values are just "r,c"
-  const isValidMove = function (move: number[]) {
-    if (isRestricted(game, move[0], move[1])) return false;
-    return game.board[move[0]][move[1]] === undefined;
-  };
-  for (const shape of nonQuietShapes) {
-    const dy = shape.dy;
-    const dx = shape.dx;
-    for (
-      let i = 0, r = shape.begin[0], c = shape.begin[1];
-      i < shape.length;
-      i++, r += dy, c += dx
-    ) {
-      if (!isValidMove([r, c])) continue;
-      const hash = r + "," + c;
-      if (!moveHashes.has(hash)) {
-        moves.push([r, c]);
-        moveHashes.add(hash);
-      }
-    }
-  }
-  return moves;
 }
 
 export function createOpeningBook() {
