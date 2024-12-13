@@ -59,6 +59,8 @@ const testPositions = [
   // chooses a dumb move when exiting early from a search at depth 10 - this seems to be because it realized it lost?? but it reports it's winning (-27.9) sometimes
   // I'm struggling to reproduce this issue
   "19~9.9|10.11|13.9|8.9|11.11|10.10|10.12|12.10|10.9|11.9|13.11|9.13|13.8|13.10|14.10|13.7|15.9|12.12|10.8|9.7|14.12|12.10|11.10|12.10|15.13|12.11|16.14|17.15|12.9|12.14|12.13|10.12|8.14|11.11|13.9",
+  // thinks white has a forced win when they don't - this is a moveIndex truncation bug, is a problem on 20 moves, not on 30 moves
+  "19~9.9|11.12|6.9|13.10|6.7|13.12|6.8|6.6|7.9|8.9|8.10|5.9|7.11|6.12|7.9|6.9|6.8|9.11|7.10|7.8|5.7|4.6|10.8|11.7|7.12|7.13|5.11|10.11|9.10|9.8|9.10|8.14|6.7|7.8",
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
