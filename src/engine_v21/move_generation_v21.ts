@@ -201,18 +201,17 @@ export function* makeOrderedMoveIterator(
   // if move is part of an existing shape, it is probably interesting
   // also, if it is part of a forcing shape it is probably more interesting, so visit those first
   // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
-  // map shape hash to its key in the priority list (speeds up sorting to only do this once)
-  const keyMap = new Map(
-    game.linearShapes.map((shape) => [
-      shape.hash,
-      (shape.owner === game.currentPlayer ? "my-" : "opponent-") + shape.type,
-    ])
-  );
+  // map shape hash to its priority (speeds up sorting to only do this once)
+  const priorityMap = new Map<string, number>();
+  game.linearShapes.forEach((shape) => {
+    const shapeKey =
+      (shape.owner === game.currentPlayer ? "my-" : "opponent-") + shape.type;
+    const priority = shapePriority[shapeKey] || Infinity; // infinity is worst priority
+    priorityMap.set(shape.hash, priority);
+  });
   game.linearShapes.sort((a, b) => {
-    const aKey = keyMap.get(a.hash) || 0;
-    const bKey = keyMap.get(b.hash) || 0;
-    const aPriority = shapePriority[aKey] || Infinity; // infinity is worst priority
-    const bPriority = shapePriority[bKey] || Infinity;
+    const aPriority = priorityMap.get(a.hash) || Infinity; // did OR Infinity to make typescript happy, all shapes should be in the map
+    const bPriority = priorityMap.get(b.hash) || Infinity;
     return aPriority - bPriority;
   });
   // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
@@ -254,7 +253,7 @@ export function* makeOrderedMoveIterator(
     }
     return;
   }
-  // else if opponent has 4 captures and a capture threat, only relevant moves are blocking it or making a capture that blocks the threatening piece
+  // else if opponent has 4 captures and a capture threat, only relevant moves are blocking it
   if (
     game.captures[Number(!game.currentPlayer) as 0 | 1] === 4 &&
     opponentCaptureThreat
@@ -267,7 +266,7 @@ export function* makeOrderedMoveIterator(
     }
     return;
   }
-  // else if there is an opponent pente threat, the only relevant moves are within it or making a capture that blocks all opponent pente threats
+  // else if there are opponent pente threats, the only relevant moves are blocking them
   const opponentPenteThreats = sortedShapes.filter(
     (shape) =>
       shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")
