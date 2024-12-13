@@ -11,6 +11,7 @@ import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v21/move_ge
 import { evaluatePosition, getNonlinearShapes, positionFeatureDict, evaluateMomentum } from '@/engine_v21/evaluation_v21';
 import { TTableKey } from "@/engine_v21/ttable_v21"
 import { getKeystoneCaptureThreats } from '@/engine_v21/shape_utilities_v21';
+import { mctsRollout } from '@/engine_v21/mcts_v21';
 
 import AnalysisWorker from "../analysisWorker?worker"
 import { detectSymmetry } from '@/engine_v21/move_generation_v21';
@@ -161,6 +162,12 @@ function runComputerGame() {
   window.open(router.resolve("/analyze?s=" + playGame(6, 6, 15, 100).gameString).href, "_blank")
 }
 
+function runRollout() {
+  const result = mctsRollout(game.value);
+  const gameString = gameToString(result)
+  window.open(router.resolve("/analyze?s=" + gameString).href, "_blank")
+}
+
 onMounted(() => {
   const searchParams = new URL(window.location.href).searchParams
   const gameString = searchParams.get("s")
@@ -244,6 +251,7 @@ onUnmounted(() => {
       <button @click="console.log(evaluateMomentum(game, 10))">Evaluate Momentum</button><br>
       <button @click="console.log(getKeystoneCaptureThreats(game).map(s => s.hash))">Keystone Capture
         Threats</button><br>
+      <button @click="runRollout()">Rollout</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>
