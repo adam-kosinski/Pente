@@ -260,9 +260,9 @@ export const linearShapeDef = {
   "pente-potential-1": "1_1_1",
   "pente-potential-2": "1__11",
   // "three": "111" // used for nonlinear shape detection
-  // "blocked-pente-4": "11110",  // these don't help with evaluation when adding to the model, but perhaps are useful for detecting keystone threats?
-  // "blocked-pente-31": "11101",
-  // "blocked-pente-22": "11011"
+  "blocked-pente-4": "11110", // these are used for detecting keystone threats
+  "blocked-pente-31": "11101",
+  "blocked-pente-22": "11011",
 };
 
 // expand shape definition to include flips and both players, and store as a map for easy lookup

@@ -10,6 +10,7 @@ import { createNewGame, copyGame, makeMove, undoMove, gameToString, loadFromStri
 import { makeOrderedMoveIterator, createOpeningBook } from '@/engine_v21/move_generation_v21'
 import { evaluatePosition, getNonlinearShapes, positionFeatureDict, evaluateMomentum } from '@/engine_v21/evaluation_v21';
 import { TTableKey } from "@/engine_v21/ttable_v21"
+import { getKeystoneCaptureThreats } from '@/engine_v21/shape_utilities_v21';
 
 import AnalysisWorker from "../analysisWorker?worker"
 import { detectSymmetry } from '@/engine_v21/move_generation_v21';
@@ -243,6 +244,8 @@ onUnmounted(() => {
       <button @click="generateFeatureCSV(Infinity)">Get CSV</button><br>
       <button @click="console.log(detectSymmetry(game))">Symmetry</button><br>
       <button @click="console.log(evaluateMomentum(game, 10))">Evaluate Momentum</button><br>
+      <button @click="console.log(getKeystoneCaptureThreats(game).map(s => s.hash))">Keystone Capture
+        Threats</button><br>
       <select v-model="testPositionIndex">
         <option v-for="_, i in testPositions" :value="i">Position {{ i }}</option>
       </select>

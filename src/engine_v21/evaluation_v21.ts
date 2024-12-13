@@ -9,7 +9,7 @@ import {
   undoMove,
 } from "./model_v21";
 import { makeOrderedMoveIterator } from "./move_generation_v21";
-import { getMovesBlockingAllThreats } from "./shape_utilities_v21";
+import { getMovesBlockingAllThreats, loc } from "./shape_utilities_v21";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)
@@ -358,15 +358,6 @@ export function getNonlinearShapes(game: GameState): Shape[] {
 
 function isOrthogonal(shape: LinearShape) {
   return shape.dx === 0 || shape.dy === 0;
-}
-
-function loc(shape: LinearShape, index: number): string {
-  // returns the location within the shape that is index spots away from the shape's beginning
-  // returning a string version of the location because usually we want to check if two locations are the same
-  return [
-    shape.begin[0] + index * shape.dy,
-    shape.begin[1] + index * shape.dx,
-  ].toString();
 }
 
 function intersectAt(

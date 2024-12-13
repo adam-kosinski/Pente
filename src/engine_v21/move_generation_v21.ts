@@ -9,11 +9,13 @@ import {
 import { type TTEntry } from "./ttable_v21";
 import {
   emptySpotsInShape,
+  getKeystoneCaptureThreats,
   getMovesBlockingThreat,
 } from "./shape_utilities_v21";
 
 // store which shapes should be looked at first, to use when ordering moves, earlier is more important
 const shapePriorityDef = [
+  // pente threats are the most urgent
   "my-pente-threat-4",
   "my-pente-threat-31",
   "my-pente-threat-22",
@@ -23,14 +25,18 @@ const shapePriorityDef = [
   // stuff that can create an open tessera (double pente threat)
   "my-stretch-tria", // stretch tria first b/c has a vulnerable pair
   "my-open-tria",
-  "opponent-stretch-tria",
-  "opponent-open-tria",
-  // stuff that can create a pente threat (important for me, not so important to block opponent from doing this)
+  // stuff that can create a pente threat is forcing (important for me, not so important to block opponent from doing this)
+  "my-keystone-capture-threat", // best because also captures a pair - NOTE: not an official shape type, handled specially
   "my-extendable-stretch-tria-2", // contains vulnerable pair
   "my-pente-potential-2", // contains vulnerable pair
   "my-extendable-stretch-tria-1",
   "my-pente-potential-1",
   "my-extendable-tria",
+  // after moves that threaten pente, deal with opponent tessera threats
+  "opponent-stretch-tria",
+  "opponent-open-tria",
+  // keystone captures can be bad threats, and usually not that many so it's better to examine them before looking at our many stretch twos etc.
+  "opponent-keystone-capture-threat", // NOTE: not an official shape type, handled specially
   // favor things that can create a tria
   "my-open-pair",
   "my-stretch-two",
@@ -198,31 +204,12 @@ export function* makeOrderedMoveIterator(
     }
   }
 
-  // if move is part of an existing shape, it is probably interesting
-  // also, if it is part of a forcing shape it is probably more interesting, so visit those first
-  // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
-  // map shape hash to its priority (speeds up sorting to only do this once)
-  const priorityMap = new Map<string, number>();
-  game.linearShapes.forEach((shape) => {
-    const shapeKey =
-      (shape.owner === game.currentPlayer ? "my-" : "opponent-") + shape.type;
-    const priority = shapePriority[shapeKey] || Infinity; // infinity is worst priority
-    priorityMap.set(shape.hash, priority);
-  });
-  game.linearShapes.sort((a, b) => {
-    const aPriority = priorityMap.get(a.hash) || Infinity; // did OR Infinity to make typescript happy, all shapes should be in the map
-    const bPriority = priorityMap.get(b.hash) || Infinity;
-    return aPriority - bPriority;
-  });
-  // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
-  let sortedShapes = game.linearShapes.slice();
-
   // calculate if threatening things exist
-  const myPenteThreat = sortedShapes.find(
+  const myPenteThreat = game.linearShapes.find(
     (shape) =>
       shape.owner === game.currentPlayer && shape.type.includes("pente-threat")
   );
-  const captureThreats = sortedShapes.filter(
+  const captureThreats = game.linearShapes.filter(
     (shape) => shape.type === "capture-threat"
   );
   // find instances of capture threats, useful so don't have to search twice later
@@ -267,7 +254,7 @@ export function* makeOrderedMoveIterator(
     return;
   }
   // else if there are opponent pente threats, the only relevant moves are blocking them
-  const opponentPenteThreats = sortedShapes.filter(
+  const opponentPenteThreats = game.linearShapes.filter(
     (shape) =>
       shape.owner !== game.currentPlayer && shape.type.includes("pente-threat")
   );
@@ -282,6 +269,33 @@ export function* makeOrderedMoveIterator(
     }
     return;
   }
+
+  // if move is part of an existing shape, it is probably interesting
+  // also, if it is part of a forcing shape it is probably more interesting, so visit those first
+  // sort linear shapes first and then iterate over spots - it's okay that this is sorting in place, helps to keep the game object ordered (and might help speed up further sorts)
+  // we will need to know if capture threats are keystone capture threats
+  const keystoneCaptureThreatHashes = new Set(
+    getKeystoneCaptureThreats(game).map((s) => s.hash)
+  );
+  // map shape hash to its priority (speeds up sorting to only do this once)
+  const priorityMap = new Map<string, number>();
+  game.linearShapes.forEach((shape) => {
+    let shapeType = shape.type;
+    if (keystoneCaptureThreatHashes.has(shape.hash)) {
+      shapeType = "keystone-capture-threat";
+    }
+    const shapeKey =
+      (shape.owner === game.currentPlayer ? "my-" : "opponent-") + shapeType;
+    const priority = shapePriority[shapeKey] || Infinity; // infinity is worst priority
+    priorityMap.set(shape.hash, priority);
+  });
+  game.linearShapes.sort((a, b) => {
+    const aPriority = priorityMap.get(a.hash) || Infinity; // did OR Infinity to make typescript happy, all shapes should be in the map
+    const bPriority = priorityMap.get(b.hash) || Infinity;
+    return aPriority - bPriority;
+  });
+  // however, we need another reference to the sorted version (probably?), because linear shapes get added and removed from the game as we traverse the search tree, so the sorting gets messed up
+  let sortedShapes = game.linearShapes.slice();
 
   // find moves in shapes
   for (const shape of sortedShapes) {

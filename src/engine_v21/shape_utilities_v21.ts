@@ -59,9 +59,9 @@ export function getMovesBlockingThreat(game: GameState, threat: LinearShape) {
     const dx = shape.dx;
     // determine which location is the empty spot in the capture threat shape
     for (const i of [0, 3]) {
-      const r = shape.begin[0] + i * dy;
-      const c = shape.begin[1] + i * dx;
       if (shape.pattern[i] === "_") {
+        const r = shape.begin[0] + i * dy;
+        const c = shape.begin[1] + i * dx;
         blockingMoves.push([r, c]);
         break;
       }
@@ -92,4 +92,47 @@ export function getMovesBlockingAllThreats(
   }
   // if at the end of all threats, the intersection between all threats are the moves that block all of them
   return movesBlockingAll;
+}
+
+export function loc(shape: LinearShape, index: number): string {
+  // returns the location within the shape that is index spots away from the shape's beginning
+  // returning a string version of the location because usually we want to check if two locations are the same
+  return [
+    shape.begin[0] + index * shape.dy,
+    shape.begin[1] + index * shape.dx,
+  ].toString();
+}
+
+export function getKeystoneCaptureThreats(game: GameState) {
+  const captureThreats = game.linearShapes.filter(
+    (shape) => shape.type === "capture-threat"
+  );
+  const blockedPentes = game.linearShapes.filter((shape) =>
+    shape.type.includes("blocked-pente")
+  );
+
+  const keystoneCaptureThreats: LinearShape[] = [];
+
+  // loop through blocked pentes to find keystones
+  const keystoneLocations = new Set<string>();
+  for (const blockedPente of blockedPentes) {
+    for (let i = 0; i < blockedPente.length; i++) {
+      if (blockedPente.pattern[i] !== String(blockedPente.owner)) {
+        keystoneLocations.add(loc(blockedPente, i));
+      }
+    }
+  }
+
+  // loop through capture threats to see if they contain a keystone
+  // don't actually need to check shape owners, because if a keystone is being threatened, that's always a keystone threat
+  for (const threat of captureThreats) {
+    if (
+      keystoneLocations.has(loc(threat, 1)) ||
+      keystoneLocations.has(loc(threat, 2))
+    ) {
+      keystoneCaptureThreats.push(threat);
+    }
+  }
+
+  return keystoneCaptureThreats;
 }
