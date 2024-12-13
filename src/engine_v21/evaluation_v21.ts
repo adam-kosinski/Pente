@@ -8,11 +8,8 @@ import {
   type Shape,
   undoMove,
 } from "./model_v21";
-import {
-  makeOrderedMoveIterator,
-  emptySpotsInShape,
-  getMovesBlockingAllThreats,
-} from "./move_generation_v21";
+import { makeOrderedMoveIterator } from "./move_generation_v21";
+import { getMovesBlockingAllThreats } from "./shape_utilities_v21";
 
 export function evaluatePosition(game: GameState) {
   // evaluation of a static position based on heuristics (without looking ahead, that is the job of the search function)

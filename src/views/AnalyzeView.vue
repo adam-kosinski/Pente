@@ -45,6 +45,9 @@ const testPositions = [
   "19~9.9|10.9|9.11|9.8|11.10|8.7|11.11|8.11|11.12|7.6|6.5|11.13|11.8|11.9|12.9|11.9|12.12|13.13|10.11|9.12|12.11|10.10|11.11|13.11|12.8|11.9|12.10|12.12|12.7",
   // and again! - lost on move 10 by playing 6.9 because didn't look far enough ahead
   "19~9.9|11.10|9.6|8.6|7.9|9.8|7.8|7.10|7.7|6.9|5.8|7.5|8.11|7.10|8.9|6.9|6.7|5.6|8.10|8.8|10.8|6.8|6.10|6.8|8.12|9.11|8.10|8.13|8.8",
+  // static evaluation used to be busted in this position, thought white cannot block all of black's pente threats
+  // cool position though (and one move ago actually black won!)
+  "19~9.9|10.10|6.9|10.6|6.11|12.9|6.10|6.12|6.8|6.7|8.9|7.9|7.10|10.9|8.9|9.8|5.12|4.13|5.10|10.8|10.7|8.10|3.10|4.10|4.11|10.12|10.11|9.11|11.13|9.9|11.9|9.9|7.11|11.7|12.6|7.12|7.11|9.12",
 
   // CURRENT BUGS
 
@@ -56,9 +59,6 @@ const testPositions = [
   // and perhaps include whether an open pair contains one or two keystones (threatening to capture a pair of keystones should be ranked high)
   "19~9.9|11.12|6.9|13.10|6.7|13.12|6.8|6.6|7.9|8.9|8.10|5.9|7.11|6.12|7.9|6.9|6.8|9.11|7.10|7.8|5.7|4.6|10.8|11.7|7.12|7.13|5.11",
 
-  // OLD BUGS - FXIED
-  // static evaluation is busted in this position, thinks white cannot block all of black's pente threats
-  "19~9.9|10.10|6.9|10.6|6.11|12.9|6.10|6.12|6.8|6.7|8.9|7.9|7.10|10.9|8.9|9.8|5.12|4.13|5.10|10.8|10.7|8.10|3.10|4.10|4.11|10.12|10.11|9.11|11.13|9.9|11.9|9.9|7.11|11.7|12.6|7.12|7.11|9.12",
 ]
 game.value = loadFromString(testPositions[testPositionIndex.value])
 watch(testPositionIndex, i => {
@@ -132,12 +132,6 @@ function timeTest() {
 }
 
 function printMoves() {
-  for (const move of makeOrderedMoveIterator(game.value, 1)) {
-    console.log(move)
-  }
-  console.log("")
-}
-function printForcingMoves() {
   for (const move of makeOrderedMoveIterator(game.value, 1)) {
     console.log(move)
   }
@@ -235,7 +229,6 @@ onUnmounted(() => {
 
     <div v-if="showDebug" class="button-panel">
       <button @click="printMoves()">Generate Moves</button><br>
-      <button @click="printForcingMoves()">Forcing Moves</button><br>
       <button @click="console.log(evaluatePosition(game))">Evaluate</button><br>
       <button @click="console.log(game.linearShapes.map(shape => shape.hash).join('\n'))">Linear Shapes</button><br>
       <button @click="console.log(getNonlinearShapes(game))">Nonlinear Shapes</button><br>
