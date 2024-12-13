@@ -54,7 +54,7 @@ import {
 } from "./engine_v21/evaluation_v21";
 import { createNewGame, gameToString, makeMove } from "./engine_v21/model_v21";
 import * as papa from "papaparse";
-import { gameStrings } from "./gameStrings";
+import { gameStrings } from "./allGameStrings";
 
 // v is short for versions
 const v = [
